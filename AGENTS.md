@@ -12,21 +12,38 @@ Nothing else is being built yet. Do not scaffold `model/`, `api/` or `web/`.
 ## Repo layout (only what exists now)
 
 ```
-.github/workflows/snapshot.yml   hourly cron + manual dispatch
-scripts/snapshot.py              single bare script, one main()
+.github/workflows/snapshot.yml         hourly cron + manual dispatch
+scripts/snapshot.py                    single bare script, one main()
 db/migrations/0001_api_snapshots.sql   applied by hand in Neon SQL editor
-requirements.txt                 httpx, psycopg[binary] — nothing else without asking
-docs/                            human-facing docs; read on demand, not always
+requirements.txt                       httpx, psycopg[binary], python-dotenv — nothing else without asking
+docs/                                  human-facing docs; read on demand, not always
+.cursor/rules/data-integrity.mdc       always-on data rules (also imported by CLAUDE.md)
+.env.example                           variable names, no values. Real values in .env (gitignored)
 ```
 
-Separate orphan branch `snapshots-archive`: gzipped copy of every stored payload. Written by
-the workflow only — never check it out into `main`, never rewrite its history.
+`_archive/` is the local archive output (gitignored). The real archive is a separate
+**private** repo, `freepl-archive`: gzipped copy of every stored payload, pushed by the
+workflow via a deploy key. This repo is public — raw FPL payloads never go in it.
 
 ## Stack
 
 - Python 3.12 for ingestion. TypeScript arrives later with the API/UI — not now.
 - Postgres on Neon free tier (0.5 GB storage, 100 CU-hours/month). Pooled connection string via `DATABASE_URL`.
 - GitHub Actions for scheduling. No Airflow, no ORMs, no migration runner yet.
+
+## Environment
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `DATABASE_URL` | yes | Neon pooled connection string |
+| `FPL_ENTRY_ID` | yes | The FPL entry the account snapshots track |
+| `FPL_CONTACT` | yes | Email for the User-Agent |
+| `ARCHIVE_DIR` | no, default `./_archive` | Root directory archive files are written under (in CI: the checked-out `freepl-archive`) |
+| `HEALTHCHECK_URL` | no | Dead-man's switch ping URL; skip pinging if unset |
+| `FORCE` | no | `1` = store bootstrap, fixtures, set-piece-notes as `manual`, ignoring the decision table |
+
+Locally, load `.env` with python-dotenv. In CI, values come from GitHub secrets / workflow inputs.
+CI-only: secret `ARCHIVE_DEPLOY_KEY` and variable `ARCHIVE_REPO` — used by the workflow's checkout and push steps, never read by the script.
 
 ## Non-negotiables
 
@@ -38,7 +55,7 @@ the workflow only — never check it out into `main`, never rewrite its history.
 6. **Fail loudly.** A run that should have stored data and didn't must exit non-zero.
 7. **No new dependencies, directories or abstractions** beyond the current spec without asking.
 
-Data-leakage rules for anything touching modelling live in `.cursor/rules/data-integrity.mdc`.
+Data-leakage rules live in `.cursor/rules/data-integrity.mdc` and apply always.
 
 ## FPL domain
 
@@ -57,5 +74,6 @@ If something isn't covered there, ask — don't invent a plausible rule.
 
 - Small, reviewable changes. One concern per commit.
 - Before implementing, restate the acceptance criteria from the spec you're working to.
-- Secrets only from environment variables. Never commit `.env`.
+- Secrets only from environment variables. Never commit `.env`, never print `DATABASE_URL`.
+- **Ask before:** `git push`, creating or modifying remote branches, triggering workflows, and any SQL against Neon other than `SELECT`.
 - When the spec and this file disagree, stop and flag it.

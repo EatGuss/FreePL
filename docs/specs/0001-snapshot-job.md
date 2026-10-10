@@ -8,7 +8,7 @@ Capture FPL API payloads that are overwritten and never archived, so that every 
 backtest has true point-in-time data. Above all: **a `bootstrap-static` capture before
 every deadline, every gameweek, for the whole season.**
 
-Two copies of every write: a row in Neon, and a gzipped file on a git branch. The
+Two copies of every write: a row in Neon, and a gzipped file in a private archive repo. The
 deadline captures are the only irrecoverable asset in the project; one free-tier
 database is not enough redundancy. See `docs/decisions/0001-neon-plus-git-archive.md`.
 
@@ -27,9 +27,12 @@ Do not build any of these in this task:
 ```
 db/migrations/0001_api_snapshots.sql
 scripts/snapshot.py
-requirements.txt                  httpx, psycopg[binary]
+requirements.txt                  httpx, psycopg[binary], python-dotenv
 .github/workflows/snapshot.yml
+.gitignore, .env.example          already present; don't change without asking
 ```
+
+Environment variables are defined in `AGENTS.md`.
 
 ## Schema
 
@@ -59,7 +62,7 @@ The workflow runs **hourly**. Every run:
 1. Fetch `bootstrap-static` (always — it carries `events[].deadline_time`, needed for every decision).
 2. Evaluate the decision table below against the clock and the latest existing rows.
 3. Fetch any other endpoints that are due.
-4. For each payload to store: write the archive file locally, insert the DB row, then push the archive. A failure in one sink must not skip the other.
+4. For each payload to store: write the archive file, then insert the DB row. A failure in one sink must not skip the other. (The workflow pushes archive files after the script exits.)
 5. Ping the dead-man's switch. Exit non-zero if any sink failed or the deadline assertion failed.
 
 All "is it due" rules read from `api_snapshots`, not from the schedule. Consequences the
@@ -83,7 +86,7 @@ not double-store routine rows; a manual run is always safe.
 - Inside the deadline window, **store on every run** (several shots per deadline is intended — cron drift is 10–30 min). Backtests use the latest capture strictly before `deadline_time`.
 - A deadline row also satisfies the routine check (it's a newer `bootstrap-static` row).
 - `post_gw` should backfill any settled GW with no row yet, not only the most recent — covers a missed weekend. Cap at 3 GWs per run to bound requests.
-- `workflow_dispatch` with input `force: true` stores all of: bootstrap, fixtures, set-piece-notes, with `capture_reason = 'manual'`. Used for verification.
+- Env `FORCE=1` (locally) or `workflow_dispatch` input `force: true` (CI, passed through as `FORCE=1`) stores all of: bootstrap, fixtures, set-piece-notes, with `capture_reason = 'manual'`. Used for verification.
 
 ### `gameweek` and `deadline_time` per row
 
@@ -104,15 +107,21 @@ not double-store routine rows; a manual run is always safe.
   - `team/set-piece-notes`: valid JSON (shape unknown — inspect and tighten later).
 - Pace sequential requests ≥1s apart.
 
-## Git archive
+## Archive repo
 
-- Branch: **`snapshots-archive`**, an orphan branch (no shared history with `main`, keeps the main tree clean).
-- Path: `archive/2026-27/{endpoint_slug}/{captured_at:%Y%m%dT%H%M%SZ}_{capture_reason}[_{resource_id}].json.gz`
+The code repo (`FreePL`) is public. Raw FPL payloads must not be redistributed, so the
+archive lives in a **separate private repo**, `freepl-archive`, written to by this
+workflow with a deploy key scoped to that repo only.
+
+- Repo: `<owner>/freepl-archive`, private, default branch `main`. Created by hand (see Rollout).
+- The script writes under `$ARCHIVE_DIR` (default `./_archive`, gitignored in `FreePL`). In CI, `ARCHIVE_DIR` points at the checked-out archive repo.
+- Path within it: `2026-27/{endpoint_slug}/{captured_at:%Y%m%dT%H%M%SZ}_{capture_reason}[_{resource_id}].json.gz`
   - `endpoint_slug`: endpoint with `/` replaced by `_` (e.g. `event_7_live`).
 - Content: the exact response body bytes, gzipped. Not re-serialised.
-- Workflow checks out `snapshots-archive` into a separate directory (`actions/checkout` with `ref` + `path`), the script writes files there, a final step commits and pushes them. Workflow needs `permissions: contents: write`.
-- If the branch doesn't exist, create it once by hand before enabling the schedule (see Rollout).
-- Commit message: `snapshot {captured_at} {reasons}`.
+- The script only writes files. Committing and pushing is a workflow step after the script, run with `if: always()` so archive files are pushed even when the DB insert failed.
+- Workflow checks out the archive repo with `actions/checkout`: `repository: ${{ vars.ARCHIVE_REPO }}`, `ssh-key: ${{ secrets.ARCHIVE_DEPLOY_KEY }}`, `path: archive-repo`.
+- Commit as `github-actions[bot]`. Message: `snapshot {captured_at} {reasons}`. Skip the commit if nothing changed. A failed push fails the job.
+- Nothing from the archive repo is ever copied into `FreePL`.
 
 ## Database
 
@@ -124,8 +133,8 @@ not double-store routine rows; a manual run is always safe.
 
 The dangerous failure is a green run that stored nothing. Guards:
 
-1. **Deadline assertion.** If `now` was inside a deadline window and no `deadline` row was successfully inserted *and* archived in this run → exit non-zero.
-2. **Any sink failure** (fetch exhausted retries, validation failed, DB insert failed, archive push failed) → continue the rest of the run, then exit non-zero.
+1. **Deadline assertion.** If `now` was inside a deadline window and no `deadline` row was successfully inserted *and* its archive file written in this run → exit non-zero.
+2. **Any sink failure** (fetch exhausted retries, validation failed, DB insert failed, archive file write failed) → continue the rest of the run, then exit non-zero. A failed archive push fails the push step, which fails the job.
 3. **Dead-man's switch.** If `HEALTHCHECK_URL` is set: on success `GET {url}`, on failure `GET {url}/fail`. Configure in healthchecks.io: period 1h, grace 2h. Catches the workflow not running at all.
 4. Log one line per endpoint: decision, reason, bytes, outcome. Plain `print` is fine.
 
@@ -134,8 +143,12 @@ The dangerous failure is a green run that stored nothing. Guards:
 - Triggers: `schedule: cron: '7 * * * *'` and `workflow_dispatch` (input `force`, boolean, default false).
 - `timeout-minutes: 10`.
 - `concurrency: { group: snapshot, cancel-in-progress: false }` — prevents two runs racing the archive push.
+- `permissions: contents: read` — the workflow never writes to `FreePL` itself.
+- Steps: checkout `FreePL` → checkout archive repo → set up Python → run script (`ARCHIVE_DIR=archive-repo`) → commit + push archive repo (`if: always()`) → healthcheck ping. The ping reflects overall job status, so it runs last with `if: always()` and pings `/fail` if any earlier step failed.
 - Python 3.12, pip cache. Path filter is irrelevant for schedule triggers; don't add `push` triggers.
-- Secrets: `DATABASE_URL`, `FPL_ENTRY_ID`, `FPL_CONTACT`, `HEALTHCHECK_URL` (optional).
+- Secrets: `DATABASE_URL`, `FPL_ENTRY_ID`, `FPL_CONTACT`, `ARCHIVE_DEPLOY_KEY`, `HEALTHCHECK_URL` (optional).
+- Repository variable: `ARCHIVE_REPO` (e.g. `egus/freepl-archive`).
+- `ARCHIVE_DIR` and `FORCE` are set in the workflow, not secrets.
 
 ## Neon settings (manual, before go-live)
 
@@ -147,9 +160,14 @@ The dangerous failure is a green run that stored nothing. Guards:
 Each step must pass before the next.
 
 1. Apply migration in Neon SQL editor.
-2. Run script locally with env vars and `--force` equivalent (env `FORCE=1` is fine); confirm 3 rows in Neon and 3 files in a local archive dir.
-3. Create the orphan branch by hand, push it.
-4. Add secrets. Run the workflow via `workflow_dispatch` with `force: true`. Confirm rows **and** a commit on `snapshots-archive`.
+2. Run script locally with `.env` loaded and `FORCE=1`; confirm 3 `manual` rows in Neon and 3 `.json.gz` files under `_archive/`. Then remove `FORCE` from `.env`.
+3. Create the archive repo by hand:
+   - New **private** repo `freepl-archive`, initialised with a README.
+   - `ssh-keygen -t ed25519 -f freepl_archive_deploy -N "" -C freepl-archive`
+   - In `freepl-archive` → Settings → Deploy keys: add `freepl_archive_deploy.pub`, **tick Allow write access**.
+   - In `FreePL` → Settings → Secrets and variables → Actions: secret `ARCHIVE_DEPLOY_KEY` = contents of `freepl_archive_deploy` (private key); variable `ARCHIVE_REPO` = `<owner>/freepl-archive`.
+   - Delete both key files locally. Never commit them.
+4. Add the remaining secrets. Run the workflow via `workflow_dispatch` with `force: true`. Confirm rows in Neon **and** a new commit in `freepl-archive`.
 5. Add the cron. Confirm at least two scheduled runs land rows within 24h.
 6. Set up healthchecks.io; confirm a ping arrives.
 7. Confirm the first real deadline capture (query below) after the next deadline.
@@ -157,11 +175,12 @@ Each step must pass before the next.
 ## Acceptance criteria
 
 - [ ] Hourly scheduled runs complete in < 2 min under normal conditions.
-- [ ] Every deadline has ≥1 `bootstrap-static` row with `capture_reason = 'deadline'` and `captured_at < deadline_time`, in both Neon and the archive branch.
+- [ ] Every deadline has ≥1 `bootstrap-static` row with `capture_reason = 'deadline'` and `captured_at < deadline_time`, in both Neon and `freepl-archive`.
 - [ ] Routine rows: ~2/day bootstrap, ~1/day fixtures, ~1/week set-piece notes. No duplicates from double runs.
 - [ ] Each settled GW has exactly one `post_gw` row per post-GW endpoint.
 - [ ] A forced validation failure (e.g. point the base URL at a non-JSON page) produces a red run and a healthchecks `/fail` ping.
-- [ ] Killing the DB (bad `DATABASE_URL`) still produces archive files, and a red run.
+- [ ] Killing the DB (bad `DATABASE_URL`) still pushes archive files to `freepl-archive`, and the run is red.
+- [ ] The workflow has no write access to `FreePL`, and the deploy key has access to `freepl-archive` only.
 - [ ] No `UPDATE` or `DELETE` statements anywhere in the code.
 
 ## Verification queries
@@ -193,4 +212,4 @@ Also check Neon's dashboard storage figure, which includes more than logical row
 **If projected season storage > ~350 MB** (cap is 500 MB), first lever: change routine
 `bootstrap-static` from >11h to >23h, timed after the overnight price change. Deadline
 captures stay untouched. Second lever (later, only if needed): gzip payloads into `bytea`.
-The archive branch is unaffected by either.
+The archive repo is unaffected by either.

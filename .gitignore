@@ -8,7 +8,7 @@
 __pycache__/
 *.pyc
 
-# Local snapshot archive (the real archive lives on the snapshots-archive branch)
+# Local snapshot archive (the real archive is the private freepl-archive repo)
 _archive/
 
 # OS / editor
@@ -16,3 +16,6 @@ _archive/
 Thumbs.db
 .vscode/
 .idea/
+
+# Claude Code personal settings (shared settings in .claude/settings.json are fine to commit)
+.claude/settings.local.json
