@@ -1,0 +1,87 @@
+# Snapshot job. Spec: docs/specs/0001-snapshot-job.md
+name: snapshot
+
+on:
+  # Rollout step 5: uncomment once the forced manual run (step 4) has passed.
+  # schedule:
+  #   - cron: '7 * * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Store bootstrap, fixtures and set-piece notes as 'manual', ignoring the decision table
+        type: boolean
+        default: false
+
+permissions:
+  contents: read  # never writes to FreePL; the archive push uses the deploy key
+
+concurrency:
+  group: snapshot
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check out archive repo
+        id: archive_checkout
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.ARCHIVE_REPO }}
+          ssh-key: ${{ secrets.ARCHIVE_DEPLOY_KEY }}
+          path: archive-repo
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      # HEALTHCHECK_URL is deliberately not passed here: the final step pings once
+      # for the whole job, including the archive push.
+      - name: Run snapshot
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          FPL_ENTRY_ID: ${{ secrets.FPL_ENTRY_ID }}
+          FPL_CONTACT: ${{ secrets.FPL_CONTACT }}
+          ARCHIVE_DIR: archive-repo
+          FORCE: ${{ inputs.force && '1' || '' }}
+        run: python scripts/snapshot.py
+
+      # always(): archive files are pushed even when the DB insert failed.
+      - name: Commit and push archive
+        if: always() && steps.archive_checkout.outcome == 'success'
+        working-directory: archive-repo
+        run: |
+          git add -A
+          if git diff --cached --quiet; then
+            echo "nothing to archive"
+            exit 0
+          fi
+          reasons=$(git diff --cached --name-only \
+            | xargs -n1 basename \
+            | grep -oE '^[0-9]{8}T[0-9]{6}Z_(routine|deadline|post_gw|manual|backfill)' \
+            | sed -E 's/^[^_]+_//' | sort -u | paste -sd, -)
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -q -m "snapshot $(date -u +%Y-%m-%dT%H:%M:%SZ) ${reasons}"
+          git push origin HEAD:main
+
+      # Dead-man's switch, reflecting the whole job. Runs last.
+      - name: Healthcheck ping
+        if: always()
+        env:
+          HEALTHCHECK_URL: ${{ secrets.HEALTHCHECK_URL }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          if [ -z "$HEALTHCHECK_URL" ]; then
+            echo "HEALTHCHECK_URL not set; skipping ping"
+            exit 0
+          fi
+          url="${HEALTHCHECK_URL%/}"
+          if [ "$JOB_STATUS" != "success" ]; then url="$url/fail"; fi
+          curl -fsS -m 10 --retry 3 -o /dev/null "$url" || echo "healthcheck ping failed"
