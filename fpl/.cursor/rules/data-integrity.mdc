@@ -1,0 +1,37 @@
+---
+description: Data integrity and leakage invariants. Non-negotiable across the whole repo.
+globs:
+alwaysApply: true
+---
+
+# Data integrity
+
+These rules protect the project's credibility. Code that violates them can look correct and
+produce silently wrong results. If a task seems to require breaking one, stop and ask.
+
+## Storage
+
+- `api_snapshots` is append-only. Never `UPDATE`, never `DELETE`, never truncate, never "dedupe".
+- Store raw API payloads unmodified. Flatten into typed tables later, from raw rows — never at ingest.
+- Archive files on `snapshots-archive` are the exact response bytes, gzipped. Never re-serialise.
+- Prices are integers in tenths (`now_cost: 75` = £7.5m). Never store or compute prices as floats.
+- All timestamps `timestamptz` in UTC. Deadlines come from `events[].deadline_time`, never hardcoded.
+
+## Point-in-time correctness
+
+- Backtest features may only use data available **before that gameweek's deadline**.
+- Never use as a backtest feature: `xP` (from vaastav `merged_gw.csv` — scraped after the GW), `selected`, `transfers_in`, `transfers_out`, or any current-season aggregate.
+- "Available before the deadline" from our snapshots means: the latest row with `captured_at < deadline_time`. Never the nearest row, never a later one.
+- Rows with `capture_reason = 'backfill'` do not have a verified pre-deadline timestamp. Exclude them from any query that assumes one.
+- Blank/double gameweek information may only be used once it was published as of that deadline.
+
+## Domain arithmetic
+
+- Sell price = purchase price + floor((current − purchase) / 2), in tenths. Losses taken in full. Never assume `now_cost` back.
+- Free transfers bank to a maximum of 5. Wildcard and Free Hit preserve banked FTs.
+- Each transfer beyond available FTs is −4 points.
+
+## Backtest scope
+
+- The 2025/26 replay is flag-blind. Do not add availability features (`status`, `news`, `chance_of_playing_*`) to it.
+- End-to-end agent validation is 2025/26 only (current scoring and chip rules). Earlier seasons are for training projection components only.
