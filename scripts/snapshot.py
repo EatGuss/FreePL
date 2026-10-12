@@ -61,7 +61,7 @@ def is_valid_shape(endpoint: str, data) -> bool:
 
 def main() -> int:
     load_dotenv()
-    database_url = os.environ.get("DATABASE_URL", "")
+    database_url = os.environ.get("DATABASE_URL", "").strip()
     entry_id = os.environ.get("FPL_ENTRY_ID", "").strip()
     contact = os.environ.get("FPL_CONTACT", "").strip()
     archive_dir = Path(os.environ.get("ARCHIVE_DIR") or "./_archive")
