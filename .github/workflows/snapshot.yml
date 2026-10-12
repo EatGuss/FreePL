@@ -3,8 +3,8 @@ name: snapshot
 
 on:
   # Rollout step 5: uncomment once the forced manual run (step 4) has passed.
-  # schedule:
-  #   - cron: '7 * * * *'
+   schedule:
+     - cron: '7 * * * *'
   workflow_dispatch:
     inputs:
       force:
