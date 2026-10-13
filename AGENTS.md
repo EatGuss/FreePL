@@ -63,12 +63,11 @@ You do not know how FPL works well enough to guess. Read `docs/fpl-domain.md` be
 writing anything that touches squads, prices, chips, transfers, scoring or gameweeks.
 If something isn't covered there, ask — don't invent a plausible rule.
 
-## Definitions used across the codebase
+## Vocabulary
 
-- **gameweek** on a snapshot row = the GW the payload is *about*:
-  - pre-deadline data (`bootstrap-static`, `fixtures`, `set-piece-notes`): the event whose deadline is **next**, i.e. the GW being decided. `NULL` after the final deadline.
-  - post-GW data (`event/{gw}/live`, `entry/{id}/picks`): the finished GW.
-- **deadline capture** = a `bootstrap-static` row written inside the 2h window before a deadline.
+Use the terms in `GLOSSARY.md` (Entry, Club, Capture, Settled gameweek, …) and avoid
+the synonyms it lists. What the `gameweek` and `deadline_time` columns hold on each row
+is defined in spec 0001, "`gameweek` and `deadline_time` per row".
 
 ## Working style
 

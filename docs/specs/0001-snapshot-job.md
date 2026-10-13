@@ -41,7 +41,7 @@ create table api_snapshots (
   id             bigserial primary key,
   endpoint       text        not null,  -- path as requested, e.g. 'bootstrap-static', 'event/7/live'
   resource_id    text,                  -- entry id for entry/* endpoints; null otherwise
-  gameweek       int,                   -- see AGENTS.md "gameweek" definition
+  gameweek       int,                   -- see spec 0001 "gameweek and deadline_time per row"
   captured_at    timestamptz not null default now(),
   capture_reason text        not null
                  check (capture_reason in ('routine','deadline','post_gw','manual','backfill')),
@@ -75,7 +75,7 @@ not double-store routine rows; a manual run is always safe.
 
 | Endpoint | Store when | `capture_reason` |
 | --- | --- | --- |
-| `bootstrap-static` | `next_deadline − 2h ≤ now < next_deadline` | `deadline` |
+| `bootstrap-static` | `next_deadline − 3h ≤ now < next_deadline` | `deadline` |
 | `bootstrap-static` | otherwise, if latest row for this endpoint is > 11h old | `routine` |
 | `fixtures` | latest row > 23h old | `routine` |
 | `team/set-piece-notes` | latest row > 6 days old | `routine` |
@@ -171,6 +171,19 @@ Each step must pass before the next.
 5. Add the cron. Confirm at least two scheduled runs land rows within 24h.
 6. Set up healthchecks.io; confirm a ping arrives.
 7. Confirm the first real deadline capture (query below) after the next deadline.
+
+## Known limits
+
+Not handled in this task. Revisit before the end of the 2026/27 season.
+
+- **Season rollover.** `SEASON` is hardcoded to `2026-27` and rows carry no season.
+  Element ids are per season and `bootstrap-static` resets in summer, so the job must be
+  revisited before the 2027/28 bootstrap goes live, or new-season payloads land under
+  the `2026-27/` archive path.
+- **Post-GW corrections.** `post_gw` rows are the payload at first settlement, stored
+  once. Any correction FPL makes afterwards is not captured. Before the summer reset,
+  re-capture every GW's `event/{gw}/live` and `entry/{FPL_ENTRY_ID}/history` once as
+  `manual`; after the reset these payloads are not re-fetchable.
 
 ## Acceptance criteria
 
