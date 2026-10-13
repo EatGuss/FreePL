@@ -21,7 +21,7 @@ from dotenv import load_dotenv
 
 BASE_URL = "https://fantasy.premierleague.com/api/"
 SEASON = "2026-27"
-DEADLINE_WINDOW = timedelta(hours=2)
+DEADLINE_WINDOW = timedelta(hours=3)
 ROUTINE_MAX_AGE = {
     "bootstrap-static": timedelta(hours=11),
     "fixtures": timedelta(hours=23),

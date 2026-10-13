@@ -75,7 +75,7 @@ not double-store routine rows; a manual run is always safe.
 
 | Endpoint | Store when | `capture_reason` |
 | --- | --- | --- |
-| `bootstrap-static` | `next_deadline − 2h ≤ now < next_deadline` | `deadline` |
+| `bootstrap-static` | `next_deadline − 3h ≤ now < next_deadline` | `deadline` |
 | `bootstrap-static` | otherwise, if latest row for this endpoint is > 11h old | `routine` |
 | `fixtures` | latest row > 23h old | `routine` |
 | `team/set-piece-notes` | latest row > 6 days old | `routine` |
