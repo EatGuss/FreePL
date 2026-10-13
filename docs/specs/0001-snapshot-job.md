@@ -172,6 +172,19 @@ Each step must pass before the next.
 6. Set up healthchecks.io; confirm a ping arrives.
 7. Confirm the first real deadline capture (query below) after the next deadline.
 
+## Known limits
+
+Not handled in this task. Revisit before the end of the 2026/27 season.
+
+- **Season rollover.** `SEASON` is hardcoded to `2026-27` and rows carry no season.
+  Element ids are per season and `bootstrap-static` resets in summer, so the job must be
+  revisited before the 2027/28 bootstrap goes live, or new-season payloads land under
+  the `2026-27/` archive path.
+- **Post-GW corrections.** `post_gw` rows are the payload at first settlement, stored
+  once. Any correction FPL makes afterwards is not captured. Before the summer reset,
+  re-capture every GW's `event/{gw}/live` and `entry/{FPL_ENTRY_ID}/history` once as
+  `manual`; after the reset these payloads are not re-fetchable.
+
 ## Acceptance criteria
 
 - [ ] Hourly scheduled runs complete in < 2 min under normal conditions.
