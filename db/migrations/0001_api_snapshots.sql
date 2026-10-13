@@ -5,7 +5,7 @@ create table api_snapshots (
   id             bigserial primary key,
   endpoint       text        not null,  -- path as requested, e.g. 'bootstrap-static', 'event/7/live'
   resource_id    text,                  -- entry id for entry/* endpoints; null otherwise
-  gameweek       int,                   -- see AGENTS.md "gameweek" definition
+  gameweek       int,                   -- see spec 0001 "gameweek and deadline_time per row"
   captured_at    timestamptz not null default now(),
   capture_reason text        not null
                  check (capture_reason in ('routine','deadline','post_gw','manual','backfill')),
