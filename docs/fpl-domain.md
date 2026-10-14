@@ -36,10 +36,10 @@ over this file — verify against a live payload before hardcoding anything.
 ## Chips (2026/27)
 
 - **Eight chips in two sets of four**: Wildcard, Free Hit, Bench Boost, Triple Captain — once per set.
-- **Set 1 expires at the GW19 deadline** (13:30 GMT, Sat 2 Jan 2027). No carry-over: unused set-1 chips are lost.
-- Set 2 is available from after the GW19 deadline to the end of the season.
+- **Set 1 covers GW1–GW19** and expires at the GW19 deadline (read it from `events[]`, never hardcode). No carry-over: unused set-1 chips are lost.
+- **Set 2 covers GW20–GW38.** A chip played in gameweek `event ≤ 19` is from set 1; `event ≥ 20` is from set 2.
 - **One chip per gameweek.** **No Free Hit in GW1.**
-- **Wildcard and Free Hit preserve banked free transfers** (playing them does not reset your FT count).
+- **Wildcard and Free Hit preserve banked free transfers, and the chip gameweek earns none.** The count carries over unchanged: 3 banked before a Wildcard or Free Hit GW → 3 available for the following GW (not 4, not 1).
 - Wildcard: unlimited free transfers, permanent. Free Hit: unlimited free transfers for one GW, squad reverts afterwards. Bench Boost: bench players score too. Triple Captain: captain scores ×3 instead of ×2.
 
 ## Captaincy and auto-subs
