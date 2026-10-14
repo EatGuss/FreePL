@@ -20,7 +20,6 @@ import psycopg
 from dotenv import load_dotenv
 
 BASE_URL = "https://fantasy.premierleague.com/api/"
-SEASON = "2026-27"
 DEADLINE_WINDOW = timedelta(hours=3)
 ROUTINE_MAX_AGE = {
     "bootstrap-static": timedelta(hours=11),
@@ -35,8 +34,8 @@ MIN_REQUEST_GAP_S = 1.0
 
 INSERT_SQL = """
 insert into api_snapshots
-  (endpoint, resource_id, gameweek, captured_at, capture_reason, deadline_time, payload)
-values (%s, %s, %s, %s, %s, %s, %s::jsonb)
+  (endpoint, resource_id, gameweek, captured_at, capture_reason, deadline_time, payload, season)
+values (%s, %s, %s, %s, %s, %s, %s::jsonb, %s)
 """
 
 
@@ -57,6 +56,19 @@ def is_valid_shape(endpoint: str, data) -> bool:
         return isinstance(data, dict) and "picks" in data
     # team/set-piece-notes: shape unknown; valid JSON is enough for now.
     return True
+
+
+def season_of(events) -> str:
+    """Season label from the GW1 deadline year, e.g. '2026-27'. Raises ValueError.
+
+    Read from bootstrap, not the clock: over the summer bootstrap still describes the
+    old season until FPL resets it, and captures keep the old label until then.
+    """
+    gw1 = next((ev for ev in events if ev.get("id") == 1), None)
+    if gw1 is None or not gw1.get("deadline_time"):
+        raise ValueError("no GW1 deadline_time in bootstrap events")
+    year = datetime.fromisoformat(gw1["deadline_time"]).year
+    return f"{year}-{(year + 1) % 100:02d}"
 
 
 def main() -> int:
@@ -152,6 +164,13 @@ def main() -> int:
         print(f"bootstrap-static decision=fetch outcome=FAIL ({e}); cannot evaluate anything else")
         ping(False)
         return 1
+    try:
+        season = season_of(boot["events"])
+    except ValueError as e:
+        print(f"bootstrap-static decision=season outcome=FAIL ({e}); cannot evaluate anything else")
+        ping(False)
+        return 1
+    print(f"season={season}")
 
     deadlines = {
         ev["id"]: datetime.fromisoformat(ev["deadline_time"])
@@ -214,7 +233,8 @@ def main() -> int:
             with conn.cursor() as cur:
                 cur.execute(
                     "select distinct endpoint, gameweek from api_snapshots"
-                    " where capture_reason = 'post_gw'"
+                    " where capture_reason = 'post_gw' and season = %s",
+                    (season,),
                 )
                 have = set(cur.fetchall())
         except psycopg.Error as e:
@@ -256,7 +276,7 @@ def main() -> int:
         name = f"{captured_at:%Y%m%dT%H%M%SZ}_{reason}"
         if resource_id:
             name += f"_{resource_id}"
-        path = archive_dir / SEASON / endpoint.replace("/", "_") / f"{name}.json.gz"
+        path = archive_dir / season / endpoint.replace("/", "_") / f"{name}.json.gz"
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
             with open(path, "xb") as f:  # never overwrite an existing archive file
@@ -274,7 +294,7 @@ def main() -> int:
                 conn.execute(
                     INSERT_SQL,
                     (endpoint, resource_id, gameweek, captured_at, reason, deadline_time,
-                     body.decode("utf-8")),
+                     body.decode("utf-8"), season),
                 )
                 db_ok = True
                 db_result = "ok"
