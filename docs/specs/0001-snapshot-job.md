@@ -46,14 +46,16 @@ create table api_snapshots (
   capture_reason text        not null
                  check (capture_reason in ('routine','deadline','post_gw','manual','backfill')),
   deadline_time  timestamptz,           -- the deadline this capture was aimed at (deadline rows); else the next deadline at capture time
-  payload        jsonb       not null
+  payload        jsonb       not null,
+  season         text        not null   -- e.g. '2026-27'; see "Season". Added by migration 0002
 );
 
 create index on api_snapshots (endpoint, captured_at desc);
 create index on api_snapshots (gameweek) where capture_reason = 'deadline';
 ```
 
-Applied by hand in the Neon SQL editor. No migration runner.
+Applied by hand in the Neon SQL editor. No migration runner. `season` was added by
+`0002_api_snapshots_season.sql`; rows before it are all 2026/27.
 
 ## Run model
 
@@ -79,7 +81,7 @@ not double-store routine rows; a manual run is always safe.
 | `bootstrap-static` | otherwise, if latest row for this endpoint is > 11h old | `routine` |
 | `fixtures` | latest row > 23h old | `routine` |
 | `team/set-piece-notes` | latest row > 6 days old | `routine` |
-| `event/{gw}/live` | event `gw` has `finished` and `data_checked` true, and no row exists for this endpoint+gw | `post_gw` |
+| `event/{gw}/live` | event `gw` has `finished` and `data_checked` true, and no row exists for this endpoint+gw in the current season | `post_gw` |
 | `entry/{FPL_ENTRY_ID}/history` | same trigger as live, per gw | `post_gw` |
 | `entry/{FPL_ENTRY_ID}/event/{gw}/picks` | same trigger as live, per gw | `post_gw` |
 
@@ -87,6 +89,16 @@ not double-store routine rows; a manual run is always safe.
 - A deadline row also satisfies the routine check (it's a newer `bootstrap-static` row).
 - `post_gw` should backfill any settled GW with no row yet, not only the most recent — covers a missed weekend. Cap at 3 GWs per run to bound requests.
 - Env `FORCE=1` (locally) or `workflow_dispatch` input `force: true` (CI, passed through as `FORCE=1`) stores all of: bootstrap, fixtures, set-piece-notes, with `capture_reason = 'manual'`. Used for verification.
+
+### Season
+
+- `season` = `"{Y}-{Y+1 mod 100:02}"` where `Y` is the year of GW1's `deadline_time` in the
+  fetched `bootstrap-static` (2026 → `2026-27`). Read from the API, never from the clock.
+- Written on every row and used as the top-level archive directory.
+- Over the summer, captures keep the old season's label until FPL resets bootstrap.
+- The `post_gw` "no row exists" check is scoped to the current season: gameweek numbers
+  repeat every season, so an unscoped check would treat every new-season GW as captured.
+- No GW1 `deadline_time` in bootstrap → exit non-zero before deciding anything.
 
 ### `gameweek` and `deadline_time` per row
 
@@ -115,7 +127,7 @@ workflow with a deploy key scoped to that repo only.
 
 - Repo: `<owner>/freepl-archive`, private, default branch `main`. Created by hand (see Rollout).
 - The script writes under `$ARCHIVE_DIR` (default `./_archive`, gitignored in `FreePL`). In CI, `ARCHIVE_DIR` points at the checked-out archive repo.
-- Path within it: `2026-27/{endpoint_slug}/{captured_at:%Y%m%dT%H%M%SZ}_{capture_reason}[_{resource_id}].json.gz`
+- Path within it: `{season}/{endpoint_slug}/{captured_at:%Y%m%dT%H%M%SZ}_{capture_reason}[_{resource_id}].json.gz`
   - `endpoint_slug`: endpoint with `/` replaced by `_` (e.g. `event_7_live`).
 - Content: the exact response body bytes, gzipped. Not re-serialised.
 - The script only writes files. Committing and pushing is a workflow step after the script, run with `if: always()` so archive files are pushed even when the DB insert failed.
@@ -176,10 +188,6 @@ Each step must pass before the next.
 
 Not handled in this task. Revisit before the end of the 2026/27 season.
 
-- **Season rollover.** `SEASON` is hardcoded to `2026-27` and rows carry no season.
-  Element ids are per season and `bootstrap-static` resets in summer, so the job must be
-  revisited before the 2027/28 bootstrap goes live, or new-season payloads land under
-  the `2026-27/` archive path.
 - **Post-GW corrections.** `post_gw` rows are the payload at first settlement, stored
   once. Any correction FPL makes afterwards is not captured. Before the summer reset,
   re-capture every GW's `event/{gw}/live` and `entry/{FPL_ENTRY_ID}/history` once as
