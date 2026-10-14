@@ -24,6 +24,39 @@ The moment after which an Entry's squad, transfers and chip for a gameweek are l
 A gameweek that is both finished and data-checked, so its points (including bonus) are final.
 _Avoid_: Finished gameweek, completed gameweek
 
+**Upcoming gameweek**:
+The gameweek that owns the next deadline.
+_Avoid_: Current gameweek (the API's `is_current` is the gameweek whose deadline most recently passed), next gameweek
+
+**Squad**:
+The 15 players an Entry holds.
+_Avoid_: Team
+
+**Pending transfer**:
+A transfer made for the upcoming gameweek, not yet locked by its deadline.
+
+**Free transfer (FT)**:
+A transfer that costs no points. One is earned per gameweek and unused ones bank, up to five.
+
+**Hit**:
+The 4-point deduction for each transfer beyond the free transfers available.
+
+**Chip**:
+One of Wildcard, Free Hit, Bench Boost or Triple Captain, played for a single gameweek.
+
+**Chip set**:
+The four chips usable in one half of the season: set 1 covers GW1–19, set 2 covers GW20–38.
+
+**Blank gameweek**:
+A gameweek in which a Club has no fixture.
+
+**Double gameweek**:
+A gameweek in which a Club has two or more fixtures.
+
+**Unscheduled fixture**:
+A fixture not yet assigned to any gameweek.
+_Avoid_: Postponed fixture (a postponed fixture may already be rescheduled)
+
 ## Capture
 
 **Capture**:
