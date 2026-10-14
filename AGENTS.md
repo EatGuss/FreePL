@@ -15,6 +15,7 @@ Nothing else is being built yet. Do not scaffold `model/`, `api/` or `web/`.
 .github/workflows/snapshot.yml         hourly cron + manual dispatch
 scripts/snapshot.py                    single bare script, one main()
 db/migrations/0001_api_snapshots.sql   applied by hand in Neon SQL editor
+db/migrations/0002_api_snapshots_season.sql  adds api_snapshots.season; applied by hand
 requirements.txt                       httpx, psycopg[binary], python-dotenv — nothing else without asking
 docs/                                  human-facing docs; read on demand, not always
 .cursor/rules/data-integrity.mdc       always-on data rules (also imported by CLAUDE.md)
