@@ -12,7 +12,7 @@ Nothing else is being built yet. Do not scaffold `model/`, `api/` or `web/`.
 ## Repo layout (only what exists now)
 
 ```
-.github/workflows/snapshot.yml         hourly cron + manual dispatch
+.github/workflows/snapshot.yml         hourly via external workflow_dispatch; cron backstop
 scripts/snapshot.py                    single bare script, one main()
 db/migrations/0001_api_snapshots.sql   applied by hand in Neon SQL editor
 db/migrations/0002_api_snapshots_season.sql  adds api_snapshots.season; applied by hand

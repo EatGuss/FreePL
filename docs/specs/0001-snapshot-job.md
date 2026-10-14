@@ -152,7 +152,7 @@ The dangerous failure is a green run that stored nothing. Guards:
 
 ## Workflow
 
-- Triggers: `schedule: cron: '7 * * * *'` and `workflow_dispatch` (input `force`, boolean, default false).
+- Triggers: `workflow_dispatch` (input `force`, boolean, default false) and `schedule: cron: '7 * * * *'`.
 - `timeout-minutes: 10`.
 - `concurrency: { group: snapshot, cancel-in-progress: false }` — prevents two runs racing the archive push.
 - `permissions: contents: read` — the workflow never writes to `FreePL` itself.
@@ -161,6 +161,26 @@ The dangerous failure is a green run that stored nothing. Guards:
 - Secrets: `DATABASE_URL`, `FPL_ENTRY_ID`, `FPL_CONTACT`, `ARCHIVE_DEPLOY_KEY`, `HEALTHCHECK_URL` (optional).
 - Repository variable: `ARCHIVE_REPO` (e.g. `egus/freepl-archive`).
 - `ARCHIVE_DIR` and `FORCE` are set in the workflow, not secrets.
+
+### Hourly trigger
+
+GitHub's `schedule` is best-effort: on this repo it fired every 4–8h, not hourly, which
+misses most 3h deadline windows. So the hourly driver is external, and the cron is a
+backstop.
+
+- **Primary:** a cron-job.org job, every hour at minute 7 UTC, sends
+  `POST https://api.github.com/repos/EatGuss/FreePL/actions/workflows/snapshot.yml/dispatches`
+  with body `{"ref":"main"}` (no `force`, so the decision table applies). Headers:
+  `Authorization: Bearer <token>`, `Accept: application/vnd.github+json`,
+  `X-GitHub-Api-Version: 2022-11-28`, `Content-Type: application/json`. Success is `204`.
+  Failure emails on.
+- **Token:** fine-grained PAT `freepl-snapshot-dispatch`, repository `FreePL` only,
+  permission Actions: read and write, nothing else. Stored only in cron-job.org — not a
+  GitHub secret, never read by the workflow or script.
+- **Backstop:** the `schedule` cron stays. Overlapping runs are safe: the decision table
+  dedupes routine rows and `concurrency` serialises the archive push.
+- Don't remove `workflow_dispatch`: it is the production trigger, not only for manual runs.
+- The dead-man's switch covers this trigger failing (token expired, job disabled).
 
 ## Neon settings (manual, before go-live)
 
@@ -180,7 +200,8 @@ Each step must pass before the next.
    - In `FreePL` → Settings → Secrets and variables → Actions: secret `ARCHIVE_DEPLOY_KEY` = contents of `freepl_archive_deploy` (private key); variable `ARCHIVE_REPO` = `<owner>/freepl-archive`.
    - Delete both key files locally. Never commit them.
 4. Add the remaining secrets. Run the workflow via `workflow_dispatch` with `force: true`. Confirm rows in Neon **and** a new commit in `freepl-archive`.
-5. Add the cron. Confirm at least two scheduled runs land rows within 24h.
+5. Add the cron and the external hourly trigger (see "Hourly trigger"). Confirm a test
+   call returns `204` and starts a `workflow_dispatch` run, then ~24 green runs within 24h.
 6. Set up healthchecks.io; confirm a ping arrives.
 7. Confirm the first real deadline capture (query below) after the next deadline.
 
@@ -192,6 +213,9 @@ Not handled in this task. Revisit before the end of the 2026/27 season.
   once. Any correction FPL makes afterwards is not captured. Before the summer reset,
   re-capture every GW's `event/{gw}/live` and `entry/{FPL_ENTRY_ID}/history` once as
   `manual`; after the reset these payloads are not re-fetchable.
+- **Dispatch token expiry.** The `freepl-snapshot-dispatch` PAT expires (max 1 year).
+  When it does, runs fall back to the unreliable cron and healthchecks alerts. Renew it
+  and update the cron-job.org header before the expiry date.
 
 ## Acceptance criteria
 
