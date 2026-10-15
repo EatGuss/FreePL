@@ -18,6 +18,8 @@ over this file — verify against a live payload before hardcoding anything.
 - Prices change overnight (roughly once a day, early UK morning). `now_cost` is current only — past prices exist only in our snapshots.
 - **Sell price** = purchase price + floor((current price − purchase price) / 2), in tenths.
   - Buy 70, rises to 75 → sell 72. Buy 70, rises to 71 → sell 70. Buy 70, falls to 66 → sell 66 (losses are taken in full).
+  - So a price must rise £0.2m above purchase before the sell price rises £0.1m: buy 50 → at 51 sells 50, at 52 sells 51, at 53 sells 51. Buy 60, falls to 59 → sells 59 immediately.
+  - Purchase price = what you paid when the player joined your squad: the transfer-in cost, or the launch price for players in your original squad.
   - Never assume a player sells for `now_cost`. Purchase price per player must be tracked.
 
 ## Gameweeks and deadlines
@@ -29,22 +31,25 @@ over this file — verify against a live payload before hardcoding anything.
 
 ## Transfers
 
-- **1 free transfer per GW**; unused FTs bank, **up to a maximum of 5**.
+- Transfers made before the GW1 deadline are unlimited and free.
+- **1 free transfer per GW** from GW2 (GW2 starts with 1); unused FTs bank, **up to a maximum of 5**.
 - Each transfer beyond available FTs costs **−4 points** (a "hit").
 - Transfers made before a deadline apply to that GW.
 
 ## Chips (2026/27)
 
 - **Eight chips in two sets of four**: Wildcard, Free Hit, Bench Boost, Triple Captain — once per set.
-- **Set 1 expires at the GW19 deadline** (13:30 GMT, Sat 2 Jan 2027). No carry-over: unused set-1 chips are lost.
-- Set 2 is available from after the GW19 deadline to the end of the season.
+- **Set 1 covers GW1–GW19** and expires at the GW19 deadline (read it from `events[]`, never hardcode). No carry-over: unused set-1 chips are lost.
+- **Set 2 covers GW20–GW38.** A chip played in gameweek `event ≤ 19` is from set 1; `event ≥ 20` is from set 2.
 - **One chip per gameweek.** **No Free Hit in GW1.**
-- **Wildcard and Free Hit preserve banked free transfers** (playing them does not reset your FT count).
+- **Wildcard and Free Hit preserve banked free transfers, and the chip gameweek earns none.** The count carries over unchanged: 3 banked before a Wildcard or Free Hit GW → 3 available for the following GW (not 4, not 1).
 - Wildcard: unlimited free transfers, permanent. Free Hit: unlimited free transfers for one GW, squad reverts afterwards. Bench Boost: bench players score too. Triple Captain: captain scores ×3 instead of ×2.
 
 ## Captaincy and auto-subs
 
 - Captain scores ×2. If the captain plays 0 minutes, the vice-captain gets the multiplier.
+- Captain and vice-captain must both be in the starting XI.
+- The bench GK is always first on the bench and can only swap with the starting GK; the 3 outfield subs are ordered.
 - Auto-subs: after the GW, starters with 0 minutes are replaced by bench players **in bench order**, skipping any sub that would break formation rules. Bench GK only replaces the starting GK.
 
 ## Scoring

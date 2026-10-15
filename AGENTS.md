@@ -7,7 +7,22 @@ optimiser, logged before each deadline, with a public scorecard.
 ## Current phase
 
 **Task 0: the snapshot job.** Spec: `docs/specs/0001-snapshot-job.md`.
-Nothing else is being built yet. Do not scaffold `model/`, `api/` or `web/`.
+Task 0 is done when its rollout steps 5–7 pass (24 green hourly runs, healthchecks ping,
+first deadline capture verified). The two-week compression check doesn't block.
+
+Queued after it, in order — docs only until Task 0 is done:
+
+| Spec | What | Status |
+| --- | --- | --- |
+| `0002-player-stats-table.md` | Stats table + injury watch; stands up contract, `server/`, `web/`, Vercel | queued |
+| `0003-fixture-difficulty-ticker.md` | Club × gameweek difficulty grid | draft |
+| `0004-entry-view.md` | Current Squad, sell prices, FTs, chips, transfer what-if (ADR 0003) | draft |
+| `0005-pick-rating.md` | Best/Great/Good/OK band per player within position | draft |
+| `0006-shortlist-and-saved-plans.md` | Starred players and transfer plans, kept in the URL | draft |
+
+Until 0002 starts, do not scaffold `packages/`, `server/`, `api/` or `web/`. `model/` stays
+out until its own spec. When 0002 starts, update the layout, stack and environment sections
+below from spec 0002's "Files" and "Environment".
 
 ## Repo layout (only what exists now)
 
@@ -18,6 +33,7 @@ db/migrations/0001_api_snapshots.sql   applied by hand in Neon SQL editor
 db/migrations/0002_api_snapshots_season.sql  adds api_snapshots.season; applied by hand
 requirements.txt                       httpx, psycopg[binary], python-dotenv — nothing else without asking
 docs/                                  human-facing docs; read on demand, not always
+  specs/ decisions/ roadmap.md fpl-domain.md design.md design/mockup.html
 .cursor/rules/data-integrity.mdc       always-on data rules (also imported by CLAUDE.md)
 .env.example                           variable names, no values. Real values in .env (gitignored)
 ```
@@ -28,7 +44,7 @@ workflow via a deploy key. This repo is public — raw FPL payloads never go in 
 
 ## Stack
 
-- Python 3.12 for ingestion. TypeScript arrives later with the API/UI — not now.
+- Python 3.12 for ingestion. TypeScript (Node 22, pnpm, Hono, React) arrives with spec 0002 — not before.
 - Postgres on Neon free tier (0.5 GB storage, 100 CU-hours/month). Pooled connection string via `DATABASE_URL`.
 - GitHub Actions for scheduling. No Airflow, no ORMs, no migration runner yet.
 
