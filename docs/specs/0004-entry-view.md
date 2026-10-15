@@ -134,11 +134,18 @@ Tab **My squad**, top to bottom:
 2. **Planned transfers** box, when a plan exists: out (sell price) → in (buy price) per
    line, Undo per line, Clear plan, warnings.
 3. **Pitch / List toggle**, pitch by default.
-   - **Pitch:** GW n's XI by slot (GK, DEF, MID, FWD rows) on a pitch, bench below in GW n
-     order. Each card: rating colour strip, short name, band word, next gameweek's
-     fixture(s) (doubles stacked, blank marked), sell price; C/V badge from GW n; amber %
-     or OUT flag. A planned player takes the slot of the player they replace, marked NEW.
-     Tap a card to swap.
+   - **Pitch:** GW n's XI by slot (GK, DEF, MID, FWD rows) on a pitch drawn with a goal,
+     net, penalty box and six-yard box at the top so the goalkeeper's position reads at a
+     glance; bench below in GW n order. Each player is a small Club shirt (goalkeepers in
+     a distinct keeper kit) above a compact card (~66px wide): rating colour strip, short
+     name, band word, next gameweek's fixture(s) (doubles stacked, blank marked), sell
+     price; C/V badge and amber % or OUT flag on the shirt. A planned player takes the slot
+     of the player they replace, marked NEW. Tap a player to swap.
+   - **Shirt colours** come from a small hand-kept table in the contract: Club short name →
+     body and trim colour, for the 20 Clubs of the season. FPL's API has no Club colours,
+     and its shirt images are on FPL's servers, which the app never requests (spec 0002) —
+     nor are official kit images used. Re-check the table each summer for promoted Clubs;
+     a Club missing from it gets a neutral grey shirt, never an error.
    - **List:** grouped by position. Row colour by rating; player cell (name, flags, C/V or
      Bench tag; band word · Club · now price); sell price with "bought £x"; next 3
      fixtures; Swap button.
