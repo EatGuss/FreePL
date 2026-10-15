@@ -57,6 +57,10 @@ A gameweek in which a Club has two or more fixtures.
 A fixture not yet assigned to any gameweek.
 _Avoid_: Postponed fixture (a postponed fixture may already be rescheduled)
 
+**Pick rating**:
+A band (Best, Great, Good, OK) ranking a player against others in the same position on underlying stats, fixtures and nailedness. A browsing aid only: not a projection, and never an input to the Entry's logged decisions.
+_Avoid_: Score, projection, prediction
+
 ## Capture
 
 **Capture**:
