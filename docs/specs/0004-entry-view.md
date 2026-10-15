@@ -133,22 +133,23 @@ Tab **My squad**, one screen, top to bottom:
    and the move prompt while moving.
 2. **Planned transfers** box, when a plan exists: out (sell price) → in (buy price) per
    line, Undo per line, Clear plan, warnings (over budget, more than 3 from a Club, hits).
-3. **Dashboard strip**, attached to the top of the pitch as one compact band, not separate
-   cards: bank (now, or after the plan), free transfers (left, or the hit), selling value
+3. **Pitch / List toggle**, pitch by default — two separate views of the same 15.
+4. **Dashboard strip**, one compact band (attached to the top of the pitch in Pitch view,
+   standalone above the list in List view), not separate cards: bank (now, or after the plan), free transfers (left, or the hit), selling value
    (live), squad value (FPL, as of GW n); second line: chips of the current chip set, used
    ones struck through, with the set's expiry.
-4. **Pitch** — the planned XI by position (GK, DEF, MID, FWD rows) on a pitch drawn with a
-   goal, net, penalty box and six-yard box at the top so the goalkeeper's position reads at
-   a glance; bench below (GK, then 1st, 2nd, 3rd sub). Each player is a small Club shirt
+5. **Pitch view** — the planned XI by position (GK, DEF, MID, FWD rows) on a pitch drawn
+   with a goal, net, penalty box and six-yard box at the top so the goalkeeper's position
+   reads at a glance. The turf is drawn in perspective (tilted back, mown stripes) for a 3D
+   feel; player cards stay upright and flat so they remain legible and tappable; bench below (GK, then 1st, 2nd, 3rd sub). Each player is a small Club shirt
    (goalkeepers in a distinct keeper kit) above a compact card (~66px wide): rating colour
    strip, short name, band word, next gameweek's fixture(s) (doubles stacked, blank
    marked), sell price; C/V badge and amber % or OUT flag on the shirt. A planned player
    takes the slot of the player they replace, marked NEW.
-5. **List** below the pitch — the same 15 grouped by position: row colour by rating;
-   player cell (name, flags, C/V and Bench-order tags; band word · Club · now price); sell
-   price with "bought £x"; next 3 fixtures. No separate toggle: pitch and list are always
-   both shown.
-6. **Colour legend** and a one-line explanation of the sell-price rule.
+6. **List view** — the same 15 grouped by position: row colour by rating; player cell
+   (name, flags, C/V and Bench-order tags; band word · Club · now price); sell price with
+   "bought £x"; next 3 fixtures.
+7. **Colour legend** and a one-line explanation of the sell-price rule.
 
 **Shirt colours** come from a small hand-kept table in the contract: Club short name → body
 and trim colour, for the 20 Clubs of the season. FPL's API has no Club colours, and its
@@ -244,7 +245,7 @@ are local and commit nothing.
       spend week, a hit week and a chip week.
 - [ ] The what-if allows a negative bank and a 4th player from a Club, and warns on both;
       hits show at −4 each beyond free transfers.
-- [ ] Pitch and list show the same 15 players; a planned player takes the replaced
+- [ ] Pitch and List views show the same 15 players; a planned player takes the replaced
       player's slot.
 - [ ] Tapping a player opens the player sheet; Replace, not the tap, opens the transfer list.
 - [ ] Move only offers swaps that keep a legal formation; a benched captain or vice loses
