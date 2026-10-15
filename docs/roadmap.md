@@ -3,13 +3,17 @@
 Capabilities deliberately not built yet, with what they need, so they aren't rediscovered
 from scratch.
 
-## Selling-price reconstruction
+## Selling prices for the AI account
 
-Public data can rebuild every Squad player's purchase price without authentication:
-GW1 deadline prices come from the deadline capture of `bootstrap-static`, and
-`entry/{id}/transfers` carries `element_in_cost` for every change since. Selling price then
-follows the rule in `docs/fpl-domain.md`. Belongs with the AI account's `squad_state`
-table, which needs it for the solver. Until then no selling price is shown (spec 0004).
+Spec 0004 reconstructs purchase and selling prices for the Entry from the transfer log and
+launch prices (`now_cost − cost_change_start`). The AI account's `squad_state` table needs
+the same function for the solver; reuse it, don't rewrite it.
+
+## Server-side saved plans
+
+Spec 0006 keeps shortlists and plans in the URL and browser storage. Saving them on the
+server would make the API a second writer and need a FreePL login of its own — only worth
+it if FreePL ever becomes multi-user. FPL login stays out regardless.
 
 ## Flattening into typed tables
 

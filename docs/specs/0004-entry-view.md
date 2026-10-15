@@ -1,15 +1,16 @@
 # Spec 0004 — Entry view
 
 Status: draft · hardens once spec 0002 ships
-Depends on spec 0002 (contract, API, patterns), spec 0003 (`difficultyFor`) and ADR 0003
-(live entry reads). Called "My Team" in earlier drafts; the UI label is free, the code and
-docs say **Entry**.
+Depends on spec 0002 (contract, API, patterns), spec 0003 (`difficultyFor`, fixture cells),
+spec 0005 (row colours) and ADR 0003 (live entry reads). Called "My Team" in earlier
+drafts; the UI tab is "My squad", the code and docs say **Entry**.
 
 ## The constraint, first
 
 **The editable pre-deadline squad is not publicly available.** It lives behind
 `my-team/{id}`, which requires an authenticated session. The project is read-only and
-unauthenticated by settled decision, so that endpoint is out.
+unauthenticated by settled decision, so that endpoint is out — permanently, not "until
+auth is added".
 
 What is publicly reachable:
 
@@ -22,17 +23,16 @@ What is publicly reachable:
 | Bank, squad value, GW points, rank | `entry/{id}/history` | Yes |
 | Chips already used | `entry/{id}/history.chips` | Yes |
 | Transfers made, with in/out costs | `entry/{id}/transfers` | Yes |
-| Purchase and selling prices | `my-team/{id}` | **No** — see `docs/roadmap.md` |
+| Purchase and selling prices | `my-team/{id}` directly; **reconstructable** otherwise | Yes, see "Selling prices" |
 
-So the honest shape of this feature is: **the current Squad, with the latest started
-gameweek's XI and captain, plus the money and transfer state.** It is not a live team
-editor and cannot become one without authentication. The README should say so.
+So the shape of this feature is: **the current Squad with sell prices, the latest started
+gameweek's XI and captain, the money and transfer state, and a transfer what-if.** It is
+not a live team editor: nothing is ever sent to FPL.
 
 ## Goal
 
-A single page showing the current Squad with the stats-table columns attached, the
-financial state, and the transfer/chip state — so the pre-deadline question "what do I
-have and what can I afford" is answered on a phone without opening the FPL site.
+A single page that answers the pre-deadline questions "what do I have, what is it worth,
+and what can I afford" on a phone without opening the FPL site.
 
 ## Squad reconstruction
 
@@ -60,46 +60,102 @@ Edge cases, handled explicitly rather than discovered:
 - A transfer whose `event` is n or earlier is history, not pending. Filter on n+1 exactly.
 - Reconstruct one gameweek ahead only. Do not generalise to arbitrary N.
 
+## Selling prices
+
+The rule is in `docs/fpl-domain.md` ("Money"). The only per-player input is the
+**purchase price**:
+
+1. If the player arrived by transfer: the `element_in_cost` of the **latest** transfer that
+   brought them in. (Free Hit transfers excluded, per the reconstruction above.)
+2. Otherwise the player has been held since the original squad: the **launch price**,
+   `now_cost − cost_change_start` from the latest `bootstrap-static`.
+
+Then `sell = purchase + floor((now_cost − purchase) / 2)` if `now_cost > purchase`, else
+`now_cost`. Integer tenths throughout. One pure function, tested with the worked examples
+in `docs/fpl-domain.md`.
+
+**Verify before shipping** (rollout step 2):
+
+- `cost_change_start` is the change since launch, in tenths, and FPL prices do not move
+  before the GW1 deadline. Cross-check against `element-summary/{id}` GW1 `value` for a few
+  players held since GW1 (fetched locally; not stored).
+- All 15 computed sell prices match the FPL site's transfers page for the Entry.
+
+**All or nothing.** If any Squad player's purchase price cannot be determined, show no sell
+prices and no selling value — a figure that is right for some players and wrong for others
+is the quiet budget inflation that makes FPL backtests cheat.
+
 ## Derived financial state
 
 - **Bank** = `history.current[n].bank + Σ element_out_cost − Σ element_in_cost` over
-  pending transfers, all in tenths. **Verify at build time** that `element_out_cost` is
-  the amount received when selling (the selling price), not `now_cost`. If it is not, bank
-  is not shown.
-- **Squad value** = `history.current[n].value`, labelled "as of GW n". Not adjusted:
-  price changes since cannot be turned into selling value from public data.
-- **Selling prices are not shown anywhere.** Public data gives purchase cost at each
-  transfer but not the original Squad's purchase prices, so a sell-price figure would be
-  right for transferred-in players and wrong for everyone held since GW1. A wrong sell
-  price is the quiet budget inflation that makes FPL backtests cheat. Reconstruction is
-  noted in `docs/roadmap.md`.
+  pending transfers, all in tenths. Verify at build time that `element_out_cost` is the
+  selling price received; if it is not, bank is not shown.
+- **Selling value** = Σ sell prices of the 15 + bank: what could actually be spent. Live:
+  it updates with the what-if below.
+- **Squad value (FPL)** = `history.current[n].value`, labelled "as reported for GW n".
+  Verify at build time whether it equals selling value or Σ `now_cost` + bank, and label
+  it accordingly; never call either one bare "team value".
 - **Free transfers available**, per `docs/fpl-domain.md`, as a pure tested function over
   `history.current[]` and `history.chips`:
   - Transfers before the GW1 deadline are unlimited and free; GW2 starts with 1.
   - After a gameweek with a Wildcard or Free Hit: unchanged (banked FTs kept, none earned).
   - Otherwise: `min(5, max(ft − transfers_made, 0) + 1)`.
-  The same accounting the backtest simulator needs. Any extra FTs FPL grants mid-season
-  only show up through the acceptance check against the FPL site — if one appears, add the
-  rule to `fpl-domain.md`, don't patch the function.
+  Any extra FTs FPL grants mid-season only show up through the acceptance check against
+  the FPL site — if one appears, add the rule to `fpl-domain.md`, don't patch the function.
 - **Chips**: chip set 1 is GW1–19, set 2 is GW20–38; a used chip's set is decided by its
   `event`. The set 1 expiry shown is GW19's `deadlineTime` from `gameweeks`, never a
   hardcoded date.
 
+## Transfer what-if
+
+Tap **Swap** on a Squad player → a sheet listing same-position replacements ordered by pick
+rating, each showing **bank after** = bank + sell(out) − `now_cost`(in). Choosing one adds
+it to a **planned transfers** box; the Squad, bank, selling value and free transfers update
+live.
+
+- **Soft limits.** Bank may go negative and a Club may exceed 3: a plan is a draft. Both
+  show as explicit warnings ("Over budget by £0.4m", "More than 3 from KST — FPL won't
+  allow this"). Position is a hard limit (only same-position replacements are offered).
+- **Hits:** each planned transfer beyond free transfers available shows −4 points.
+- Incoming players are valued at `now_cost` (their sell price if sold straight back).
+  Prices can change overnight; the plan says so.
+- **Client-side only.** Never stored on the server, never sent to FPL. Lost on refresh in
+  this spec; saving plans is spec 0006.
+- The accounting (bank, hits, club counts) is one pure tested function — the backtest
+  simulator needs the same arithmetic.
+
 ## Layout
 
-Two sections on one page:
+Tab **My squad**, top to bottom:
 
-1. **Squad** — pitch layout by position, 11 plus 4 from gameweek n's picks, with that
-   gameweek's captain and vice marked and labelled "GW n", and auto-subs indicated.
-   Players brought in by pending transfers appear with no XI position, flagged as such.
-   Each player card carries price, form, `ep_next`, availability badge (shown whatever the
-   status — this is your own Squad) and next fixture via `difficultyFor`.
-2. **State** — bank, squad value (as of GW n), total points, overall rank, GW points and
-   rank, free transfers available, chips used and remaining per chip set with the set 1
-   expiry.
+1. **State cards** — bank (after pending transfers, or after the plan), free transfers
+   (with any hit), selling value (live), squad value (FPL, as of GW n), chips used and
+   remaining per chip set with the set 1 expiry.
+2. **Planned transfers** box, when a plan exists: out (sell price) → in (buy price) per
+   line, Undo per line, Clear plan, warnings.
+3. **Pitch / List toggle**, pitch by default.
+   - **Pitch:** GW n's XI by slot (GK, DEF, MID, FWD rows) on a pitch, bench below in GW n
+     order. Each card: rating colour strip, short name, band word, next gameweek's
+     fixture(s) (doubles stacked, blank marked), sell price; C/V badge from GW n; amber %
+     or OUT flag. A planned player takes the slot of the player they replace, marked NEW.
+     Tap a card to swap.
+   - **List:** grouped by position. Row colour by rating; player cell (name, flags, C/V or
+     Bench tag; band word · Club · now price); sell price with "bought £x"; next 3
+     fixtures; Swap button.
+4. **Colour legend** and a one-line explanation of the sell-price rule.
 
-A list/table toggle for the Squad is worth it on mobile; the pitch graphic is the thing
-most likely to be fiddly at 390px and least likely to matter.
+Row and card colours (spec 0005 bands, plus two Squad-only states):
+
+| State | Look |
+| --- | --- |
+| Best / Great / Good / OK | as spec 0005 |
+| Below OK — rated, outside the top 40% | muted red tint and stripe |
+| Not rated — under 270 minutes or `i`/`s`/`u`/`n` | no tint, dashed grey stripe, "Not rated · 180 min" / "· injured" |
+
+Not rated is never coloured as Below OK: a new signing or a returning player is not a bad
+pick. Availability badges show whatever the status — this is your own Squad.
+
+On the **Picks** tab (spec 0005), players in the Squad carry an "In squad" tag.
 
 ## API
 
@@ -109,10 +165,13 @@ Entry id from env (`FPL_ENTRY_ID`), one Entry. The route is `/entry/me` rather t
 `/entry/{id}` deliberately — an id parameter invites the caching and rate-limiting work
 that multi-user drags in.
 
+`squad[]` carries, per player: id, GW n slot (XI/bench order, C/V), purchase price and its
+source (`transfer` | `launch`), and whether it is a pending transfer in. Sell price is
+computed in the contract, not stored.
+
 Live reads per ADR 0003: `history`, `transfers`, `picks` fetched from FPL by the client in
 `server/` (User-Agent `FreePL-api/0.1`), 5 minute in-process cache, **never written to
-Postgres**. Player and Club detail joined from the snapshot views, so the columns match the
-stats table exactly.
+Postgres**. Player and Club detail joined from the snapshot views.
 
 `meta.sources` = `{ bootstrap: { capturedAt }, entry: { fetchedAt, stale } }`. The
 freshness line shows the oldest source.
@@ -125,9 +184,10 @@ Additional Vercel env: `FPL_ENTRY_ID`, `FPL_CONTACT`. Server-only, never `VITE_`
 
 ## Testing
 
-Synthetic fixtures only: a hand-written history/transfers/picks set covering a normal week,
-a hit, a Wildcard week, a Free Hit week (Squad reverts) and a bank-up to 5. Real-data
-checks are local and commit nothing.
+Synthetic fixtures only: a hand-written history/transfers/picks/bootstrap set covering a
+normal week, a hit, a Wildcard week, a Free Hit week (Squad reverts), a bank-up to 5, a
+player bought twice, and sell prices for a rise of +1, +2, +3 and a fall. Real-data checks
+are local and commit nothing.
 
 ## Acceptance criteria
 
@@ -135,33 +195,36 @@ checks are local and commit nothing.
       the cache TTL — including while gameweek n is still being played.
 - [ ] A Wildcard week (many transfers in one event) reconstructs to exactly 15 players.
 - [ ] The week after a Free Hit, the Squad is the pre-Free-Hit Squad.
+- [ ] All 15 sell prices match the FPL site's transfers page. If any purchase price is
+      unknown, no sell price or selling value is shown at all.
+- [ ] Sell-price function passes the `fpl-domain.md` worked examples (5.0→5.1 sells 5.0,
+      5.0→5.2 sells 5.1, 5.0→5.3 sells 5.1, 6.0→5.9 sells 5.9).
 - [ ] Free transfers available matches the FPL site's figure across a bank-up week, a
       spend week, a hit week and a chip week.
+- [ ] The what-if allows a negative bank and a 4th player from a Club, and warns on both;
+      hits show at −4 each beyond free transfers.
+- [ ] Pitch and List views show the same 15 players; a planned player takes the replaced
+      player's slot.
 - [ ] Chips remaining shows both chip sets and the set 1 expiry from GW19's deadline.
-- [ ] No selling price is displayed anywhere.
 - [ ] Nothing from `entry/*` is written to `api_snapshots` — verify by row count.
 - [ ] With the FPL API unreachable, the page renders the Squad from cache and labels it
       stale; with no cache, it degrades without rendering wrong numbers.
 - [ ] Before the GW1 deadline, the page shows an empty state.
-- [ ] Leak check passes (Rollout step 4).
+- [ ] Leak check passes (Rollout step 5).
 
 ## Rollout
 
 1. **Before building anything on live reads:** from a Vercel preview deployment, make one
    request to `entry/{FPL_ENTRY_ID}/history` and confirm FPL answers datacenter IPs with
    JSON, not a block page. If it doesn't, stop and revisit ADR 0003.
-2. Dump one real `transfers` and `history` response locally (not committed) and confirm
-   the `element_out_cost` meaning and Free Hit transfer listing.
+2. Locally (nothing committed): dump one real `transfers`, `history` and a few
+   `element-summary` responses. Confirm the `element_out_cost` meaning, Free Hit transfer
+   listing, `cost_change_start` semantics and the meaning of `history.value`.
 3. Build, with the synthetic tests above.
-4. **Leak check**, on the deployed build:
+4. Compare all 15 sell prices and the FT figure with the FPL site before enabling them.
+5. **Leak check**, on the deployed build:
    - grep the built web bundle for `FPL_CONTACT`'s value, `DATABASE_URL`'s value and any
      Neon hostname — none present;
    - force an upstream error and a DB error; the responses carry a generic message only;
    - row count of `api_snapshots` for `entry/%` endpoints is unchanged by page loads;
    - accept consciously that anyone with the URL sees this Entry's (already public) data.
-5. Check the FT figure against the FPL site after the next gameweek.
-
-## Open, to settle when this is built
-
-- Whether to show the next-fixture column here or rely on the ticker. Duplication across
-  views is cheap; duplication of the *difficulty logic* is not — reuse `difficultyFor`.

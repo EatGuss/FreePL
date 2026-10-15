@@ -18,6 +18,8 @@ over this file — verify against a live payload before hardcoding anything.
 - Prices change overnight (roughly once a day, early UK morning). `now_cost` is current only — past prices exist only in our snapshots.
 - **Sell price** = purchase price + floor((current price − purchase price) / 2), in tenths.
   - Buy 70, rises to 75 → sell 72. Buy 70, rises to 71 → sell 70. Buy 70, falls to 66 → sell 66 (losses are taken in full).
+  - So a price must rise £0.2m above purchase before the sell price rises £0.1m: buy 50 → at 51 sells 50, at 52 sells 51, at 53 sells 51. Buy 60, falls to 59 → sells 59 immediately.
+  - Purchase price = what you paid when the player joined your squad: the transfer-in cost, or the launch price for players in your original squad.
   - Never assume a player sells for `now_cost`. Purchase price per player must be tracked.
 
 ## Gameweeks and deadlines

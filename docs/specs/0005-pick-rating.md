@@ -141,6 +141,9 @@ Exact values live in the web theme tokens, light and dark.
   a rank) — with a bar and the input's weight, plus the overall rank ("3rd of 22 rated
   MIDs").
 - Unrated players (under 270 minutes) show "—", with the reason on tap.
+- Rated players outside the top 40% show **Below OK** in the Players tab and the Squad
+  (spec 0004), never in Picks. Not rated is never shown as Below OK.
+- On Picks, players already in the Entry's Squad carry an "In squad" tag (spec 0004 data).
 
 ## Testing
 

@@ -16,8 +16,9 @@ Queued after it, in order — docs only until Task 0 is done:
 | --- | --- | --- |
 | `0002-player-stats-table.md` | Stats table + injury watch; stands up contract, `server/`, `web/`, Vercel | queued |
 | `0003-fixture-difficulty-ticker.md` | Club × gameweek difficulty grid | draft |
-| `0004-entry-view.md` | Current Squad, bank, FTs, chips (live entry reads, ADR 0003) | draft |
+| `0004-entry-view.md` | Current Squad, sell prices, FTs, chips, transfer what-if (ADR 0003) | draft |
 | `0005-pick-rating.md` | Best/Great/Good/OK band per player within position | draft |
+| `0006-shortlist-and-saved-plans.md` | Starred players and transfer plans, kept in the URL | draft |
 
 Until 0002 starts, do not scaffold `packages/`, `server/`, `api/` or `web/`. `model/` stays
 out until its own spec. When 0002 starts, update the layout, stack and environment sections

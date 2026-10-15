@@ -61,6 +61,23 @@ _Avoid_: Postponed fixture (a postponed fixture may already be rescheduled)
 A band (Best, Great, Good, OK) ranking a player against others in the same position on underlying stats, fixtures and nailedness. A browsing aid only: not a projection, and never an input to the Entry's logged decisions.
 _Avoid_: Score, projection, prediction
 
+**Below OK**:
+A rated player outside the top 40% of their position. Shown for the Squad and in the full player table, never among picks.
+
+**Not rated**:
+A player with no pick rating: too few minutes to judge, or ruled out. Not the same as Below OK.
+
+**Purchase price**:
+What the Entry paid for a player when they joined the Squad.
+
+**Selling price**:
+What the Entry would get back for selling a player now: purchase price plus half of any rise (rounded down to £0.1m), or the current price if it has fallen.
+_Avoid_: Sell value, price (unqualified)
+
+**Selling value**:
+The Squad's selling prices plus the bank: what the Entry could actually spend.
+_Avoid_: Team value (used for different figures by different people)
+
 ## Capture
 
 **Capture**:

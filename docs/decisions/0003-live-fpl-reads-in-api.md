@@ -40,9 +40,11 @@ irrecoverable data and spends storage on the one free tier with a measured ceili
 
 - The Entry view reflects the squad as it stands, not as it stood on Saturday.
 - The `transfers` endpoint carries `element_in_cost` and `element_out_cost`. Combined with
-  the GW1 deadline snapshot, that reconstructs purchase prices for the whole season
-  without authentication — relevant later for sell-price accounting in the AI account's
-  state table. Not built in v1, but the inputs now exist and are worth not losing.
+  launch prices (`now_cost − cost_change_start` in `bootstrap-static`) for players held
+  since the original Squad, that reconstructs every purchase price without
+  authentication — including in 2026/27, whose GW1 deadline predates the snapshot job.
+  Spec 0004 uses it for selling prices; the AI account's state table will too.
+  *(Amended 2026-10-15: an earlier draft said this needed a GW1 deadline capture.)*
 - v1 has exactly one outbound dependency on FPL from the serving path. Keeping that
   boundary explicit is what stops "just fetch it live" from spreading to the stats table
   the first time a view feels slow.
