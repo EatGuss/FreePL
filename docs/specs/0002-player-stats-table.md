@@ -182,8 +182,9 @@ client concerns; keeping them there is what makes the table feel instant.
 
 ## Table
 
-**Designed fresh, not ported**, from a throwaway 390px mockup with synthetic data (never
-committed). Final tab order, left to right:
+**Designed fresh, not ported**, from a 390px mockup with synthetic data. Visual language
+(colours, type, components): `docs/design.md`; clickable reference:
+`docs/design/mockup.html`. Final tab order, left to right:
 
 | Tab | What | Ships in |
 | --- | --- | --- |

@@ -33,7 +33,7 @@ db/migrations/0001_api_snapshots.sql   applied by hand in Neon SQL editor
 db/migrations/0002_api_snapshots_season.sql  adds api_snapshots.season; applied by hand
 requirements.txt                       httpx, psycopg[binary], python-dotenv — nothing else without asking
 docs/                                  human-facing docs; read on demand, not always
-  specs/ decisions/ roadmap.md fpl-domain.md
+  specs/ decisions/ roadmap.md fpl-domain.md design.md design/mockup.html
 .cursor/rules/data-integrity.mdc       always-on data rules (also imported by CLAUDE.md)
 .env.example                           variable names, no values. Real values in .env (gitignored)
 ```

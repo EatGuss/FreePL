@@ -126,6 +126,9 @@ live.
 
 ## Layout
 
+Visual details (dashboard strip, view bar, pitch, shirt cards, sheets) are in
+`docs/design.md`; this section says what is on the screen and how it behaves.
+
 Tab **My squad** — the **landing tab** once this spec ships (spec 0002 "Table" has the
 order and the fallback if FPL blocks Vercel). Top to bottom:
 

@@ -95,6 +95,8 @@ work.
 
 ## Rendering
 
+Colours and component looks: `docs/design.md`.
+
 ### Picks tab
 
 Becomes the **landing tab** when this spec ships, until spec 0004's My squad takes over
