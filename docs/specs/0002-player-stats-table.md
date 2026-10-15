@@ -183,16 +183,19 @@ client concerns; keeping them there is what makes the table feel instant.
 ## Table
 
 **Designed fresh, not ported**, from a throwaway 390px mockup with synthetic data (never
-committed). The page has three tabs:
+committed). Final tab order, left to right:
 
 | Tab | What | Ships in |
 | --- | --- | --- |
-| **Picks** | One table per position of rated players, rows coloured by band, next 3 fixtures | spec 0005 — becomes the landing tab then |
-| **Players** | The full sortable table below — the landing tab until 0005 ships | this spec |
+| **My squad** | The Entry's Squad, pitch and list views, what-if | spec 0004 — the landing tab from then on |
+| **Picks** | One table per position of rated players, rows coloured by band, next 3 fixtures | spec 0005 |
+| **Players** | The full sortable table below | this spec |
 | **Injury watch** | Every flagged player, newest news first | this spec |
 
-This spec builds the tab bar with Players and Injury watch; the Picks tab is specified in
-spec 0005.
+**Landing tab** follows the build order: Players (this spec) → Picks (when spec 0005
+ships) → My squad (when spec 0004 ships). If spec 0004's rollout finds FPL blocks requests
+from Vercel, Picks stays the landing tab. This spec builds the tab bar with Players and
+Injury watch.
 
 **Players tab:**
 

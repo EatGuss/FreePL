@@ -126,8 +126,14 @@ live.
 
 ## Layout
 
-Tab **My squad**, one screen, top to bottom:
+Tab **My squad** — the **landing tab** once this spec ships (spec 0002 "Table" has the
+order and the fallback if FPL blocks Vercel). Top to bottom:
 
+0. **Needs attention** line — tappable chips for: each flagged Squad player (amber % for
+   doubtful, red for `i`/`s`/`u`/`n`), starters blanking in each of the next 3 gameweeks,
+   and "No captain set". Tapping a flagged player opens Picks focused on that position
+   with budget = bank + their selling price (spec 0005). Nothing flagged → "Nothing needs
+   attention".
 1. **Lineup note** — "Planned lineup 4-4-2 · starts from your GW n XI. A what-if only: set
    your real XI, bench and captain on the FPL site." Plus warnings: no captain, no vice,
    and the move prompt while moving.

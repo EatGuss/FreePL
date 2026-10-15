@@ -97,8 +97,12 @@ work.
 
 ### Picks tab
 
-Becomes the **landing tab** when this spec ships (spec 0002 builds Players and Injury watch
-first).
+Becomes the **landing tab** when this spec ships, until spec 0004's My squad takes over
+(order and fallback in spec 0002 "Table").
+
+**Focused view:** opened from My squad's attention line for a flagged player, Picks shows
+only that position with the budget set to bank + that player's selling price, under a bar
+"Replacements for {player}: {POS} within £x · Show all".
 
 - **One table per position**: Goalkeepers, Defenders, Midfielders, Forwards. Rows are rated
   players (OK or better) ordered by rating score. Best, Great and Good show by default;
@@ -156,7 +160,7 @@ in the fixture window, a `d` player).
 - [ ] Bands are computed within position; a goalkeeper is never compared with a forward.
 - [ ] Band sizes match the table above for each position.
 - [ ] Every rating's breakdown shows each input's rank within position and its weight.
-- [ ] Picks is the landing tab: four position tables, rows coloured by band with the band
+- [ ] Picks is the landing tab until My squad ships: four position tables, rows coloured by band with the band
       word visible, next 3 fixtures shown with doubles stacked and blanks marked.
 - [ ] A player with a double gameweek in the window gets both fixtures counted in the
       fixtures input; a blank counts zero.
