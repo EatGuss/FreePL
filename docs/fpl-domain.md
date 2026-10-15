@@ -48,6 +48,8 @@ over this file — verify against a live payload before hardcoding anything.
 ## Captaincy and auto-subs
 
 - Captain scores ×2. If the captain plays 0 minutes, the vice-captain gets the multiplier.
+- Captain and vice-captain must both be in the starting XI.
+- The bench GK is always first on the bench and can only swap with the starting GK; the 3 outfield subs are ordered.
 - Auto-subs: after the GW, starters with 0 minutes are replaced by bench players **in bench order**, skipping any sub that would break formation rules. Bench GK only replaces the starting GK.
 
 ## Scoring

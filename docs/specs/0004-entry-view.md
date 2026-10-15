@@ -126,30 +126,64 @@ live.
 
 ## Layout
 
-Tab **My squad**, top to bottom:
+Tab **My squad**, one screen, top to bottom:
 
-1. **State cards** — bank (after pending transfers, or after the plan), free transfers
-   (with any hit), selling value (live), squad value (FPL, as of GW n), chips used and
-   remaining per chip set with the set 1 expiry.
+1. **Lineup note** — "Planned lineup 4-4-2 · starts from your GW n XI. A what-if only: set
+   your real XI, bench and captain on the FPL site." Plus warnings: no captain, no vice,
+   and the move prompt while moving.
 2. **Planned transfers** box, when a plan exists: out (sell price) → in (buy price) per
-   line, Undo per line, Clear plan, warnings.
-3. **Pitch / List toggle**, pitch by default.
-   - **Pitch:** GW n's XI by slot (GK, DEF, MID, FWD rows) on a pitch drawn with a goal,
-     net, penalty box and six-yard box at the top so the goalkeeper's position reads at a
-     glance; bench below in GW n order. Each player is a small Club shirt (goalkeepers in
-     a distinct keeper kit) above a compact card (~66px wide): rating colour strip, short
-     name, band word, next gameweek's fixture(s) (doubles stacked, blank marked), sell
-     price; C/V badge and amber % or OUT flag on the shirt. A planned player takes the slot
-     of the player they replace, marked NEW. Tap a player to swap.
-   - **Shirt colours** come from a small hand-kept table in the contract: Club short name →
-     body and trim colour, for the 20 Clubs of the season. FPL's API has no Club colours,
-     and its shirt images are on FPL's servers, which the app never requests (spec 0002) —
-     nor are official kit images used. Re-check the table each summer for promoted Clubs;
-     a Club missing from it gets a neutral grey shirt, never an error.
-   - **List:** grouped by position. Row colour by rating; player cell (name, flags, C/V or
-     Bench tag; band word · Club · now price); sell price with "bought £x"; next 3
-     fixtures; Swap button.
-4. **Colour legend** and a one-line explanation of the sell-price rule.
+   line, Undo per line, Clear plan, warnings (over budget, more than 3 from a Club, hits).
+3. **Dashboard strip**, attached to the top of the pitch as one compact band, not separate
+   cards: bank (now, or after the plan), free transfers (left, or the hit), selling value
+   (live), squad value (FPL, as of GW n); second line: chips of the current chip set, used
+   ones struck through, with the set's expiry.
+4. **Pitch** — the planned XI by position (GK, DEF, MID, FWD rows) on a pitch drawn with a
+   goal, net, penalty box and six-yard box at the top so the goalkeeper's position reads at
+   a glance; bench below (GK, then 1st, 2nd, 3rd sub). Each player is a small Club shirt
+   (goalkeepers in a distinct keeper kit) above a compact card (~66px wide): rating colour
+   strip, short name, band word, next gameweek's fixture(s) (doubles stacked, blank
+   marked), sell price; C/V badge and amber % or OUT flag on the shirt. A planned player
+   takes the slot of the player they replace, marked NEW.
+5. **List** below the pitch — the same 15 grouped by position: row colour by rating;
+   player cell (name, flags, C/V and Bench-order tags; band word · Club · now price); sell
+   price with "bought £x"; next 3 fixtures. No separate toggle: pitch and list are always
+   both shown.
+6. **Colour legend** and a one-line explanation of the sell-price rule.
+
+**Shirt colours** come from a small hand-kept table in the contract: Club short name → body
+and trim colour, for the 20 Clubs of the season. FPL's API has no Club colours, and its
+shirt images are on FPL's servers, which the app never requests (spec 0002) — nor are
+official kit images used. Re-check the table each summer for promoted Clubs; a Club missing
+from it gets a neutral grey shirt, never an error.
+
+### Player sheet
+
+Tapping a player — on the pitch or a list row — opens a sheet, never the transfer list
+directly:
+
+- Club, position, band word, now price, sell price (or buy price if planned), injury news.
+- Eight brief stats: xP next, form, points, minutes, then by position — GK: clean sheets,
+  xGC/90, saves/90, bonus; DEF: clean sheets, xGC/90, xG/90, xA/90; MID/FWD: goals,
+  assists, xG/90, xA/90.
+- Next 3 fixtures.
+- **Captain** and **Vice-captain** tick boxes, FPL-style. Ticking Captain on the current
+  vice swaps the two. Disabled for bench players, with the reason.
+- **Move** — highlights every player this one can legally swap with and dims the rest; tap
+  one to swap, or Cancel. **Replace** — opens the same-position replacement list (transfer
+  what-if above). **Why this rating?** — the spec 0005 breakdown.
+
+### Planned lineup rules
+
+From `docs/fpl-domain.md`; one pure tested function, shared with the backtest simulator:
+
+- Starts from GW n's XI, bench order, captain and vice (the upcoming ones are not public).
+- A swap is legal only if the XI stays at 1 GK, 3–5 DEF, 2–5 MID, 1–3 FWD. Two bench
+  outfield players can swap to reorder the subs. The bench GK only swaps with the starting
+  GK. Two starters never swap (it would change nothing).
+- Captain and vice-captain must both be starters. Moving either to the bench clears it and
+  shows the warning.
+- A planned transfer in keeps the slot, role and armband of the player it replaces.
+- Client-side only, like the transfer what-if; saved with the plan in spec 0006.
 
 Row and card colours (spec 0005 bands, plus two Squad-only states):
 
@@ -210,8 +244,11 @@ are local and commit nothing.
       spend week, a hit week and a chip week.
 - [ ] The what-if allows a negative bank and a 4th player from a Club, and warns on both;
       hits show at −4 each beyond free transfers.
-- [ ] Pitch and List views show the same 15 players; a planned player takes the replaced
+- [ ] Pitch and list show the same 15 players; a planned player takes the replaced
       player's slot.
+- [ ] Tapping a player opens the player sheet; Replace, not the tap, opens the transfer list.
+- [ ] Move only offers swaps that keep a legal formation; a benched captain or vice loses
+      the armband and the warning shows; captain and vice can't be ticked on the bench.
 - [ ] Chips remaining shows both chip sets and the set 1 expiry from GW19's deadline.
 - [ ] Nothing from `entry/*` is written to `api_snapshots` — verify by row count.
 - [ ] With the FPL API unreachable, the page renders the Squad from cache and labels it

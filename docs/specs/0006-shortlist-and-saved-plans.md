@@ -10,7 +10,8 @@ and no server-side writes**:
 
 1. **Shortlist** — players you've starred, grouped by position with rating, price and next
    3 fixtures, plus "affordable if I sell X".
-2. **Saved plans** — the spec 0004 transfer what-if, kept instead of lost on refresh.
+2. **Saved plans** — the spec 0004 transfer what-if **and planned lineup** (XI, bench order,
+   captain, vice), kept instead of lost on refresh.
 
 ## Out of scope
 
@@ -24,7 +25,8 @@ and no server-side writes**:
 ## Storage
 
 - **The URL is the source of truth**: `?sl=12,345,…` for the shortlist (element ids) and
-  `?plan=out:in,out:in` for a plan. Copying the link moves it to another device.
+  `?plan=out:in,out:in&xi=…&bench=…&c=…&v=…` for a plan (transfers plus lineup, by element
+  id). Copying the link moves it to another device.
 - **Browser storage mirrors it** so the app reopens where you left it. Every read and write
   is wrapped in try/catch; with storage unavailable, the URL alone still works.
 - Element ids are per season. A shortlist or plan from another season (ids unknown to the
@@ -43,7 +45,9 @@ and no server-side writes**:
 
 ## Saved plans
 
-- The planned-transfers box gains **Save** (writes the URL) and the URL restores it.
+- The planned-transfers box gains **Save** (writes the URL) and the URL restores transfers
+  and lineup together. A restored lineup that breaks the formation rules (e.g. after a
+  real transfer) falls back to GW n's lineup with a notice.
 - One plan at a time in v1.
 
 ## Acceptance criteria
