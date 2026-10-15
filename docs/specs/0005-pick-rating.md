@@ -86,15 +86,60 @@ If not, DefCon falls back to the season per-90 average and this view is not buil
 Weights: **to be set** with the mockup. Constraints already agreed: G+A/90 low; price
 absent; no weight fitted to data.
 
-Fixtures input: proposed as the sum of ease (`6 − difficulty`) over all fixtures in the
-next 3 gameweeks, so a blank contributes nothing and a double contributes twice — a blank
-really is zero points. Settle with the weights.
+**Fixtures input (settled):** the sum of ease (`6 − difficulty`) over every fixture in the
+next 3 gameweeks. A blank contributes nothing and a double contributes twice: two games
+are two chances to score, and a blank really is zero points. Example: two difficulty-3
+games (6) beat one difficulty-1 game (5). Per-90 inputs and nailedness are unaffected by
+the schedule. Rotation risk within a double gameweek is not modelled — that is projection
+work.
 
 ## Rendering
 
-- One sortable column. Each band shows **a colour and its word** — never colour alone.
-- Tapping a rating shows how it was reached: each input's percentile and weight, e.g.
-  "xG/90 92nd · xA/90 88th · fixtures 40th · nailed 100th".
+### Picks tab
+
+Becomes the **landing tab** when this spec ships (spec 0002 builds Players and Injury watch
+first).
+
+- **One table per position**: Goalkeepers, Defenders, Midfielders, Forwards. Rows are rated
+  players (OK or better) ordered by rating score. Best, Great and Good show by default;
+  "Show N OK" expands the rest.
+- **A budget slider** above the tables filters all four by max price.
+- **No rating or `ep_next` column.** The band colours the whole row; the band word sits on
+  the player's second line ("Great · KST · £6.5m") so the band never relies on colour
+  alone.
+- **Columns, in order:** player cell (name, availability badge; band · club · price), the
+  next 3 gameweeks' fixtures, then that position's remaining rating inputs as raw values
+  (e.g. xGC/90 and saves/90 for goalkeepers). The fixtures replace a numeric fixtures
+  column.
+- **Fixture cells** follow spec 0003's cell model: opponent short name plus H/A, coloured
+  by `difficultyFor` on a green (easy) → red (hard) scale. A double shows both opponents
+  stacked; a blank shows an explicit "Blank".
+- Doubtful players keep their amber % badge. `i`/`s`/`u`/`n` players are never rated, so
+  never appear.
+- Tapping a row opens the breakdown.
+
+### Band colours
+
+Row tint plus a left stripe, all at the same saturation and lightness so the ladder reads
+evenly. The fixture scale (green → red) and the band scale are deliberately different hues,
+so a hard fixture never reads as a bad pick.
+
+| Band | Row |
+| --- | --- |
+| Best | muted steel blue tint and stripe |
+| Great | teal tint and stripe |
+| Good | lighter teal tint and stripe |
+| OK | no tint, grey stripe |
+
+Exact values live in the web theme tokens, light and dark.
+
+### Players tab and breakdown
+
+- In the Players tab the rating is one sortable column, shown as a band chip with its word.
+- Tapping a rating (Players) or a row (Picks) shows how it was reached: for each input, the
+  player's **rank among rated players in that position** — "1st", "2nd", "3rd"… (ties share
+  a rank) — with a bar and the input's weight, plus the overall rank ("3rd of 22 rated
+  MIDs").
 - Unrated players (under 270 minutes) show "—", with the reason on tap.
 
 ## Testing
@@ -107,7 +152,11 @@ in the fixture window, a `d` player).
 
 - [ ] Bands are computed within position; a goalkeeper is never compared with a forward.
 - [ ] Band sizes match the table above for each position.
-- [ ] Every rating's breakdown shows each input's percentile and weight.
+- [ ] Every rating's breakdown shows each input's rank within position and its weight.
+- [ ] Picks is the landing tab: four position tables, rows coloured by band with the band
+      word visible, next 3 fixtures shown with doubles stacked and blanks marked.
+- [ ] A player with a double gameweek in the window gets both fixtures counted in the
+      fixtures input; a blank counts zero.
 - [ ] Players under 270 minutes or flagged `i`/`s`/`u`/`n` have no band.
 - [ ] No code outside `pickRatingFor` computes or reads band thresholds.
 - [ ] Nothing in the decision log, model or backtest imports `pickRatingFor`.

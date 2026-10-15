@@ -182,16 +182,29 @@ client concerns; keeping them there is what makes the table feel instant.
 
 ## Table
 
-**Designed fresh, not ported.** The layout comes out of a throwaway 390px mockup with
-synthetic data (never committed); this section is rewritten from it before building. Fixed
-inputs to that design:
+**Designed fresh, not ported**, from a throwaway 390px mockup with synthetic data (never
+committed). The page has three tabs:
+
+| Tab | What | Ships in |
+| --- | --- | --- |
+| **Picks** | One table per position of rated players, rows coloured by band, next 3 fixtures | spec 0005 — becomes the landing tab then |
+| **Players** | The full sortable table below — the landing tab until 0005 ships | this spec |
+| **Injury watch** | Every flagged player, newest news first | this spec |
+
+This spec builds the tab bar with Players and Injury watch; the Picks tab is specified in
+spec 0005.
+
+**Players tab:**
 
 - **Landing view:** position and max price are the most prominent controls; default sort
   `ep_next` descending. Ownership and transfer counts are available but not in the default
   view — popularity is not the question.
 - **All stats stay visible.** The pick rating (spec 0005) will be one sortable column among
   them, never a replacement. Leave room for it.
-- **Fixed columns**, pinned left: player name, club short name, position, price.
+- **One pinned cell**, not four pinned columns (four would fill a 390px screen): player
+  name and availability badge on the first line, "club · position · price" on the second.
+  After it, in order: pick rating (once spec 0005 ships), `ep_next` (labelled "xP next"),
+  price, then the chosen column group, which scrolls sideways.
 - **Filters:** position, club (multi), price range, minimum minutes, text search on name,
   "show unavailable". Filter state lives in the URL query string.
 - **Availability** badge per the contract table, with `news` on tap.
@@ -203,11 +216,11 @@ inputs to that design:
   the density is the product.
 - Price renders from integer tenths without float division: `75` → `£7.5m`.
 
-Starting proposal for column groups (the mockup may replace it): Overview (total points,
-form, PPG, minutes, starts), Attack (goals, assists, xG, xA, xGI, threat, creativity),
-Defence (clean sheets, goals conceded, xGC, saves, cards, defensive contributions),
-Expected (`ep_this`, `ep_next`, ICT, influence), Value (value form, value season, selected
-by %, transfers in/out).
+Column groups, picked with chips above the table: Overview (total points, form, PPG,
+minutes, starts), Attack (goals, assists, xG, xA, xG/90, xA/90), Defence (clean sheets,
+goals conceded, xGC/90, saves, defensive contributions/90), Expected (`ep_next`, `ep_this`,
+form, fixture ease once spec 0003 ships), Value (selected by %, transfers in/out, bonus).
+Tapping a column header sorts it; tapping again reverses.
 
 ## Testing
 
