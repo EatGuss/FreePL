@@ -94,6 +94,9 @@ in `docs/fpl-domain.md`.
   are equal. Settle it on the first sale of a player who had risen ≥ £0.2m above purchase;
   until then the bank shown after pending transfers is labelled "as FPL reports".
 - All 15 computed sell prices match the FPL site's transfers page for the Entry.
+  *Spot-checked 2026-10-16, both purchase-price sources:* a player bought by transfer at
+  155 (`element_in_cost`), now 156 → formula 155, site 155; a player held since the
+  original Squad, launch 55, now 59 → formula 57, site 57.
 
 **All or nothing.** If any Squad player's purchase price cannot be determined, show no sell
 prices and no selling value — a figure that is right for some players and wrong for others

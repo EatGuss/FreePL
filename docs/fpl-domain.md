@@ -20,6 +20,7 @@ over this file — verify against a live payload before hardcoding anything.
   - Buy 70, rises to 75 → sell 72. Buy 70, rises to 71 → sell 70. Buy 70, falls to 66 → sell 66 (losses are taken in full).
   - So a price must rise £0.2m above purchase before the sell price rises £0.1m: buy 50 → at 51 sells 50, at 52 sells 51, at 53 sells 51. Buy 60, falls to 59 → sells 59 immediately.
   - Purchase price = what you paid when the player joined your squad: the transfer-in cost, or the launch price for players in your original squad.
+  - Confirmed against the FPL site (2026/27): bought 155, now 156 → sells 155; bought 55, now 59 → sells 57.
   - Never assume a player sells for `now_cost`. Purchase price per player must be tracked.
 
 ## Gameweeks and deadlines
