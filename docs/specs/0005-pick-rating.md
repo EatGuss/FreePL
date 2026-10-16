@@ -53,7 +53,11 @@ Notes on choices made in review:
   the input is the **DefCon hit rate** (share of appearances reaching it) once per-gameweek
   data is available, falling back to the per-90 average.
 
-Field names are unconfirmed until spec 0002's live-payload diff.
+Field names are verified (spec 0002, "Database"). `defensive_contribution` **is** the DefCon action count
+(confirmed on a defender: CBIT = `clearances_blocks_interceptions` + `tackles`), so use it
+and `defensive_contribution_per_90` directly. Confirmed on a midfielder as CBIRT (adds
+`recoveries`). `penalties_order` is available too:
+show a penalty-taker badge beside xG rather than trying to derive npxG.
 
 ## Per-gameweek data
 

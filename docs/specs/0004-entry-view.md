@@ -54,9 +54,18 @@ Edge cases, handled explicitly rather than discovered:
 - **Before the GW1 deadline** there is no `picks` to build from. Empty state, not an error.
 - **Wildcard or Free Hit** in the upcoming gameweek produces many pending transfers; the
   arithmetic is unchanged but the count is not 1 or 2.
+  *Verified (2026-10-16, real Entry):* `entry/{id}/transfers` lists every Wildcard transfer
+  individually — one gameweek showed 15 rows in two batches (12, then 3) minutes apart, including a
+  player bought in the first batch and sold in the second. The reconstruction must apply
+  them in `time` order, and the free-transfer function must not count a chip gameweek's
+  transfers. The endpoint's fields are exactly `element_in`, `element_in_cost`,
+  `element_out`, `element_out_cost`, `entry`, `event`, `time`.
 - **Free Hit in gameweek n**: `picks(n)` is the temporary Squad and the real one is
-  `picks(n−1)`. Transfers with `event = n` are ignored. To verify against live data at
-  build time: whether `entry/{id}/transfers` lists Free Hit transfers at all.
+  `picks(n−1)`. Transfers with `event = n` are ignored. Reported by third-party API
+  references: Free Hit transfers **do not appear** in `entry/{id}/transfers`, and the chip
+  shows as `active_chip: "freehit"` in picks and `name: "freehit"` in `history.chips` — so
+  the transfer log only ever holds permanent transactions and ignoring `event = n` is a
+  harmless safeguard. Confirm on the first real Free Hit.
 - A transfer whose `event` is n or earlier is history, not pending. Filter on n+1 exactly.
 - Reconstruct one gameweek ahead only. Do not generalise to arbitrary N.
 
@@ -78,8 +87,20 @@ in `docs/fpl-domain.md`.
 
 - `cost_change_start` is the change since launch, in tenths, and FPL prices do not move
   before the GW1 deadline. Cross-check against `element-summary/{id}` GW1 `value` for a few
-  players held since GW1 (fetched locally; not stored).
+  players held since GW1 (fetched locally; not stored). *Seen 2026-10-16:*
+  `element-summary/{id}.history[].value` is the price at each fixture (one example: 60 at
+  GW1 = launch, then 60, 59, 58, 58, 57), and `history_past[]` carries `start_cost` /
+  `end_cost` per past season. A fixture's `value` is the price at kickoff, not at the
+  moment of a transfer made days earlier — don't use it to date a sale price.
+- **`element_out_cost` is the selling price received** — reported by third-party API
+  references, and consistent with every sale checked (all at or below purchase, where
+  selling and market price coincide). Not yet observed on a riser: confirm on the first
+  sale of a player up ≥ £0.2m. Our own sell-price function is already verified against
+  the FPL site, so nothing depends on this field alone.
 - All 15 computed sell prices match the FPL site's transfers page for the Entry.
+  *Spot-checked 2026-10-16, both purchase-price sources:* a player bought by transfer at
+  155 (`element_in_cost`), now 156 → formula 155, site 155; a player held since the
+  original Squad, launch 55, now 59 → formula 57, site 57.
 
 **All or nothing.** If any Squad player's purchase price cannot be determined, show no sell
 prices and no selling value — a figure that is right for some players and wrong for others
@@ -93,13 +114,24 @@ is the quiet budget inflation that makes FPL backtests cheat.
 - **Selling value** = Σ sell prices of the 15 + bank: what could actually be spent. Live:
   it updates with the what-if below.
 - **Squad value (FPL)** = `history.current[n].value`, labelled "as reported for GW n".
-  Verify at build time whether it equals selling value or Σ `now_cost` + bank, and label
-  it accordingly; never call either one bare "team value".
+  Observed: `value` 1000 at GW1 with `bank` 0, rising with price changes to 1014 by GW6
+  (bank 6). **Verified 2026-10-16: it is exactly the figure the FPL site labels "Squad
+  value" (£101.4m), with the bank shown separately beside it.** So display it as FPL's own
+  number under that label. Its make-up (market vs selling prices, bank in or out) is not
+  needed and not assumed: never compute with it — budgets use our own selling value.
+  Never call it bare "team value".
 - **Free transfers available**, per `docs/fpl-domain.md`, as a pure tested function over
   `history.current[]` and `history.chips`:
   - Transfers before the GW1 deadline are unlimited and free; GW2 starts with 1.
   - After a gameweek with a Wildcard or Free Hit: unchanged (banked FTs kept, none earned).
   - Otherwise: `min(5, max(ft − transfers_made, 0) + 1)`.
+  *Verified on a real Entry (2026-10-16):* `history.current[].event_transfers` is **0 in a
+  Wildcard gameweek** even with 15 transfers listed, so it already excludes chip transfers;
+  `event_transfers_cost` is the hit in points. `history.chips[].name` values seen:
+  `bboost`, `wildcard`, `3xc` (Free Hit presumably `freehit` — confirm when one appears).
+  Worked through that Entry (BB GW1, 0 transfers GW2, WC GW3, 2 transfers GW4, 0 in GW5–6)
+  the rules give 1 → 2 → 2 → 1 → 2 → 3 free transfers for GW2…GW7 — **and the FPL site
+  showed 3 for GW7**, confirming the `fpl-domain.md` free-transfer rules end to end.
   Any extra FTs FPL grants mid-season only show up through the acceptance check against
   the FPL site — if one appears, add the rule to `fpl-domain.md`, don't patch the function.
 - **Chips**: chip set 1 is GW1–19, set 2 is GW20–38; a used chip's set is decided by its
@@ -270,7 +302,12 @@ are local and commit nothing.
 
 1. **Before building anything on live reads:** from a Vercel preview deployment, make one
    request to `entry/{FPL_ENTRY_ID}/history` and confirm FPL answers datacenter IPs with
-   JSON, not a block page. If it doesn't, stop and revisit ADR 0003.
+   JSON, not a block page. If it doesn't, stop and revisit ADR 0003. Context: the two
+   known constraints are CORS and User-Agent filtering. CORS does not apply — every FPL call
+   is server-side in `server/`, never from the browser. User-Agent: send the descriptive
+   `FreePL-api/0.1 (+contact: …)` header; the snapshot job already uses the same style of
+   header from GitHub Actions' datacenter IPs and has run green hourly, which is good
+   evidence but not proof for Vercel's IP ranges.
 2. Locally (nothing committed): dump one real `transfers`, `history` and a few
    `element-summary` responses. Confirm the `element_out_cost` meaning, Free Hit transfer
    listing, `cost_change_start` semantics and the meaning of `history.value`.

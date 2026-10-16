@@ -20,6 +20,7 @@ over this file — verify against a live payload before hardcoding anything.
   - Buy 70, rises to 75 → sell 72. Buy 70, rises to 71 → sell 70. Buy 70, falls to 66 → sell 66 (losses are taken in full).
   - So a price must rise £0.2m above purchase before the sell price rises £0.1m: buy 50 → at 51 sells 50, at 52 sells 51, at 53 sells 51. Buy 60, falls to 59 → sells 59 immediately.
   - Purchase price = what you paid when the player joined your squad: the transfer-in cost, or the launch price for players in your original squad.
+  - Confirmed against the FPL site (2026/27): bought 155, now 156 → sells 155; bought 55, now 59 → sells 57.
   - Never assume a player sells for `now_cost`. Purchase price per player must be tracked.
 
 ## Gameweeks and deadlines
@@ -60,7 +61,7 @@ over this file — verify against a live payload before hardcoding anything.
   - Clean sheets require 60+ minutes; worth different amounts by position.
   - Goals conceded: −1 per **two** conceded (GK/DEF). Saves: +1 per **three** (GK). These are floor functions.
   - **Bonus**: top 3 by BPS in each match get 3/2/1; ties share. Provisional until `data_checked`.
-  - **Defensive contributions (DefCon)**, since 2025/26: points for reaching a threshold of defensive actions — 10 for defenders, 12 for midfielders and forwards.
+  - **Defensive contributions (DefCon)**, since 2025/26: points for reaching a threshold of defensive actions — 10 for defenders, 12 for midfielders and forwards. Outfield players only: goalkeepers never earn DefCon.
 - `event/{gw}/live` includes an `explain` breakdown per player showing exactly how points were awarded. Use it as ground truth for tests.
 
 ## Player status (`elements[].status`)
