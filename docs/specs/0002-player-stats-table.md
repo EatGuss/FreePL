@@ -123,8 +123,9 @@ Rules, all from ADR 0002:
 - Defensive counts, integers: `clearances_blocks_interceptions`, `tackles`, `recoveries`,
   `defensive_contribution` (labelled "Defensive Contribution" in `element_stats`). A
   goalkeeper shows 0 despite 79 such actions — expected, since DefCon is outfield-only.
-  Whether it holds the action count (CBIT for DEF, CBIRT for MID/FWD) or DefCon points is
-  still to confirm on a defender; until then, derive CBIT/CBIRT from the three components.
+  **Confirmed on a defender: it is the action count** — `clearances_blocks_interceptions` +
+  `tackles` (25 + 8 = 33; recoveries not included). For midfielders and forwards it should
+  add `recoveries` (CBIRT); spot-check one midfielder when building.
 - `cost_change_start` (tenths since launch; launch price = `now_cost − cost_change_start`),
   `cost_change_event`, and `_fall` mirrors of both.
 - Set pieces: `penalties_order`, `corners_and_indirect_freekicks_order`,

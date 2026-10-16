@@ -53,9 +53,10 @@ Notes on choices made in review:
   the input is the **DefCon hit rate** (share of appearances reaching it) once per-gameweek
   data is available, falling back to the per-90 average.
 
-Field names are verified (spec 0002, "Database"). **CBIT = `clearances_blocks_interceptions`
-+ `tackles`; CBIRT = CBIT + `recoveries`**, summed from the components until
-`defensive_contribution`'s meaning is confirmed on an outfield player (spec 0002). `penalties_order` is available too:
+Field names are verified (spec 0002, "Database"). `defensive_contribution` **is** the DefCon action count
+(confirmed on a defender: CBIT = `clearances_blocks_interceptions` + `tackles`), so use it
+and `defensive_contribution_per_90` directly. For midfielders it should equal CBIRT (adds
+`recoveries`) — spot-check one when building; if it doesn't, sum the components instead. `penalties_order` is available too:
 show a penalty-taker badge beside xG rather than trying to derive npxG.
 
 ## Per-gameweek data
