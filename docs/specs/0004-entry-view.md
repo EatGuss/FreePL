@@ -114,7 +114,8 @@ is the quiet budget inflation that makes FPL backtests cheat.
   `event_transfers_cost` is the hit in points. `history.chips[].name` values seen:
   `bboost`, `wildcard`, `3xc` (Free Hit presumably `freehit` — confirm when one appears).
   Worked through that Entry (BB GW1, 0 transfers GW2, WC GW3, 2 transfers GW4, 0 in GW5–6)
-  the rules give 1 → 2 → 2 → 1 → 2 → 3 free transfers for GW2…GW7.
+  the rules give 1 → 2 → 2 → 1 → 2 → 3 free transfers for GW2…GW7 — **and the FPL site
+  showed 3 for GW7**, confirming the `fpl-domain.md` free-transfer rules end to end.
   Any extra FTs FPL grants mid-season only show up through the acceptance check against
   the FPL site — if one appears, add the rule to `fpl-domain.md`, don't patch the function.
 - **Chips**: chip set 1 is GW1–19, set 2 is GW20–38; a used chip's set is decided by its
