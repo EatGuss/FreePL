@@ -99,6 +99,9 @@ is the quiet budget inflation that makes FPL backtests cheat.
 - **Selling value** = Σ sell prices of the 15 + bank: what could actually be spent. Live:
   it updates with the what-if below.
 - **Squad value (FPL)** = `history.current[n].value`, labelled "as reported for GW n".
+  Observed: `value` 1000 at GW1 with `bank` 0, rising with price changes to 1014 by GW6
+  (bank 6) — still to settle whether it includes the bank and whether it is market or
+  selling value.
   Verify at build time whether it equals selling value or Σ `now_cost` + bank, and label
   it accordingly; never call either one bare "team value".
 - **Free transfers available**, per `docs/fpl-domain.md`, as a pure tested function over
@@ -106,6 +109,12 @@ is the quiet budget inflation that makes FPL backtests cheat.
   - Transfers before the GW1 deadline are unlimited and free; GW2 starts with 1.
   - After a gameweek with a Wildcard or Free Hit: unchanged (banked FTs kept, none earned).
   - Otherwise: `min(5, max(ft − transfers_made, 0) + 1)`.
+  *Verified on a real Entry (2026-10-16):* `history.current[].event_transfers` is **0 in a
+  Wildcard gameweek** even with 15 transfers listed, so it already excludes chip transfers;
+  `event_transfers_cost` is the hit in points. `history.chips[].name` values seen:
+  `bboost`, `wildcard`, `3xc` (Free Hit presumably `freehit` — confirm when one appears).
+  Worked through that Entry (BB GW1, 0 transfers GW2, WC GW3, 2 transfers GW4, 0 in GW5–6)
+  the rules give 1 → 2 → 2 → 1 → 2 → 3 free transfers for GW2…GW7.
   Any extra FTs FPL grants mid-season only show up through the acceptance check against
   the FPL site — if one appears, add the rule to `fpl-domain.md`, don't patch the function.
 - **Chips**: chip set 1 is GW1–19, set 2 is GW20–38; a used chip's set is decided by its

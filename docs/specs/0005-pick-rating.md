@@ -55,8 +55,8 @@ Notes on choices made in review:
 
 Field names are verified (spec 0002, "Database"). `defensive_contribution` **is** the DefCon action count
 (confirmed on a defender: CBIT = `clearances_blocks_interceptions` + `tackles`), so use it
-and `defensive_contribution_per_90` directly. For midfielders it should equal CBIRT (adds
-`recoveries`) — spot-check one when building; if it doesn't, sum the components instead. `penalties_order` is available too:
+and `defensive_contribution_per_90` directly. Confirmed on a midfielder as CBIRT (adds
+`recoveries`). `penalties_order` is available too:
 show a penalty-taker badge beside xG rather than trying to derive npxG.
 
 ## Per-gameweek data
