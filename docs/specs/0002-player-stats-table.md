@@ -121,9 +121,10 @@ Rules, all from ADR 0002:
   `text` in the view anyway (a JSON number reads fine as text) and parse with `fplDecimal`,
   so a later switch to strings — or back — changes nothing.
 - Defensive counts, integers: `clearances_blocks_interceptions`, `tackles`, `recoveries`,
-  `defensive_contribution`. `defensive_contribution` is **not** the raw action count (a
-  goalkeeper with 79 such actions shows 0); its meaning is still to confirm on a defender
-  or midfielder — until then, derive CBIT/CBIRT from the three components.
+  `defensive_contribution` (labelled "Defensive Contribution" in `element_stats`). A
+  goalkeeper shows 0 despite 79 such actions — expected, since DefCon is outfield-only.
+  Whether it holds the action count (CBIT for DEF, CBIRT for MID/FWD) or DefCon points is
+  still to confirm on a defender; until then, derive CBIT/CBIRT from the three components.
 - `cost_change_start` (tenths since launch; launch price = `now_cost − cost_change_start`),
   `cost_change_event`, and `_fall` mirrors of both.
 - Set pieces: `penalties_order`, `corners_and_indirect_freekicks_order`,

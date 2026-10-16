@@ -60,7 +60,7 @@ over this file — verify against a live payload before hardcoding anything.
   - Clean sheets require 60+ minutes; worth different amounts by position.
   - Goals conceded: −1 per **two** conceded (GK/DEF). Saves: +1 per **three** (GK). These are floor functions.
   - **Bonus**: top 3 by BPS in each match get 3/2/1; ties share. Provisional until `data_checked`.
-  - **Defensive contributions (DefCon)**, since 2025/26: points for reaching a threshold of defensive actions — 10 for defenders, 12 for midfielders and forwards.
+  - **Defensive contributions (DefCon)**, since 2025/26: points for reaching a threshold of defensive actions — 10 for defenders, 12 for midfielders and forwards. Outfield players only: goalkeepers never earn DefCon.
 - `event/{gw}/live` includes an `explain` breakdown per player showing exactly how points were awarded. Use it as ground truth for tests.
 
 ## Player status (`elements[].status`)
