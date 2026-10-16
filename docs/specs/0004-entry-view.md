@@ -111,10 +111,11 @@ is the quiet budget inflation that makes FPL backtests cheat.
   it updates with the what-if below.
 - **Squad value (FPL)** = `history.current[n].value`, labelled "as reported for GW n".
   Observed: `value` 1000 at GW1 with `bank` 0, rising with price changes to 1014 by GW6
-  (bank 6) — still to settle whether it includes the bank and whether it is market or
-  selling value.
-  Verify at build time whether it equals selling value or Σ `now_cost` + bank, and label
-  it accordingly; never call either one bare "team value".
+  (bank 6). **Verified 2026-10-16: it is exactly the figure the FPL site labels "Squad
+  value" (£101.4m), with the bank shown separately beside it.** So display it as FPL's own
+  number under that label. Its make-up (market vs selling prices, bank in or out) is not
+  needed and not assumed: never compute with it — budgets use our own selling value.
+  Never call it bare "team value".
 - **Free transfers available**, per `docs/fpl-domain.md`, as a pure tested function over
   `history.current[]` and `history.chips`:
   - Transfers before the GW1 deadline are unlimited and free; GW2 starts with 1.
