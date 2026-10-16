@@ -54,6 +54,12 @@ Edge cases, handled explicitly rather than discovered:
 - **Before the GW1 deadline** there is no `picks` to build from. Empty state, not an error.
 - **Wildcard or Free Hit** in the upcoming gameweek produces many pending transfers; the
   arithmetic is unchanged but the count is not 1 or 2.
+  *Verified (2026-10-16, real Entry):* `entry/{id}/transfers` lists every Wildcard transfer
+  individually — one gameweek showed 15 rows in two batches (12, then 3) minutes apart, including a
+  player bought in the first batch and sold in the second. The reconstruction must apply
+  them in `time` order, and the free-transfer function must not count a chip gameweek's
+  transfers. The endpoint's fields are exactly `element_in`, `element_in_cost`,
+  `element_out`, `element_out_cost`, `entry`, `event`, `time`.
 - **Free Hit in gameweek n**: `picks(n)` is the temporary Squad and the real one is
   `picks(n−1)`. Transfers with `event = n` are ignored. To verify against live data at
   build time: whether `entry/{id}/transfers` lists Free Hit transfers at all.
