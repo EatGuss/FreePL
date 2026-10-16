@@ -61,8 +61,11 @@ Edge cases, handled explicitly rather than discovered:
   transfers. The endpoint's fields are exactly `element_in`, `element_in_cost`,
   `element_out`, `element_out_cost`, `entry`, `event`, `time`.
 - **Free Hit in gameweek n**: `picks(n)` is the temporary Squad and the real one is
-  `picks(n−1)`. Transfers with `event = n` are ignored. To verify against live data at
-  build time: whether `entry/{id}/transfers` lists Free Hit transfers at all.
+  `picks(n−1)`. Transfers with `event = n` are ignored. Reported by third-party API
+  references: Free Hit transfers **do not appear** in `entry/{id}/transfers`, and the chip
+  shows as `active_chip: "freehit"` in picks and `name: "freehit"` in `history.chips` — so
+  the transfer log only ever holds permanent transactions and ignoring `event = n` is a
+  harmless safeguard. Confirm on the first real Free Hit.
 - A transfer whose `event` is n or earlier is history, not pending. Filter on n+1 exactly.
 - Reconstruct one gameweek ahead only. Do not generalise to arbitrary N.
 
@@ -89,10 +92,11 @@ in `docs/fpl-domain.md`.
   GW1 = launch, then 60, 59, 58, 58, 57), and `history_past[]` carries `start_cost` /
   `end_cost` per past season. A fixture's `value` is the price at kickoff, not at the
   moment of a transfer made days earlier — don't use it to date a sale price.
-- **`element_out_cost` = selling price or market price is still unproven.** Every sale in
-  the Entry checked so far was of a player at or below his purchase price, where the two
-  are equal. Settle it on the first sale of a player who had risen ≥ £0.2m above purchase;
-  until then the bank shown after pending transfers is labelled "as FPL reports".
+- **`element_out_cost` is the selling price received** — reported by third-party API
+  references, and consistent with every sale checked (all at or below purchase, where
+  selling and market price coincide). Not yet observed on a riser: confirm on the first
+  sale of a player up ≥ £0.2m. Our own sell-price function is already verified against
+  the FPL site, so nothing depends on this field alone.
 - All 15 computed sell prices match the FPL site's transfers page for the Entry.
   *Spot-checked 2026-10-16, both purchase-price sources:* a player bought by transfer at
   155 (`element_in_cost`), now 156 → formula 155, site 155; a player held since the
@@ -298,7 +302,12 @@ are local and commit nothing.
 
 1. **Before building anything on live reads:** from a Vercel preview deployment, make one
    request to `entry/{FPL_ENTRY_ID}/history` and confirm FPL answers datacenter IPs with
-   JSON, not a block page. If it doesn't, stop and revisit ADR 0003.
+   JSON, not a block page. If it doesn't, stop and revisit ADR 0003. Context: the two
+   known constraints are CORS and User-Agent filtering. CORS does not apply — every FPL call
+   is server-side in `server/`, never from the browser. User-Agent: send the descriptive
+   `FreePL-api/0.1 (+contact: …)` header; the snapshot job already uses the same style of
+   header from GitHub Actions' datacenter IPs and has run green hourly, which is good
+   evidence but not proof for Vercel's IP ranges.
 2. Locally (nothing committed): dump one real `transfers`, `history` and a few
    `element-summary` responses. Confirm the `element_out_cost` meaning, Free Hit transfer
    listing, `cost_change_start` semantics and the meaning of `history.value`.
