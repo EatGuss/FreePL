@@ -84,7 +84,15 @@ in `docs/fpl-domain.md`.
 
 - `cost_change_start` is the change since launch, in tenths, and FPL prices do not move
   before the GW1 deadline. Cross-check against `element-summary/{id}` GW1 `value` for a few
-  players held since GW1 (fetched locally; not stored).
+  players held since GW1 (fetched locally; not stored). *Seen 2026-10-16:*
+  `element-summary/{id}.history[].value` is the price at each fixture (one example: 60 at
+  GW1 = launch, then 60, 59, 58, 58, 57), and `history_past[]` carries `start_cost` /
+  `end_cost` per past season. A fixture's `value` is the price at kickoff, not at the
+  moment of a transfer made days earlier — don't use it to date a sale price.
+- **`element_out_cost` = selling price or market price is still unproven.** Every sale in
+  the Entry checked so far was of a player at or below his purchase price, where the two
+  are equal. Settle it on the first sale of a player who had risen ≥ £0.2m above purchase;
+  until then the bank shown after pending transfers is labelled "as FPL reports".
 - All 15 computed sell prices match the FPL site's transfers page for the Entry.
 
 **All or nothing.** If any Squad player's purchase price cannot be determined, show no sell
