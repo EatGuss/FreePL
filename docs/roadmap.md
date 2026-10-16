@@ -22,6 +22,15 @@ captures per player per day. Views over the latest capture (ADR 0002) cannot ser
 Gets its own spec, written once we know which fields the model uses. Spec 0005's
 `season_gameweek_live` view is the first cross-capture read and is not a substitute.
 
+## Price-change predictor inputs
+
+Since 2026/27, `bootstrap-static.elements[]` carries FPL's own price-change signals:
+`price_change_percent`, `price_change_hourly_rate`, `price_change_projections[]` (offset,
+projected percent, likelihood), `price_change_locked_until`, `price_change_calibrating`.
+They are point-in-time and overwritten, so only our captures preserve them — another reason
+the routine capture cadence matters. The predictor's spec should decide whether these are
+features, a baseline to beat, or both.
+
 ## Per-gameweek history in the UI
 
 Points, minutes and underlying stats per gameweek since GW1 for each player. Not needed by

@@ -112,12 +112,28 @@ Rules, all from ADR 0002:
 - `now_cost` is `int` in tenths and stays an integer the whole way to the render call.
 - Backfill rows never feed a `latest_*` view.
 
-**Before writing the final column list, dump a live payload and diff it against the above.**
-Expected additions to verify (names unconfirmed): `expected_goals_per_90`,
-`expected_assists_per_90`, `expected_goals_conceded_per_90`, `saves_per_90`,
-`starts_per_90`, `clean_sheets_per_90`, `defensive_contribution`,
-`defensive_contribution_per_90`, `clearances_blocks_interceptions`, `tackles`,
-`recoveries`. Spec 0005 needs the defensive ones.
+**Verified against a live 2026/27 `elements[]` object (2026-10-16)** — add to the column list:
+
+- Per-90, as **JSON numbers** (not strings, unlike `expected_goals`): `expected_goals_per_90`,
+  `expected_assists_per_90`, `expected_goal_involvements_per_90`,
+  `expected_goals_conceded_per_90`, `goals_conceded_per_90`, `saves_per_90`,
+  `starts_per_90`, `clean_sheets_per_90`, `defensive_contribution_per_90`. Declare them
+  `text` in the view anyway (a JSON number reads fine as text) and parse with `fplDecimal`,
+  so a later switch to strings — or back — changes nothing.
+- Defensive counts, integers: `clearances_blocks_interceptions`, `tackles`, `recoveries`,
+  `defensive_contribution`. `defensive_contribution` is **not** the raw action count (a
+  goalkeeper with 79 such actions shows 0); its meaning is still to confirm on a defender
+  or midfielder — until then, derive CBIT/CBIRT from the three components.
+- `cost_change_start` (tenths since launch; launch price = `now_cost − cost_change_start`),
+  `cost_change_event`, and `_fall` mirrors of both.
+- Set pieces: `penalties_order`, `corners_and_indirect_freekicks_order`,
+  `direct_freekicks_order` (nullable ints) — useful for a "penalty taker" badge.
+- New this season, not used in v1: `price_change_percent`, `price_change_hourly_rate`,
+  `price_change_projections[]`, `price_change_locked_until`, `price_change_calibrating`
+  (see `docs/roadmap.md`); also `can_transact`, `can_select`, `removed`, `scout_risks`.
+
+Still to confirm before finalising: `element_types[]` (four positions or a fifth), and a
+defender's `defensive_contribution`.
 
 ## Contract
 
