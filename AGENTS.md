@@ -6,23 +6,26 @@ optimiser, logged before each deadline, with a public scorecard.
 
 ## Current phase
 
-**Task 0: the snapshot job.** Spec: `docs/specs/0001-snapshot-job.md`.
-Task 0 is done when its rollout steps 5–7 pass (24 green hourly runs, healthchecks ping,
-first deadline capture verified). The two-week compression check doesn't block.
+**Spec 0002: the player stats table.** Spec: `docs/specs/0002-player-stats-table.md`.
 
-Queued after it, in order — docs only until Task 0 is done:
+Task 0 (spec 0001, the snapshot job) is **done** as of 2026-10-17: hourly runs green since
+2026-10-14, healthchecks pinging, and the first deadline capture (GW7) verified in Neon.
+The job keeps running unchanged; its two-week compression check (~2026-10-28) and the
+"Known limits" items in spec 0001 are still to do on their own schedule.
+
+Order of work:
 
 | Spec | What | Status |
 | --- | --- | --- |
-| `0002-player-stats-table.md` | Stats table + injury watch; stands up contract, `server/`, `web/`, Vercel | queued |
+| `0002-player-stats-table.md` | Stats table + injury watch; stands up contract, `server/`, `web/`, Vercel | **current** |
 | `0003-fixture-difficulty-ticker.md` | Club × gameweek difficulty grid | draft |
 | `0004-entry-view.md` | Current Squad, sell prices, FTs, chips, transfer what-if (ADR 0003) | draft |
 | `0005-pick-rating.md` | Best/Great/Good/OK band per player within position | draft |
 | `0006-shortlist-and-saved-plans.md` | Starred players and transfer plans, kept in the URL | draft |
 
-Until 0002 starts, do not scaffold `packages/`, `server/`, `api/` or `web/`. `model/` stays
-out until its own spec. When 0002 starts, update the layout, stack and environment sections
-below from spec 0002's "Files" and "Environment".
+Spec 0002 may now scaffold `packages/`, `server/`, `api/` and `web/` as its "Files" section
+lists. `model/` stays out until its own spec. Update the layout, stack and environment
+sections below from spec 0002's "Files" and "Environment" in the commit that creates them.
 
 ## Repo layout (only what exists now)
 

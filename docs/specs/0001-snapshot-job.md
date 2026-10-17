@@ -1,6 +1,6 @@
 # Spec 0001 — Snapshot job
 
-Status: ready to build · Supersedes the "Snapshot job" schema and cadence in the project brief.
+Status: **done** (2026-10-17: rollout steps 1–7 passed; first deadline capture GW7) · Supersedes the "Snapshot job" schema and cadence in the project brief.
 
 ## Goal
 

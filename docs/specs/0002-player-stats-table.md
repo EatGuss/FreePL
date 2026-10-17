@@ -1,6 +1,6 @@
 # Spec 0002 — Player stats table
 
-Status: **queued** — starts when spec 0001 is done (rollout steps 5–7 pass) · Decisions in ADR 0002
+Status: **current** — spec 0001 done 2026-10-17 · Decisions in ADR 0002
 
 ## Goal
 
