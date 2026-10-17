@@ -1,6 +1,6 @@
 # Spec 0002 — Player stats table
 
-Status: **queued** — starts when spec 0001 is done (rollout steps 5–7 pass) · Decisions in ADR 0002
+Status: **current** — spec 0001 done 2026-10-17 · Decisions in ADR 0002
 
 ## Goal
 
@@ -64,7 +64,8 @@ Hand-applied, two files.
 
 **`db/roles/0002_reader.sql`** — role `freepl_reader`, `LOGIN`, `SELECT` on the views
 below and nothing else. Views run with their owner's privileges, so the role needs no grant
-on `api_snapshots`. Set the password in the Neon console, never in the file.
+on `api_snapshots`. Created with SQL (not the console's "Add role"); the password replaces a
+placeholder in the SQL editor only, never in the file. Apply it before the views file.
 
 **`db/views/0002_current.sql`** — pick the newest row, expand it.
 
@@ -135,8 +136,8 @@ Rules, all from ADR 0002:
   `price_change_projections[]`, `price_change_locked_until`, `price_change_calibrating`
   (see `docs/roadmap.md`); also `can_transact`, `can_select`, `removed`, `scout_risks`.
 
-Still to confirm before finalising: `element_types[]` (four positions or a fifth), and a
-defender's `defensive_contribution`.
+Still to confirm: `element_types[]` (four positions or a fifth) — `current_positions` handles
+either.
 
 ## Contract
 
