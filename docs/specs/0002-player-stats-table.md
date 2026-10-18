@@ -136,8 +136,7 @@ Rules, all from ADR 0002:
   `price_change_projections[]`, `price_change_locked_until`, `price_change_calibrating`
   (see `docs/roadmap.md`); also `can_transact`, `can_select`, `removed`, `scout_risks`.
 
-Still to confirm: `element_types[]` (four positions or a fifth) — `current_positions` handles
-either.
+`element_types[]` confirmed: exactly four positions, GKP / DEF / MID / FWD (2026-10-17).
 
 ## Contract
 
@@ -281,7 +280,9 @@ Tapping a column header sorts it; tapping again reverses.
 
 ## Rollout
 
-1. Apply `0002_reader.sql`, set its password, then `0002_current.sql`, in the Neon editor.
+1. *Done 2026-10-17:* 667 players, 38 gameweeks, 4 positions; reader has `SELECT` on
+   `current_players` and no `INSERT` on `api_snapshots`.
+   Apply `0002_reader.sql`, set its password, then `0002_current.sql`, in the Neon editor.
    As `freepl_reader`: `select count(*) from current_players` returns ~700 and
    `select captured_at from latest_bootstrap` matches the newest non-backfill row.
 2. Build `packages/contract`. Run the real-payload check script; confirm zero parse failures.
