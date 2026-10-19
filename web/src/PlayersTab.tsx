@@ -165,6 +165,9 @@ export function PlayersTab({ data, filters, update, now }: {
             ))}
           </thead>
           <tbody>
+            {rows.length === 0 && (
+              <tr><td className="news-row" colSpan={statColumns.length + 1}>No players match these filters.</td></tr>
+            )}
             {table.getRowModel().rows.map(({ original: p }) => (
               <Row key={p.id} player={p} columns={statColumns} club={lookups.clubById.get(p.clubId)}
                 position={lookups.positionById.get(p.positionId)} newsOpen={openNews === p.id}
