@@ -1,0 +1,33 @@
+# App checks for spec 0002: install, typecheck, test, build. Never touches Neon or FPL.
+name: ci
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4  # version from package.json "packageManager"
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+      - name: Built bundle carries no database host
+        run: |
+          if grep -rIl -E 'neon\.tech|postgres(ql)?://|DATABASE_URL' web/dist; then
+            echo "::error::web/dist mentions a database host or variable"; exit 1
+          fi
