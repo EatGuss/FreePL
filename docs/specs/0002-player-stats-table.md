@@ -189,8 +189,9 @@ PlayersResponse = {
 | `GET /api/players` | `PlayersResponse` |
 | `GET /api/health` | `{ ok, latestSnapshotAt, dataAgeHours }` — never cached |
 
-One route for the table. ~700 players over the v1 columns is roughly 250–350 KB raw and
-well under 100 KB gzipped; a second round trip costs more than the bytes save.
+One route for the table. Measured 2026-10-19 on a live capture: 668 players, 641 KB raw,
+**73 KB gzipped** (the camelCase keys repeat and compress well). A second round trip costs
+more than the bytes save.
 
 Caching, per ADR 0002:
 
@@ -291,10 +292,11 @@ Tapping a column header sorts it; tapping again reverses.
    Apply `0002_reader.sql`, set its password, then `0002_current.sql`, in the Neon editor.
    As `freepl_reader`: `select count(*) from current_players` returns ~700 and
    `select captured_at from latest_bootstrap` matches the newest non-backfill row.
-2. Build `packages/contract`. Run the real-payload check script; confirm zero parse failures.
+2. *Done 2026-10-19:* 668 players, 20 Clubs, 4 positions, 38 gameweeks, 0 parse failures,
+   73 KB gzipped. Build `packages/contract`. Run the real-payload check script; confirm zero parse failures.
 3. `server/` locally against Neon as `freepl_reader`. Verify `304` and the cache-key query cost.
 4. `web/` locally. Build the table against the live local API, not fixtures.
-5. Add `ci.yml`; confirm it passes on the PR.
+5. *Done 2026-10-19 (PR #11):* Add `ci.yml`; confirm it passes on the PR.
 6. Deploy to Vercel. Grep the built bundle for secrets. Check on an actual phone, at a
    deadline-ish hour, on mobile data.
 7. Confirm the morning after a scheduled snapshot that the new `capturedAt` appears.
