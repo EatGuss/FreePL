@@ -2,7 +2,7 @@
   "name": "@freepl/contract",
   "private": true,
   "type": "module",
-  "exports": { ".": "./src/index.ts" },
+  "exports": { ".": "./src/index.ts", "./test-fixtures": "./test/fixtures.ts" },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run"

@@ -1,0 +1,24 @@
+{
+  "name": "server",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": {
+    "dev": "tsx watch --env-file=.env src/dev.ts",
+    "check:contract": "tsx --env-file=.env scripts/check-contract.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@freepl/contract": "workspace:*",
+    "hono": "4.13.13",
+    "postgres": "3.4.9"
+  },
+  "devDependencies": {
+    "@hono/node-server": "1.19.17",
+    "@types/node": "22.20.5",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
+  }
+}
