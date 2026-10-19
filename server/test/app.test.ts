@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { PlayersResponse, type RawBootstrapRows } from "@freepl/contract";
-import { createApp } from "../src/app.js";
+import { createApp, etagMatches } from "../src/app.js";
 import type { Repo } from "../src/repo.js";
 import { bootstrap, player } from "@freepl/contract/test-fixtures";
 
@@ -88,5 +88,20 @@ describe("GET /api/health", () => {
     vi.useRealTimers();
     expect(res.headers.get("Cache-Control")).toBe("no-store");
     expect(await res.json()).toEqual({ ok: true, latestSnapshotAt: "2030-08-20T09:00:00.000Z", dataAgeHours: 3.5 });
+  });
+});
+
+describe("etagMatches", () => {
+  const tag = '"2030-08-20T09:00:00.000Z"';
+  it("uses weak comparison over a list", () => {
+    expect(etagMatches(tag, tag)).toBe(true);
+    expect(etagMatches(`W/${tag}`, tag)).toBe(true);
+    expect(etagMatches(`"other", W/${tag}`, tag)).toBe(true);
+    expect(etagMatches("*", tag)).toBe(true);
+  });
+  it("rejects anything else", () => {
+    expect(etagMatches(undefined, tag)).toBe(false);
+    expect(etagMatches("2030-08-20T09:00:00.000Z", tag)).toBe(false);
+    expect(etagMatches('"2030-08-20T20:00:00.000Z"', tag)).toBe(false);
   });
 });
