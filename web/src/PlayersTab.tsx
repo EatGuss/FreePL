@@ -1,8 +1,8 @@
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, memo, useCallback, useMemo, useState } from "react";
 import {
   createColumnHelper, flexRender, getCoreRowModel, getSortedRowModel, useReactTable, type SortingState,
 } from "@tanstack/react-table";
-import type { PlayerRow, PlayersResponse } from "@freepl/contract";
+import type { ClubRow, PlayerRow, PlayersResponse, PositionRow } from "@freepl/contract";
 import { FIXED_COLUMNS, GROUPS, type StatColumn } from "./columns.js";
 import { applyFilters, GROUP_KEYS, makeLookups, type Filters } from "./filters.js";
 import { Flag } from "./Flag.js";
@@ -25,27 +25,15 @@ export function PlayersTab({ data, filters, update, now }: {
     return { lo, hi };
   }, [data]);
 
-  const { rows, hiddenOut } = useMemo(() => applyFilters(data.players, filters, lookups), [data, filters, lookups]);
+  const shown = filters;
+  const { rows, hiddenOut } = useMemo(() => applyFilters(data.players, shown, lookups), [data, shown, lookups]);
 
-  const statColumns: StatColumn[] = useMemo(() => [...FIXED_COLUMNS, ...GROUPS[filters.group]], [filters.group]);
+  const statColumns: StatColumn[] = useMemo(() => [...FIXED_COLUMNS, ...GROUPS[shown.group]], [shown.group]);
+  const toggleNews = useCallback((id: number) => setOpenNews((cur) => (cur === id ? null : id)), []);
 
   const columns = useMemo(
     () => [
-      helper.display({
-        id: "player",
-        header: "Player",
-        cell: ({ row: { original: p } }) => (
-          <>
-            <div className="pname">
-              <span className="nm">{p.webName}</span>
-              <Flag player={p} onClick={() => setOpenNews((id) => (id === p.id ? null : p.id))} />
-            </div>
-            <div className="pmeta">
-              {lookups.clubById.get(p.clubId)?.short} · {lookups.positionById.get(p.positionId)?.short} · <b>{formatPrice(p.nowCost)}</b>
-            </div>
-          </>
-        ),
-      }),
+      helper.display({ id: "player", header: "Player" }),
       ...statColumns.map((c) =>
         // undefined (not null) so sortUndefined: "last" keeps blanks at the bottom both ways.
         helper.accessor((p) => c.value(p) ?? undefined, {
@@ -58,11 +46,11 @@ export function PlayersTab({ data, filters, update, now }: {
         }),
       ),
     ],
-    [statColumns, lookups],
+    [statColumns],
   );
 
-  const sortId = statColumns.some((c) => c.id === filters.sort) ? filters.sort : "epNext";
-  const sorting: SortingState = [{ id: sortId, desc: filters.desc }];
+  const sortId = statColumns.some((c) => c.id === shown.sort) ? shown.sort : "epNext";
+  const sorting: SortingState = [{ id: sortId, desc: shown.desc }];
 
   const table = useReactTable({
     data: rows,
@@ -177,28 +165,10 @@ export function PlayersTab({ data, filters, update, now }: {
             ))}
           </thead>
           <tbody>
-            {table.getRowModel().rows.map((row) => (
-              <Fragment key={row.id}>
-                <tr>
-                  {row.getVisibleCells().map((cell) => {
-                    const meta = cell.column.columnDef.meta as StatColumn | undefined;
-                    const isNull = meta ? meta.value(row.original) === null : false;
-                    return (
-                      <td key={cell.id} className={[meta?.strong ? "num-strong" : "", isNull ? "null" : ""].join(" ").trim() || undefined}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    );
-                  })}
-                </tr>
-                {openNews === row.original.id && (
-                  <tr>
-                    <td className="news-row" colSpan={row.getVisibleCells().length}>
-                      {row.original.news || "No news text."}
-                      {row.original.newsAdded && <span className="pmeta"> · {ago(ageHours(row.original.newsAdded, now))}</span>}
-                    </td>
-                  </tr>
-                )}
-              </Fragment>
+            {table.getRowModel().rows.map(({ original: p }) => (
+              <Row key={p.id} player={p} columns={statColumns} club={lookups.clubById.get(p.clubId)}
+                position={lookups.positionById.get(p.positionId)} newsOpen={openNews === p.id}
+                onToggleNews={toggleNews} now={now} />
             ))}
           </tbody>
         </table>
@@ -210,3 +180,35 @@ export function PlayersTab({ data, filters, update, now }: {
     </section>
   );
 }
+
+/** One table row. Memoised so a filter change only builds the rows that are new. */
+const Row = memo(function Row({ player: p, columns, club, position, newsOpen, onToggleNews, now }: {
+  player: PlayerRow; columns: StatColumn[]; club: ClubRow | undefined; position: PositionRow | undefined;
+  newsOpen: boolean; onToggleNews: (id: number) => void; now: number;
+}) {
+  return (
+    <Fragment>
+      <tr>
+        <td>
+          <div className="pname">
+            <span className="nm">{p.webName}</span>
+            <Flag player={p} onClick={() => onToggleNews(p.id)} />
+          </div>
+          <div className="pmeta">{club?.short} · {position?.short} · <b>{formatPrice(p.nowCost)}</b></div>
+        </td>
+        {columns.map((c) => {
+          const v = c.value(p);
+          return <td key={c.id} className={[c.strong ? "num-strong" : "", v === null ? "null" : ""].join(" ").trim() || undefined}>{c.format(v)}</td>;
+        })}
+      </tr>
+      {newsOpen && (
+        <tr>
+          <td className="news-row" colSpan={columns.length + 1}>
+            {p.news || "No news text."}
+            {p.newsAdded && <span className="pmeta"> · {ago(ageHours(p.newsAdded, now))}</span>}
+          </td>
+        </tr>
+      )}
+    </Fragment>
+  );
+});
