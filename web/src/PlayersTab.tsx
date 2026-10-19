@@ -4,13 +4,15 @@ import {
 } from "@tanstack/react-table";
 import type { ClubRow, PlayerRow, PlayersResponse, PositionRow } from "@freepl/contract";
 import { FIXED_COLUMNS, GROUPS, type StatColumn } from "./columns.js";
-import { applyFilters, GROUP_KEYS, makeLookups, type Filters } from "./filters.js";
+import { applyFilters, filtersToSearch, GROUP_KEYS, makeLookups, type Filters } from "./filters.js";
 import { Flag } from "./Flag.js";
 import { ago, formatPrice } from "./format.js";
 import { ageHours } from "@freepl/contract";
 
 const helper = createColumnHelper<PlayerRow>();
 const PRICE_STEP = 5; // £0.5m
+/** Rows drawn per step. Sorting and filtering always cover every player; only drawing is capped. */
+const ROW_STEP = 100;
 
 export function PlayersTab({ data, filters, update, now }: {
   data: PlayersResponse; filters: Filters; update: (p: Partial<Filters>) => void; now: number;
@@ -26,6 +28,10 @@ export function PlayersTab({ data, filters, update, now }: {
   }, [data]);
 
   const shown = filters;
+  // Any filter or sort change starts again from the top ROW_STEP rows.
+  const viewKey = filtersToSearch(filters);
+  const [drawn, setDrawn] = useState({ viewKey, n: ROW_STEP });
+  const limit = drawn.viewKey === viewKey ? drawn.n : ROW_STEP;
   const { rows, hiddenOut } = useMemo(() => applyFilters(data.players, shown, lookups), [data, shown, lookups]);
 
   const statColumns: StatColumn[] = useMemo(() => [...FIXED_COLUMNS, ...GROUPS[shown.group]], [shown.group]);
@@ -168,7 +174,7 @@ export function PlayersTab({ data, filters, update, now }: {
             {rows.length === 0 && (
               <tr><td className="news-row" colSpan={statColumns.length + 1}>No players match these filters.</td></tr>
             )}
-            {table.getRowModel().rows.map(({ original: p }) => (
+            {table.getRowModel().rows.slice(0, limit).map(({ original: p }) => (
               <Row key={p.id} player={p} columns={statColumns} club={lookups.clubById.get(p.clubId)}
                 position={lookups.positionById.get(p.positionId)} newsOpen={openNews === p.id}
                 onToggleNews={toggleNews} now={now} />
@@ -177,7 +183,18 @@ export function PlayersTab({ data, filters, update, now }: {
         </table>
       </div>
       <div className="subrow">
-        <span>{rows.length} players</span>
+        <span>
+          {rows.length > limit ? `Top ${limit} of ${rows.length} players · ` : `${rows.length} players`}
+          {rows.length > limit && (
+            <>
+              <button className="linkish" onClick={() => setDrawn({ viewKey, n: limit + ROW_STEP })}>
+                Show {Math.min(ROW_STEP, rows.length - limit)} more
+              </button>
+              {" · "}
+              <button className="linkish" onClick={() => setDrawn({ viewKey, n: rows.length })}>Show all</button>
+            </>
+          )}
+        </span>
         <span>Tap a column header to sort</span>
       </div>
     </section>
