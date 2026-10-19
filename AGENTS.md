@@ -23,9 +23,8 @@ Order of work:
 | `0005-pick-rating.md` | Best/Great/Good/OK band per player within position | draft |
 | `0006-shortlist-and-saved-plans.md` | Starred players and transfer plans, kept in the URL | draft |
 
-Spec 0002 may now scaffold `packages/`, `server/`, `api/` and `web/` as its "Files" section
-lists. `model/` stays out until its own spec. Update the layout, stack and environment
-sections below from spec 0002's "Files" and "Environment" in the commit that creates them.
+Spec 0002 scaffolds `packages/`, `server/`, `api/` and `web/` as its "Files" section lists.
+`model/` stays out until its own spec.
 
 ## Repo layout (only what exists now)
 
@@ -34,7 +33,15 @@ sections below from spec 0002's "Files" and "Environment" in the commit that cre
 scripts/snapshot.py                    single bare script, one main()
 db/migrations/0001_api_snapshots.sql   applied by hand in Neon SQL editor
 db/migrations/0002_api_snapshots_season.sql  adds api_snapshots.season; applied by hand
+db/roles/0002_reader.sql               freepl_reader role; applied by hand, password set in the editor only
+db/views/0002_current.sql              views over the latest capture (ADR 0002); applied by hand
 requirements.txt                       httpx, psycopg[binary], python-dotenv — nothing else without asking
+package.json, pnpm-workspace.yaml      pnpm workspace root (Node 22, see .nvmrc); tsconfig.base.json
+packages/contract/                     zod schemas + types, shared by server/ and web/; ships to the browser
+server/                                Hono app, platform-agnostic; reads the views as freepl_reader
+api/index.ts, vercel.json              the one Vercel function mounting server/; rewrites /api/*
+web/                                   Vite + React + Tailwind app (spec 0002 Players, Injury watch)
+.github/workflows/ci.yml               on pull_request: install, typecheck, test, build
 docs/                                  human-facing docs; read on demand, not always
   specs/ decisions/ roadmap.md fpl-domain.md design.md design/mockup.html
 .cursor/rules/data-integrity.mdc       always-on data rules (also imported by CLAUDE.md)
@@ -47,7 +54,9 @@ workflow via a deploy key. This repo is public — raw FPL payloads never go in 
 
 ## Stack
 
-- Python 3.12 for ingestion. TypeScript (Node 22, pnpm, Hono, React) arrives with spec 0002 — not before.
+- Python 3.12 for ingestion. TypeScript (Node 22, pnpm, Hono, zod, postgres.js, Vite, React,
+  Tailwind, TanStack Table/Query) for the app; the approved package list is in spec 0002.
+- Vercel Hobby hosts `web/` and the API (`api/index.ts`). Python never runs there.
 - Postgres on Neon free tier (0.5 GB storage, 100 CU-hours/month). Pooled connection string via `DATABASE_URL`.
 - GitHub Actions for scheduling. No Airflow, no ORMs, no migration runner yet.
 
@@ -63,6 +72,10 @@ workflow via a deploy key. This repo is public — raw FPL payloads never go in 
 | `FORCE` | no | `1` = store bootstrap, fixtures, set-piece-notes as `manual`, ignoring the decision table |
 
 Locally, load `.env` with python-dotenv. In CI, values come from GitHub secrets / workflow inputs.
+The app (Vercel, and `server/` locally) reads only `DATABASE_URL`, and there it is the
+**`freepl_reader`** pooled string, never the snapshot job's. Locally keep it in
+`server/.env` (gitignored). Never prefix a server variable with `VITE_`.
+
 CI-only: secret `ARCHIVE_DEPLOY_KEY` and variable `ARCHIVE_REPO` — used by the workflow's checkout and push steps, never read by the script.
 
 ## Non-negotiables

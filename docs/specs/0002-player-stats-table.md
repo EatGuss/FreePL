@@ -31,7 +31,8 @@ specs 0003–0005 bolt onto. Conventions set here are binding on those.
 pnpm-workspace.yaml, package.json, .nvmrc   pnpm workspaces, Node 22 LTS
 packages/contract/         zod schemas + inferred TS types; the single column list
 server/                    Hono app, platform-agnostic
-api/[[...route]].ts        the only file in api/: mounts server/ as one Vercel Node function
+api/index.ts               the only file in api/: mounts server/ as one Vercel Node function
+vercel.json                rewrites /api/(.*) → /api; serves web/dist
 web/                       Vite + React + Tailwind + shadcn + TanStack Table + TanStack Query
 db/views/0002_current.sql  hand-applied in the Neon SQL editor, like the migrations
 db/roles/0002_reader.sql   hand-applied; creates freepl_reader (no password in the file)
@@ -39,16 +40,21 @@ db/roles/0002_reader.sql   hand-applied; creates freepl_reader (no password in t
 ```
 
 **Why `server/` and not `api/`:** Vercel turns every file under a top-level `api/` into a
-separate function. The Hono app lives in `server/`; `api/` holds one adapter file. Moving to
-Fly.io later means deleting `api/`.
+separate function. The Hono app lives in `server/`; `api/` holds one adapter file,
+`api/index.ts`, and `vercel.json` rewrites every `/api/*` path to it (a catch-all filename
+like `[[...route]].ts` is a Next.js convention, not reliable for a plain Vercel function).
+Moving to Fly.io later means deleting `api/` and `vercel.json`.
 
 Hosting: **Vercel Hobby**, one project serving `web/` and mounting the API at `/api`.
 On serverless the in-process cache is best effort; `ETag`/`304` and the edge cache carry
 the real weight.
 
 Dependencies (approved): hono, zod, postgres (postgres.js), vite, react, tailwind, shadcn
-(Radix), @tanstack/react-table, @tanstack/react-query, typescript, vitest. Anything else:
-ask.
+(Radix), @tanstack/react-table, @tanstack/react-query, typescript, vitest. Helpers those
+need (approved in review): @hono/node-server (local dev server), tsx (runs TS scripts),
+@vitejs/plugin-react, @tailwindcss/vite, shadcn's own deps (class-variance-authority, clsx,
+tailwind-merge, lucide-react), @types/react, @types/react-dom, @types/node. Versions are
+pinned exactly, on established majors rather than brand-new releases. Anything else: ask.
 
 ## Environment (Vercel)
 
