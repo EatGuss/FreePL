@@ -1,0 +1,52 @@
+/* Colour tokens from docs/design.md (values copied from docs/design/mockup.html).
+   Light by default; dark via prefers-color-scheme or data-theme="dark". */
+:root {
+  --bg: #eef2ef;
+  --surface: #ffffff;
+  --ink: #16211c;
+  --muted: #5d6b64;
+  --line: #d5ddd8;
+  --accent: #2a55c7;
+  --accent-soft: #e3e9f8;
+  --warn: #9a5b00;
+  --warn-bg: #fff1d6;
+  --bad: #b3261e;
+  --bad-bg: #fde4e1;
+  --ok-fresh: #1f6d45;
+  --band-best: #2f5f9e;
+  --band-great: #2b8a80;
+  --band-good: #7fc0b5;
+  --band-ok: #d4ebe6;
+  --band-low: #b5544a;
+  --pitch: #3d7a57; --pitch-line: rgb(255 255 255 / 0.28); --bench: #d9e3dd;
+  --band-best-fg: #ffffff;
+  --band-great-fg: #ffffff;
+  --band-good-fg: #0d2b27;
+  --band-ok-fg: #0d2b27;
+  --fdr1: #1e7a4a; --fdr2: #7cc49a; --fdr3: #dfe3e1; --fdr4: #e9877c; --fdr5: #a3241c;
+  --fdr1-fg: #ffffff; --fdr2-fg: #0f2a1b; --fdr3-fg: #2a3430; --fdr4-fg: #2e0d09; --fdr5-fg: #ffffff;
+  --font-display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --font-body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1513; --surface: #17201c; --ink: #e5ece8; --muted: #93a39b; --line: #2a3631;
+    --accent: #8aa8ff; --accent-soft: #1f2a45;
+    --warn: #ffc56b; --warn-bg: #3a2a0d; --bad: #ff8a80; --bad-bg: #3d1714; --ok-fresh: #6fd39e;
+    --band-best: #3a6aa6; --band-great: #3aa597; --band-good: #23675f; --band-ok: #1c3a36; --band-low: #c8675c; --pitch: #1f4a35; --pitch-line: rgb(255 255 255 / 0.16); --bench: #1d2723;
+    --band-best-fg: #eef3ff; --band-great-fg: #06201d; --band-good-fg: #e5f5f2; --band-ok-fg: #cfe7e2;
+    --fdr1: #2f9b62; --fdr2: #6db88c; --fdr3: #3a4642; --fdr4: #c96a5f; --fdr5: #e0574b;
+    --fdr1-fg: #04170c; --fdr2-fg: #04170c; --fdr3-fg: #e5ece8; --fdr4-fg: #1d0603; --fdr5-fg: #1d0603;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1513; --surface: #17201c; --ink: #e5ece8; --muted: #93a39b; --line: #2a3631;
+  --accent: #8aa8ff; --accent-soft: #1f2a45;
+  --warn: #ffc56b; --warn-bg: #3a2a0d; --bad: #ff8a80; --bad-bg: #3d1714; --ok-fresh: #6fd39e;
+  --band-best: #3a6aa6; --band-great: #3aa597; --band-good: #23675f; --band-ok: #1c3a36; --band-low: #c8675c; --pitch: #1f4a35; --pitch-line: rgb(255 255 255 / 0.16); --bench: #1d2723;
+  --band-best-fg: #eef3ff; --band-great-fg: #06201d; --band-good-fg: #e5f5f2; --band-ok-fg: #cfe7e2;
+  --fdr1: #2f9b62; --fdr2: #6db88c; --fdr3: #3a4642; --fdr4: #c96a5f; --fdr5: #e0574b;
+  --fdr1-fg: #04170c; --fdr2-fg: #04170c; --fdr3-fg: #e5ece8; --fdr4-fg: #1d0603; --fdr5-fg: #1d0603;
+  color-scheme: dark;
+}
