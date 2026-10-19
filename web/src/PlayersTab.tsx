@@ -1,0 +1,212 @@
+import { Fragment, useMemo, useState } from "react";
+import {
+  createColumnHelper, flexRender, getCoreRowModel, getSortedRowModel, useReactTable, type SortingState,
+} from "@tanstack/react-table";
+import type { PlayerRow, PlayersResponse } from "@freepl/contract";
+import { FIXED_COLUMNS, GROUPS, type StatColumn } from "./columns.js";
+import { applyFilters, GROUP_KEYS, makeLookups, type Filters } from "./filters.js";
+import { Flag } from "./Flag.js";
+import { ago, formatPrice } from "./format.js";
+import { ageHours } from "@freepl/contract";
+
+const helper = createColumnHelper<PlayerRow>();
+const PRICE_STEP = 5; // £0.5m
+
+export function PlayersTab({ data, filters, update, now }: {
+  data: PlayersResponse; filters: Filters; update: (p: Partial<Filters>) => void; now: number;
+}) {
+  const lookups = useMemo(() => makeLookups(data.clubs, data.positions), [data]);
+  const [openNews, setOpenNews] = useState<number | null>(null);
+
+  const priceBounds = useMemo(() => {
+    const costs = data.players.map((p) => p.nowCost);
+    const lo = Math.floor(Math.min(...costs) / PRICE_STEP) * PRICE_STEP;
+    const hi = Math.ceil(Math.max(...costs) / PRICE_STEP) * PRICE_STEP;
+    return { lo, hi };
+  }, [data]);
+
+  const { rows, hiddenOut } = useMemo(() => applyFilters(data.players, filters, lookups), [data, filters, lookups]);
+
+  const statColumns: StatColumn[] = useMemo(() => [...FIXED_COLUMNS, ...GROUPS[filters.group]], [filters.group]);
+
+  const columns = useMemo(
+    () => [
+      helper.display({
+        id: "player",
+        header: "Player",
+        cell: ({ row: { original: p } }) => (
+          <>
+            <div className="pname">
+              <span className="nm">{p.webName}</span>
+              <Flag player={p} onClick={() => setOpenNews((id) => (id === p.id ? null : p.id))} />
+            </div>
+            <div className="pmeta">
+              {lookups.clubById.get(p.clubId)?.short} · {lookups.positionById.get(p.positionId)?.short} · <b>{formatPrice(p.nowCost)}</b>
+            </div>
+          </>
+        ),
+      }),
+      ...statColumns.map((c) =>
+        // undefined (not null) so sortUndefined: "last" keeps blanks at the bottom both ways.
+        helper.accessor((p) => c.value(p) ?? undefined, {
+          id: c.id,
+          header: c.label,
+          sortUndefined: "last",
+          sortDescFirst: true,
+          cell: (info) => c.format(info.getValue() ?? null),
+          meta: c,
+        }),
+      ),
+    ],
+    [statColumns, lookups],
+  );
+
+  const sortId = statColumns.some((c) => c.id === filters.sort) ? filters.sort : "epNext";
+  const sorting: SortingState = [{ id: sortId, desc: filters.desc }];
+
+  const table = useReactTable({
+    data: rows,
+    columns,
+    state: { sorting },
+    onSortingChange: (updater) => {
+      const next = typeof updater === "function" ? updater(sorting) : updater;
+      const s = next[0];
+      // Tapping a header sorts it; tapping again reverses. Never falls back to unsorted.
+      if (!s) update({ desc: !filters.desc });
+      else update({ sort: s.id, desc: s.desc });
+    },
+    enableSortingRemoval: false,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  });
+
+  const atMax = filters.maxPrice === null || filters.maxPrice >= priceBounds.hi;
+  const atMin = filters.minPrice === null || filters.minPrice <= priceBounds.lo;
+
+  return (
+    <section className="flex flex-col gap-2.5">
+      <div className="flex flex-wrap gap-1.5" role="group" aria-label="Position">
+        <button className="chip" aria-pressed={filters.pos === null} onClick={() => update({ pos: null })}>All</button>
+        {data.positions.map((pos) => (
+          <button key={pos.id} className="chip" aria-pressed={filters.pos === pos.short} onClick={() => update({ pos: pos.short })}>
+            {pos.short}
+          </button>
+        ))}
+      </div>
+
+      <div className="price-row">
+        <label htmlFor="maxPrice">Max price</label>
+        <input
+          id="maxPrice" type="range" min={priceBounds.lo} max={priceBounds.hi} step={PRICE_STEP}
+          value={atMax ? priceBounds.hi : filters.maxPrice!}
+          onChange={(e) => { const v = Number(e.target.value); update({ maxPrice: v >= priceBounds.hi ? null : v }); }}
+        />
+        <output htmlFor="maxPrice">{atMax ? "Any" : formatPrice(filters.maxPrice!)}</output>
+      </div>
+
+      <div className="subrow">
+        <input className="search" type="search" placeholder="Search name" aria-label="Search name"
+          value={filters.q} onChange={(e) => update({ q: e.target.value })} />
+        <button className="linkish" onClick={() => update({ showOut: !filters.showOut })}>
+          {filters.showOut ? "Hide unavailable" : hiddenOut ? `Show ${hiddenOut} unavailable` : "No unavailable players hidden"}
+        </button>
+      </div>
+
+      <details className="more">
+        <summary>More filters{filters.clubs.length || filters.minMinutes || !atMin ? " (on)" : ""}</summary>
+        <div className="flex flex-col gap-2.5 pt-2.5">
+          <div className="price-row">
+            <label htmlFor="minPrice">Min price</label>
+            <input
+              id="minPrice" type="range" min={priceBounds.lo} max={priceBounds.hi} step={PRICE_STEP}
+              value={atMin ? priceBounds.lo : filters.minPrice!}
+              onChange={(e) => { const v = Number(e.target.value); update({ minPrice: v <= priceBounds.lo ? null : v }); }}
+            />
+            <output htmlFor="minPrice">{atMin ? "Any" : formatPrice(filters.minPrice!)}</output>
+          </div>
+          <div className="price-row">
+            <label htmlFor="mins">Min minutes</label>
+            <input id="mins" className="numin" type="number" min={0} step={90} inputMode="numeric"
+              value={filters.minMinutes || ""} placeholder="0"
+              onChange={(e) => update({ minMinutes: Math.max(0, Math.floor(Number(e.target.value) || 0)) })} />
+          </div>
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Club">
+            {[...data.clubs].sort((a, b) => a.short.localeCompare(b.short)).map((c) => {
+              const on = filters.clubs.includes(c.short);
+              return (
+                <button key={c.id} className="chip small" aria-pressed={on} title={c.name}
+                  onClick={() => update({ clubs: on ? filters.clubs.filter((s) => s !== c.short) : [...filters.clubs, c.short] })}>
+                  {c.short}
+                </button>
+              );
+            })}
+            {filters.clubs.length > 0 && <button className="linkish" onClick={() => update({ clubs: [] })}>Clear clubs</button>}
+          </div>
+        </div>
+      </details>
+
+      <div className="groups" role="group" aria-label="Column group">
+        {GROUP_KEYS.map((g) => (
+          <button key={g} aria-pressed={filters.group === g}
+            onClick={() => update(GROUPS[g].some((c) => c.id === filters.sort) || FIXED_COLUMNS.some((c) => c.id === filters.sort)
+              ? { group: g } : { group: g, sort: "epNext", desc: true })}>
+            {g}
+          </button>
+        ))}
+      </div>
+
+      <div className="table-box">
+        <table>
+          <thead>
+            {table.getHeaderGroups().map((hg) => (
+              <tr key={hg.id}>
+                {hg.headers.map((h) => {
+                  const sortable = h.column.getCanSort() && h.column.id !== "player";
+                  const dir = h.column.getIsSorted();
+                  return (
+                    <th key={h.id} scope="col"
+                      aria-sort={!sortable ? undefined : dir === "desc" ? "descending" : dir === "asc" ? "ascending" : "none"}
+                      tabIndex={sortable ? 0 : undefined}
+                      onClick={sortable ? h.column.getToggleSortingHandler() : undefined}
+                      onKeyDown={sortable ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); h.column.toggleSorting(); } } : undefined}>
+                      {flexRender(h.column.columnDef.header, h.getContext())}
+                    </th>
+                  );
+                })}
+              </tr>
+            ))}
+          </thead>
+          <tbody>
+            {table.getRowModel().rows.map((row) => (
+              <Fragment key={row.id}>
+                <tr>
+                  {row.getVisibleCells().map((cell) => {
+                    const meta = cell.column.columnDef.meta as StatColumn | undefined;
+                    const isNull = meta ? meta.value(row.original) === null : false;
+                    return (
+                      <td key={cell.id} className={[meta?.strong ? "num-strong" : "", isNull ? "null" : ""].join(" ").trim() || undefined}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    );
+                  })}
+                </tr>
+                {openNews === row.original.id && (
+                  <tr>
+                    <td className="news-row" colSpan={row.getVisibleCells().length}>
+                      {row.original.news || "No news text."}
+                      {row.original.newsAdded && <span className="pmeta"> · {ago(ageHours(row.original.newsAdded, now))}</span>}
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="subrow">
+        <span>{rows.length} players</span>
+        <span>Tap a column header to sort</span>
+      </div>
+    </section>
+  );
+}
