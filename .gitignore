@@ -19,3 +19,9 @@ Thumbs.db
 
 # Claude Code personal settings (shared settings in .claude/settings.json are fine to commit)
 .claude/settings.local.json
+
+# Node / TypeScript (spec 0002)
+node_modules/
+dist/
+.vercel/
+*.tsbuildinfo
