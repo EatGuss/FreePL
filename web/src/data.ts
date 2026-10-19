@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { PlayersResponse } from "@freepl/contract";
+import type { PlayersResponse } from "@freepl/contract";
 import { useEffect, useState } from "react";
 
 /** The browser's HTTP cache sends If-None-Match, so a repeat load is a 304. */
@@ -9,7 +9,9 @@ export function usePlayers() {
     queryFn: async () => {
       const res = await fetch("/api/players");
       if (!res.ok) throw new Error(`API returned ${res.status}`);
-      return PlayersResponse.parse(await res.json());
+      // The server parsed and validated this against the contract; re-parsing ~700 rows
+      // here would only cost load time.
+      return (await res.json()) as PlayersResponse;
     },
     staleTime: 60_000,
     refetchOnWindowFocus: true,
