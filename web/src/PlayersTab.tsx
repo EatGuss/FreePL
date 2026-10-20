@@ -56,7 +56,9 @@ export function PlayersTab({ data, filters, update, now }: {
   );
 
   const sortId = statColumns.some((c) => c.id === shown.sort) ? shown.sort : "epNext";
-  const sorting: SortingState = [{ id: sortId, desc: shown.desc }];
+  // Must keep its identity between renders: TanStack re-sorts whenever this array changes and
+  // each re-sort queues a page reset (a state update), so a fresh array per render loops forever.
+  const sorting: SortingState = useMemo(() => [{ id: sortId, desc: shown.desc }], [sortId, shown.desc]);
 
   const table = useReactTable({
     data: rows,
@@ -70,6 +72,8 @@ export function PlayersTab({ data, filters, update, now }: {
       else update({ sort: s.id, desc: s.desc });
     },
     enableSortingRemoval: false,
+    // No pagination here; never queue page-index resets.
+    autoResetAll: false,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
   });
