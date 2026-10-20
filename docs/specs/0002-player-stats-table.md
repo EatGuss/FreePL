@@ -266,26 +266,29 @@ Tapping a column header sorts it; tapping again reverses.
 
 ## Acceptance criteria
 
-- [ ] Every numeric column sorts both directions, nulls last, and sorting 700 rows is
+Ticked 2026-10-20. Still open: the backfill check, the snapshot-offline amber/red check and
+the next-snapshot check (rollout step 7).
+
+- [x] Every numeric column sorts both directions, nulls last, and sorting 700 rows is
       visually instant.
-- [ ] A string-numeric field set to `null` renders as empty and sorts last — never as `0`.
-- [ ] `now_cost: 75` renders as `£7.5m`. No float appears anywhere between Postgres and
+- [x] A string-numeric field set to `null` renders as empty and sorts last — never as `0`.
+- [x] `now_cost: 75` renders as `£7.5m`. No float appears anywhere between Postgres and
       the render call.
-- [ ] `ep_next` is present and sortable.
-- [ ] Positions render from `element_types`; no position name is hardcoded.
-- [ ] A fresh browser load transfers under 100 KB gzipped for `/api/players`.
-- [ ] A reload with an unchanged snapshot returns `304`, and the freshness line still
+- [x] `ep_next` is present and sortable.
+- [x] Positions render from `element_types`; no position name is hardcoded.
+- [x] A fresh browser load transfers under 100 KB gzipped for `/api/players`.
+- [x] A reload with an unchanged snapshot returns `304`, and the freshness line still
       shows the correct, increasing age.
 - [ ] A `backfill` `bootstrap-static` row newer than every other row changes nothing.
-- [ ] `freepl_reader` cannot `INSERT` into `api_snapshots` (verify once, by hand).
+- [x] `freepl_reader` cannot `INSERT` into `api_snapshots` (verify once, by hand).
 - [ ] Taking the snapshot job offline leaves the table working and the freshness line
       visibly amber then red. No fallback fetch to the FPL API occurs — verify by network log.
-- [ ] `server/`, `api/` and `web/` make zero requests to `fantasy.premierleague.com`.
-- [ ] The built web bundle contains neither `DATABASE_URL`'s value nor any Neon hostname.
-- [ ] Doubtful players show with a warning; `i`/`s`/`u`/`n` are hidden until "show
+- [x] `server/`, `api/` and `web/` make zero requests to `fantasy.premierleague.com`.
+- [x] The built web bundle contains neither `DATABASE_URL`'s value nor any Neon hostname.
+- [x] Doubtful players show with a warning; `i`/`s`/`u`/`n` are hidden until "show
       unavailable"; injury watch lists all of them, newest news first.
-- [ ] Usable one-handed at 390px: name column stays pinned through horizontal scroll.
-- [ ] Filter state survives a page refresh via the URL.
+- [x] Usable one-handed at 390px: name column stays pinned through horizontal scroll.
+- [x] Filter state survives a page refresh via the URL.
 - [ ] After the next scheduled snapshot lands, the page reflects it within 60s of a reload.
 
 ## Rollout
@@ -302,7 +305,9 @@ Tapping a column header sorts it; tapping again reverses.
 4. *Done 2026-10-20:* real data, every Players control responsive after the re-render loop fix.
    `web/` locally. Build the table against the live local API, not fixtures.
 5. *Done 2026-10-19 (PR #11):* Add `ci.yml`; confirm it passes on the PR.
-6. Deploy to Vercel. Grep the built bundle for secrets. Check on an actual phone, at a
+6. *Done 2026-10-20:* live at free-pl.vercel.app; `/api/health` ok; reload is a 0.1 KB `304`;
+   checked on a phone on mobile data; CI greps the bundle on every PR.
+   Deploy to Vercel. Grep the built bundle for secrets. Check on an actual phone, at a
    deadline-ish hour, on mobile data.
 7. Confirm the morning after a scheduled snapshot that the new `capturedAt` appears.
 
