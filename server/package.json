@@ -2,9 +2,12 @@
   "name": "server",
   "private": true,
   "type": "module",
-  "exports": { ".": "./src/index.ts" },
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "dev": "tsx watch --env-file=.env src/dev.ts",
+    "build": "vite build",
     "check:contract": "tsx --env-file=.env scripts/check-contract.ts",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run"
@@ -19,6 +22,7 @@
     "@types/node": "22.20.5",
     "tsx": "4.23.15",
     "typescript": "5.9.3",
-    "vitest": "3.2.7"
+    "vitest": "3.2.7",
+    "vite": "7.3.7"
   }
 }

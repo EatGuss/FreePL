@@ -7,9 +7,9 @@
     "node": ">=22 <23"
   },
   "scripts": {
-    "typecheck": "pnpm -r --if-present typecheck && tsc -p api",
+    "typecheck": "pnpm -r --if-present typecheck",
     "test": "pnpm -r --if-present test",
-    "build": "pnpm --filter web build",
+    "build": "pnpm --filter server build && pnpm --filter web build",
     "dev:server": "pnpm --filter server dev",
     "dev:web": "pnpm --filter web dev",
     "check:contract": "pnpm --filter server check:contract"
@@ -18,13 +18,5 @@
     "onlyBuiltDependencies": [
       "esbuild"
     ]
-  },
-  "dependencies": {
-    "hono": "4.13.13",
-    "server": "workspace:*"
-  },
-  "devDependencies": {
-    "@types/node": "22.20.5",
-    "typescript": "5.9.3"
   }
 }

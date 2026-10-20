@@ -39,7 +39,7 @@ requirements.txt                       httpx, psycopg[binary], python-dotenv —
 package.json, pnpm-workspace.yaml      pnpm workspace root (Node 22, see .nvmrc); tsconfig.base.json
 packages/contract/                     zod schemas + types, shared by server/ and web/; ships to the browser
 server/                                Hono app, platform-agnostic; reads the views as freepl_reader
-api/index.ts, vercel.json              the one Vercel function mounting server/; rewrites /api/*
+api/index.js, vercel.json              the one Vercel function (re-exports the server/dist bundle); rewrites /api/*
 web/                                   Vite + React + Tailwind app (spec 0002 Players, Injury watch)
 .github/workflows/ci.yml               on pull_request: install, typecheck, test, build
 docs/                                  human-facing docs; read on demand, not always
@@ -56,7 +56,7 @@ workflow via a deploy key. This repo is public — raw FPL payloads never go in 
 
 - Python 3.12 for ingestion. TypeScript (Node 22, pnpm, Hono, zod, postgres.js, Vite, React,
   Tailwind, TanStack Table/Query) for the app; the approved package list is in spec 0002.
-- Vercel Hobby hosts `web/` and the API (`api/index.ts`). Python never runs there.
+- Vercel Hobby hosts `web/` and the API (`api/index.js` → `server/dist/vercel.js`, built by `pnpm build`). Python never runs there.
 - Postgres on Neon free tier (0.5 GB storage, 100 CU-hours/month). Pooled connection string via `DATABASE_URL`.
 - GitHub Actions for scheduling. No Airflow, no ORMs, no migration runner yet.
 
