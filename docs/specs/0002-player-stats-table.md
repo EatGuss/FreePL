@@ -31,7 +31,7 @@ specs 0003–0005 bolt onto. Conventions set here are binding on those.
 pnpm-workspace.yaml, package.json, .nvmrc   pnpm workspaces, Node 22 LTS
 packages/contract/         zod schemas + inferred TS types; the single column list
 server/                    Hono app, platform-agnostic
-api/index.ts               the only file in api/: mounts server/ as one Vercel Node function
+api/index.js               the only file in api/: re-exports server/dist/vercel.js as one Vercel function
 vercel.json                rewrites /api/(.*) → /api; serves web/dist
 web/                       Vite + React + Tailwind + shadcn + TanStack Table + TanStack Query
 db/views/0002_current.sql  hand-applied in the Neon SQL editor, like the migrations
@@ -41,8 +41,11 @@ db/roles/0002_reader.sql   hand-applied; creates freepl_reader (no password in t
 
 **Why `server/` and not `api/`:** Vercel turns every file under a top-level `api/` into a
 separate function. The Hono app lives in `server/`; `api/` holds one adapter file,
-`api/index.ts`, and `vercel.json` rewrites every `/api/*` path to it (a catch-all filename
+`api/index.js`, and `vercel.json` rewrites every `/api/*` path to it (a catch-all filename
 like `[[...route]].ts` is a Next.js convention, not reliable for a plain Vercel function).
+Vercel compiles `api/` but not the TypeScript it imports from workspace packages (found on
+the first deploy: `ERR_MODULE_NOT_FOUND …/server/src/index.ts`), so `pnpm build` first
+bundles `server/src/vercel.ts` with Vite into one self-contained `server/dist/vercel.js`.
 Moving to Fly.io later means deleting `api/` and `vercel.json`.
 
 Hosting: **Vercel Hobby**, one project serving `web/` and mounting the API at `/api`.
