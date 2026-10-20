@@ -294,8 +294,10 @@ Tapping a column header sorts it; tapping again reverses.
    `select captured_at from latest_bootstrap` matches the newest non-backfill row.
 2. *Done 2026-10-19:* 668 players, 20 Clubs, 4 positions, 38 gameweeks, 0 parse failures,
    73 KB gzipped. Build `packages/contract`. Run the real-payload check script; confirm zero parse failures.
-3. `server/` locally against Neon as `freepl_reader`. Verify `304` and the cache-key query cost.
-4. `web/` locally. Build the table against the live local API, not fixtures.
+3. *Done 2026-10-19:* `200` with ETag and Cache-Control, matching `If-None-Match` → `304`.
+   `server/` locally against Neon as `freepl_reader`. Verify `304` and the cache-key query cost.
+4. *Done 2026-10-20:* real data, every Players control responsive after the re-render loop fix.
+   `web/` locally. Build the table against the live local API, not fixtures.
 5. *Done 2026-10-19 (PR #11):* Add `ci.yml`; confirm it passes on the PR.
 6. Deploy to Vercel. Grep the built bundle for secrets. Check on an actual phone, at a
    deadline-ish hour, on mobile data.
