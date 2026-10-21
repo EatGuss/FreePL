@@ -138,8 +138,9 @@ window change for no benefit.
 - Double gameweek cells split, showing both opponents.
 - Blank cells are explicitly marked blank, not left empty — empty reads as a render bug.
 - Freshness line as above.
-- Mobile: Club column pinned, gameweek columns scroll horizontally. Six columns of
-  three-letter opponents fits 390px.
+- Mobile: Club column pinned (three-letter code; full name on long-press), gameweek columns
+  scroll horizontally. At 390px about five gameweeks show beside Club and Avg; the rest
+  scroll in.
 
 ## Rollout
 

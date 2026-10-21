@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import type { PlayersResponse } from "@freepl/contract";
+import type { FixturesResponse, PlayersResponse } from "@freepl/contract";
 import { useEffect, useState } from "react";
 
 /** The browser's HTTP cache sends If-None-Match, so a repeat load is a 304. */
@@ -13,6 +13,21 @@ export function usePlayers() {
       // here would only cost load time.
       return (await res.json()) as PlayersResponse;
     },
+    staleTime: 60_000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+/** Fixtures for the Fixtures tab (spec 0003); fetched only once that tab is opened. */
+export function useFixtures(enabled: boolean) {
+  return useQuery({
+    queryKey: ["fixtures"],
+    queryFn: async () => {
+      const res = await fetch("/api/fixtures");
+      if (!res.ok) throw new Error(`API returned ${res.status}`);
+      return (await res.json()) as FixturesResponse;
+    },
+    enabled,
     staleTime: 60_000,
     refetchOnWindowFocus: true,
   });
