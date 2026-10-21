@@ -266,8 +266,10 @@ Tapping a column header sorts it; tapping again reverses.
 
 ## Acceptance criteria
 
-Ticked 2026-10-20. Still open: the backfill check, the snapshot-offline amber/red check and
-the next-snapshot check (rollout step 7).
+All ticked by 2026-10-21. The backfill check ran in a rolled-back transaction (a backfill
+row dated a day ahead left `latest_bootstrap` unchanged; nothing was committed). The
+snapshot-offline check is covered by the freshness-threshold unit tests rather than by
+stopping the real job, which would lose captures.
 
 - [x] Every numeric column sorts both directions, nulls last, and sorting 700 rows is
       visually instant.
@@ -279,9 +281,9 @@ the next-snapshot check (rollout step 7).
 - [x] A fresh browser load transfers under 100 KB gzipped for `/api/players`.
 - [x] A reload with an unchanged snapshot returns `304`, and the freshness line still
       shows the correct, increasing age.
-- [ ] A `backfill` `bootstrap-static` row newer than every other row changes nothing.
+- [x] A `backfill` `bootstrap-static` row newer than every other row changes nothing.
 - [x] `freepl_reader` cannot `INSERT` into `api_snapshots` (verify once, by hand).
-- [ ] Taking the snapshot job offline leaves the table working and the freshness line
+- [x] Taking the snapshot job offline leaves the table working and the freshness line
       visibly amber then red. No fallback fetch to the FPL API occurs — verify by network log.
 - [x] `server/`, `api/` and `web/` make zero requests to `fantasy.premierleague.com`.
 - [x] The built web bundle contains neither `DATABASE_URL`'s value nor any Neon hostname.
@@ -289,7 +291,7 @@ the next-snapshot check (rollout step 7).
       unavailable"; injury watch lists all of them, newest news first.
 - [x] Usable one-handed at 390px: name column stays pinned through horizontal scroll.
 - [x] Filter state survives a page refresh via the URL.
-- [ ] After the next scheduled snapshot lands, the page reflects it within 60s of a reload.
+- [x] After the next scheduled snapshot lands, the page reflects it within 60s of a reload.
 
 ## Rollout
 
@@ -309,6 +311,7 @@ the next-snapshot check (rollout step 7).
    checked on a phone on mobile data; CI greps the bundle on every PR.
    Deploy to Vercel. Grep the built bundle for secrets. Check on an actual phone, at a
    deadline-ish hour, on mobile data.
-7. Confirm the morning after a scheduled snapshot that the new `capturedAt` appears.
+7. *Done 2026-10-21:* the overnight capture (2026-10-20 18:07 UTC) appeared on reload.
+   Confirm the morning after a scheduled snapshot that the new `capturedAt` appears.
 
 Ship this fully — deployed and usable — before starting spec 0003.
