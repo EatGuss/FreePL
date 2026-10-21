@@ -29,6 +29,10 @@ over this file — verify against a live payload before hardcoding anything.
 - Deadlines **move** — international breaks, midweek rounds, reschedules. Always read `deadline_time`; never assume a weekday or time.
 - A GW is fully settled (bonus confirmed) when `finished` **and** `data_checked` are both true.
 - Blank gameweek: a team has no fixture. Double gameweek: a team has two. Detectable from `fixtures/` grouped by `event`; fixtures can also have `event: null` while unscheduled.
+- Fixture difficulty: `team_h_difficulty` is the difficulty **for the home team** (how hard
+  its opponent is), `team_a_difficulty` the same for the away team; integers 1 (easy) to 5
+  (hard). Verified 2026-10-21: a strong Club at home rated 2 while its visitor rated 5. Read
+  only through `difficultyFor` (spec 0003).
 
 ## Transfers
 
