@@ -6,7 +6,10 @@ optimiser, logged before each deadline, with a public scorecard.
 
 ## Current phase
 
-**Spec 0003: the fixture difficulty ticker.** Spec: `docs/specs/0003-fixture-difficulty-ticker.md`.
+**Next: choose between spec 0004 (Entry view) and 0005 (pick rating); both are drafts.**
+
+Spec 0003 (fixture difficulty ticker) **shipped** 2026-10-21; its double/blank check waits for
+FPL to publish one.
 
 Spec 0002 (stats table, contract, `server/`, `web/`, Vercel) is **done** as of 2026-10-21:
 live at free-pl.vercel.app, every acceptance criterion ticked.
@@ -21,7 +24,7 @@ Order of work:
 | Spec | What | Status |
 | --- | --- | --- |
 | `0002-player-stats-table.md` | Stats table + injury watch; stands up contract, `server/`, `web/`, Vercel | done |
-| `0003-fixture-difficulty-ticker.md` | Club × gameweek difficulty grid | **current** |
+| `0003-fixture-difficulty-ticker.md` | Club × gameweek difficulty grid | done (DGW/BGW check pending) |
 | `0004-entry-view.md` | Current Squad, sell prices, FTs, chips, transfer what-if (ADR 0003) | draft |
 | `0005-pick-rating.md` | Best/Great/Good/OK band per player within position | draft |
 | `0006-shortlist-and-saved-plans.md` | Starred players and transfer plans, kept in the URL | draft |
