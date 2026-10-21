@@ -48,3 +48,11 @@ export function player(overrides: Partial<RawPlayer> = {}): RawPlayer {
 export function bootstrap(players: RawPlayer[] = [player()]): RawBootstrapRows {
   return { capturedAt: new Date("2030-08-20T09:00:00Z"), players, clubs, gameweeks, positions };
 }
+
+export function rawFixture(overrides: Partial<import("../src/index.js").RawFixture> = {}): import("../src/index.js").RawFixture {
+  return {
+    id: 1, event: 2, team_h: 1, team_a: 2, team_h_difficulty: 2, team_a_difficulty: 4,
+    kickoff_time: "2030-08-23T14:00:00Z", provisional_start_time: false, finished: false,
+    ...overrides,
+  };
+}

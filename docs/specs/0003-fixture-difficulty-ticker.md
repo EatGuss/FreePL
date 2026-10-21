@@ -1,6 +1,6 @@
 # Spec 0003 — Fixture difficulty ticker
 
-Status: draft · hardens once spec 0002 ships and its conventions are real
+Status: **current** · spec 0002 shipped 2026-10-21; decisions from review 2026-10-21 (Q62–Q69) below
 Depends on spec 0002 (contract package, API shape, table/mobile patterns)
 
 ## Goal
@@ -89,7 +89,9 @@ Per Club, over the visible window:
 - `difficultySum` — sum over all fixtures in the window
 - `difficultyMean` — `difficultySum / fixtureCount`, null when count is 0
 
-Sort options: mean ascending, sum ascending, count descending. **No blank penalty, no
+Sort options: mean ascending, sum ascending, count descending. **Default: mean ascending**
+(easiest run first, so the tab answers "who has the best run" on open); ties by more
+fixtures first, then Club name. Clubs with no fixture in the window (mean null) sort last. **No blank penalty, no
 imputation.** A blank is a missing observation, not a hard fixture; inventing a number for
 it makes the sort lie. Showing count alongside mean is what lets the reader weigh it.
 
@@ -120,15 +122,34 @@ window change for no benefit.
 
 ## Rendering
 
-- Rows are Clubs, pinned left as the stats table pins player name.
+- Its own **Fixtures** tab, between Players and Injury watch (tab order in spec 0002).
+- Rows are Clubs, pinned left as the stats table pins player name. Next to it a narrow
+  **Avg** column showing the mean with the fixture count beneath ("2.4 / 6 fx"), so the sort
+  value sits beside the name on a phone; then the gameweek columns.
+- Gameweek headers: "GW9" with the deadline day beneath ("Sat 25"), local time, from the
+  response's `gameweeks`.
+- Colours and the cell component are the existing `--fdr1`…`--fdr5` tokens and fixture cell
+  in `docs/design.md`, shared with spec 0005's Picks.
+- Provisional fixtures: same fill, dotted border, small "TBC" (`docs/design.md`).
+- Cells are not tappable in v1; a kick-off-time sheet can come later.
 - Five-band colour scale over difficulty 1–5, legible in both themes, and **not** carrying
   meaning by colour alone — the cell shows the opponent's short name and a home/away
   indicator as text.
 - Double gameweek cells split, showing both opponents.
 - Blank cells are explicitly marked blank, not left empty — empty reads as a render bug.
 - Freshness line as above.
-- Mobile: Club column pinned, gameweek columns scroll horizontally. Six columns of
-  three-letter opponents fits 390px.
+- Mobile: Club column pinned (three-letter code; full name on long-press), gameweek columns
+  scroll horizontally. At 390px about five gameweeks show beside Club and Avg; the rest
+  scroll in.
+
+## Rollout
+
+1. Confirm the 2026/27 `fixtures` field names against a real capture (read-only query).
+2. `db/views/0003_fixtures.sql`: `latest_fixtures`, `current_fixtures`, `select` granted to
+   `freepl_reader`. Applied by hand in the Neon SQL editor, like 0002.
+3. Contract (`difficultyFor`, cell model, aggregates), `GET /api/fixtures`, the Fixtures tab.
+4. Local check against real data (doubles/blanks against the official schedule), then
+   deploy; one PR.
 
 ## Testing
 

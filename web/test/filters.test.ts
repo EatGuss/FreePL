@@ -42,6 +42,14 @@ describe("URL state", () => {
     const f = { ...DEFAULT_FILTERS, tab: "injury" as const, pos: "DEF", clubs: ["AAA", "BBB"], maxPrice: 80, minMinutes: 270, q: "x", showOut: true, group: "Attack" as const, sort: "xG", desc: false };
     expect(filtersFromSearch(filtersToSearch(f))).toEqual(f);
   });
+  it("keeps the Fixtures tab's window and sort in the URL, clamped to 3–10", () => {
+    const f = { ...DEFAULT_FILTERS, tab: "fixtures" as const, window: 8, tickerSort: "count" as const };
+    expect(filtersToSearch(f)).toBe("?tab=fixtures&gws=8&fsort=count");
+    expect(filtersFromSearch(filtersToSearch(f))).toEqual(f);
+    expect(filtersFromSearch("?gws=40").window).toBe(10);
+    expect(filtersFromSearch("?gws=1").window).toBe(3);
+    expect(filtersFromSearch("?fsort=nope&tab=nope")).toEqual(DEFAULT_FILTERS);
+  });
   it("ignores junk values", () => {
     expect(filtersFromSearch("?maxp=abc&group=Nope&mins=-5")).toEqual(DEFAULT_FILTERS);
   });

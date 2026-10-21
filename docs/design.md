@@ -54,7 +54,7 @@ distinguished by hue (blue), not by being louder.
 ## Components
 
 **Tab bar.** Text tabs with a 3px accent underline on the selected one. Order: My squad,
-Picks, Players, Injury watch (count badge in red).
+Picks, Players, Fixtures, Injury watch (count badge in red).
 
 **Freshness line.** Dot + "Data as of …, n hours ago"; green / amber / red per the contract
 thresholds.
@@ -66,6 +66,13 @@ grey stripe and the reason.
 
 **Fixture cell.** Small rounded chip, opponent short name + H/A, filled with `--fdr{n}`.
 Doubles stack two chips in one cell; blanks are a dashed "Blank" chip, never an empty cell.
+A provisional fixture (kick-off not confirmed) keeps its fill but gets a dotted border and a
+small "TBC", so it reads without colour; it still fits stacked in a double.
+
+**Fixtures grid.** Club pinned left; then a narrow "Avg" column with the fixture count
+under it ("2.4 / 6 fx"); then one column per gameweek, headed "GW9" with the deadline day
+underneath ("Sat 25", local time), scrolling sideways. Cells are fixture cells as above.
+Cells are not tappable in v1.
 
 **Player cell.** Line 1: name, then flags (amber "75%", red "INJ"/"SUS"/"OUT") and tags
 ("In squad", "C", "V", "Bench 1", "Planned"). Line 2: band word · Club · price. Pinned left

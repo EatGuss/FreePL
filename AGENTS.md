@@ -6,7 +6,10 @@ optimiser, logged before each deadline, with a public scorecard.
 
 ## Current phase
 
-**Spec 0002: the player stats table.** Spec: `docs/specs/0002-player-stats-table.md`.
+**Spec 0003: the fixture difficulty ticker.** Spec: `docs/specs/0003-fixture-difficulty-ticker.md`.
+
+Spec 0002 (stats table, contract, `server/`, `web/`, Vercel) is **done** as of 2026-10-21:
+live at free-pl.vercel.app, every acceptance criterion ticked.
 
 Task 0 (spec 0001, the snapshot job) is **done** as of 2026-10-17: hourly runs green since
 2026-10-14, healthchecks pinging, and the first deadline capture (GW7) verified in Neon.
@@ -17,8 +20,8 @@ Order of work:
 
 | Spec | What | Status |
 | --- | --- | --- |
-| `0002-player-stats-table.md` | Stats table + injury watch; stands up contract, `server/`, `web/`, Vercel | **current** |
-| `0003-fixture-difficulty-ticker.md` | Club × gameweek difficulty grid | draft |
+| `0002-player-stats-table.md` | Stats table + injury watch; stands up contract, `server/`, `web/`, Vercel | done |
+| `0003-fixture-difficulty-ticker.md` | Club × gameweek difficulty grid | **current** |
 | `0004-entry-view.md` | Current Squad, sell prices, FTs, chips, transfer what-if (ADR 0003) | draft |
 | `0005-pick-rating.md` | Best/Great/Good/OK band per player within position | draft |
 | `0006-shortlist-and-saved-plans.md` | Starred players and transfer plans, kept in the URL | draft |

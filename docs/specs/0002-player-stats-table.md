@@ -220,6 +220,7 @@ client concerns; keeping them there is what makes the table feel instant.
 | **My squad** | The Entry's Squad, pitch and list views, what-if | spec 0004 — the landing tab from then on |
 | **Picks** | One table per position of rated players, rows coloured by band, next 3 fixtures | spec 0005 |
 | **Players** | The full sortable table below | this spec |
+| **Fixtures** | Club × gameweek difficulty grid | spec 0003 |
 | **Injury watch** | Every flagged player, newest news first | this spec |
 
 **Landing tab** follows the build order: Players (this spec) → Picks (when spec 0005
