@@ -1,16 +1,21 @@
 import { describe, expect, it, vi } from "vitest";
-import { PlayersResponse, type RawBootstrapRows } from "@freepl/contract";
+import { FixturesResponse, PlayersResponse, type RawBootstrapRows } from "@freepl/contract";
 import { createApp, etagMatches } from "../src/app.js";
 import type { Repo } from "../src/repo.js";
-import { bootstrap, player } from "@freepl/contract/test-fixtures";
+import { bootstrap, player, rawFixture } from "@freepl/contract/test-fixtures";
 
 function fakeRepo(rows: RawBootstrapRows = bootstrap()) {
-  const state = { rows, reads: 0 };
+  const state = { rows, reads: 0, fixturesAt: new Date("2030-08-20T08:00:00Z"), fixtures: [rawFixture()] as unknown[], fixtureReads: 0 };
   const repo: Repo = {
     latestCapturedAt: async () => state.rows.capturedAt as Date,
     bootstrapRows: async () => {
       state.reads++;
       return state.rows;
+    },
+    latestFixturesCapturedAt: async () => state.fixturesAt,
+    fixturesRows: async () => {
+      state.fixtureReads++;
+      return { bootstrap: state.rows, fixturesCapturedAt: state.fixturesAt, fixtures: state.fixtures };
     },
   };
   return { repo, state };
@@ -65,10 +70,10 @@ describe("GET /api/players", () => {
 
   it("never leaks a database error message", async () => {
     const repo: Repo = {
+      ...fakeRepo().repo,
       latestCapturedAt: async () => {
         throw new Error("connect to postgres://reader:secret@ep-test.neon.tech failed");
       },
-      bootstrapRows: async () => bootstrap(),
     };
     const res = await createApp(repo, silent).request("/api/players");
     expect(res.status).toBe(500);
@@ -76,7 +81,7 @@ describe("GET /api/players", () => {
   });
 
   it("returns 503 when there is no capture yet", async () => {
-    const repo: Repo = { latestCapturedAt: async () => null, bootstrapRows: async () => bootstrap() };
+    const repo: Repo = { ...fakeRepo().repo, latestCapturedAt: async () => null };
     expect((await createApp(repo, silent).request("/api/players")).status).toBe(503);
   });
 });
@@ -103,5 +108,42 @@ describe("etagMatches", () => {
     expect(etagMatches(undefined, tag)).toBe(false);
     expect(etagMatches("2030-08-20T09:00:00.000Z", tag)).toBe(false);
     expect(etagMatches('"2030-08-20T20:00:00.000Z"', tag)).toBe(false);
+  });
+});
+
+describe("GET /api/fixtures", () => {
+  const both = '"2030-08-20T09:00:00.000Z|2030-08-20T08:00:00.000Z"';
+
+  it("returns the normalised fixtures with an ETag built from both captures", async () => {
+    const res = await createApp(fakeRepo().repo, silent).request("/api/fixtures");
+    expect(res.status).toBe(200);
+    expect(res.headers.get("ETag")).toBe(both);
+    expect(res.headers.get("Cache-Control")).toBe("public, max-age=60, stale-while-revalidate=600");
+    const body = FixturesResponse.parse(await res.json());
+    expect(body.fixtures[0]).toMatchObject({ gameweek: 2, homeClubId: 1, awayClubId: 2 });
+    expect(body.meta.sources.fixtures.capturedAt).toBe("2030-08-20T08:00:00.000Z");
+  });
+
+  it("answers 304 on a match and rebuilds when either capture changes", async () => {
+    const { repo, state } = fakeRepo();
+    const app = createApp(repo, silent);
+    expect((await app.request("/api/fixtures", { headers: { "If-None-Match": both } })).status).toBe(304);
+    expect(state.fixtureReads).toBe(0);
+    await app.request("/api/fixtures");
+    await app.request("/api/fixtures");
+    expect(state.fixtureReads).toBe(1);
+    state.fixturesAt = new Date("2030-08-21T08:00:00Z");
+    const res = await app.request("/api/fixtures");
+    expect(state.fixtureReads).toBe(2);
+    expect(res.headers.get("ETag")).toBe('"2030-08-20T09:00:00.000Z|2030-08-21T08:00:00.000Z"');
+  });
+
+  it("returns 503 before the first fixtures capture and a generic 500 on bad rows", async () => {
+    const { repo, state } = fakeRepo();
+    expect((await createApp({ ...repo, latestFixturesCapturedAt: async () => null }, silent).request("/api/fixtures")).status).toBe(503);
+    state.fixtures = [rawFixture({ team_a: 9 })];
+    const res = await createApp(repo, silent).request("/api/fixtures");
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ error: "Something went wrong" });
   });
 });

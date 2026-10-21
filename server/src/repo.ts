@@ -1,5 +1,5 @@
 import postgres from "postgres";
-import type { RawBootstrapRows } from "@freepl/contract";
+import type { RawBootstrapRows, RawFixturesRows } from "@freepl/contract";
 
 /** Everything the API reads. Implemented over the views; faked in tests. */
 export interface Repo {
@@ -7,6 +7,10 @@ export interface Repo {
   latestCapturedAt(): Promise<Date | string | null>;
   /** All four views, read in one snapshot so the rows and capturedAt agree. */
   bootstrapRows(): Promise<RawBootstrapRows>;
+  /** captured_at of latest_fixtures, or null if there is no fixtures capture yet. */
+  latestFixturesCapturedAt(): Promise<Date | string | null>;
+  /** Fixtures plus the bootstrap Clubs and gameweeks they refer to, in one snapshot. */
+  fixturesRows(): Promise<RawFixturesRows>;
 }
 
 /**
@@ -35,6 +39,33 @@ export function createPgRepo(databaseUrl: string): Repo & { end(): Promise<void>
           clubs: [...clubs],
           gameweeks: [...gameweeks],
           positions: [...positions],
+        };
+      });
+    },
+    async latestFixturesCapturedAt() {
+      const rows = await sql<{ captured_at: Date }[]>`select captured_at from latest_fixtures`;
+      return rows[0]?.captured_at ?? null;
+    },
+    async fixturesRows() {
+      return sql.begin("isolation level repeatable read read only", async (tx) => {
+        const [bLatest, fLatest, clubs, gameweeks, positions, fixtures] = await Promise.all([
+          tx<{ captured_at: Date }[]>`select captured_at from latest_bootstrap`,
+          tx<{ captured_at: Date }[]>`select captured_at from latest_fixtures`,
+          tx`select * from current_clubs`,
+          tx`select * from current_gameweeks`,
+          tx`select * from current_positions`,
+          tx`select * from current_fixtures`,
+        ]);
+        return {
+          bootstrap: {
+            capturedAt: bLatest[0]?.captured_at ?? null,
+            players: [],
+            clubs: [...clubs],
+            gameweeks: [...gameweeks],
+            positions: [...positions],
+          },
+          fixturesCapturedAt: fLatest[0]?.captured_at ?? null,
+          fixtures: [...fixtures],
         };
       });
     },

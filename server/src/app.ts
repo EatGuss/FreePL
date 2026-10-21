@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { ageHours, buildPlayersResponse } from "@freepl/contract";
+import { ageHours, buildFixturesResponse, buildPlayersResponse } from "@freepl/contract";
 import type { Repo } from "./repo.js";
 
 type Log = (message: string, err?: unknown) => void;
@@ -22,41 +22,69 @@ export function etagMatches(header: string | undefined, etag: string): boolean {
   });
 }
 
+interface Cached {
+  key: string;
+  body: string;
+}
+
 /**
- * The Hono app, platform-agnostic: api/index.ts mounts it on Vercel, src/dev.ts locally.
- * Caching per ADR 0002: the key is latest_bootstrap.captured_at; the parsed, serialised
- * body is memoised per key (best effort on serverless — ETag/304 and the edge do the rest).
+ * The Hono app, platform-agnostic: api/index.js mounts it on Vercel, src/dev.ts locally.
+ * Caching per ADR 0002: each route's key is the captured_at of the capture(s) it serves; the
+ * parsed, serialised body is memoised per key (best effort on serverless — ETag/304 and the
+ * edge do the rest).
  */
 export function createApp(repo: Repo, log: Log = defaultLog) {
-  let cache: { key: string; body: string } | null = null;
-  let building: Promise<{ key: string; body: string }> | null = null;
-
-  async function build(): Promise<{ key: string; body: string }> {
-    const response = buildPlayersResponse(await repo.bootstrapRows());
-    return { key: response.meta.sources.bootstrap.capturedAt, body: JSON.stringify(response) };
-  }
-
   const app = new Hono().basePath("/api");
 
-  app.get("/players", async (c) => {
-    const latest = await repo.latestCapturedAt();
-    if (latest === null) return c.json({ error: "No data yet" }, 503);
-    const key = toIso(latest);
-    const etag = `"${key}"`;
-
-    if (etagMatches(c.req.header("If-None-Match"), etag)) {
-      return c.body(null, 304, { ETag: etag, "Cache-Control": CACHE_CONTROL });
-    }
-    if (cache?.key !== key) {
-      building ??= build().finally(() => (building = null));
-      cache = await building;
-    }
-    return c.body(cache.body, 200, {
-      "Content-Type": "application/json; charset=utf-8",
-      ETag: `"${cache.key}"`,
-      "Cache-Control": CACHE_CONTROL,
+  /** A JSON route served from memory while its key is unchanged, with ETag and 304. */
+  function cachedJson(path: string, currentKey: () => Promise<string | null>, build: () => Promise<Cached>) {
+    let cache: Cached | null = null;
+    let building: Promise<Cached> | null = null;
+    app.get(path, async (c) => {
+      const key = await currentKey();
+      if (key === null) return c.json({ error: "No data yet" }, 503);
+      const etag = `"${key}"`;
+      if (etagMatches(c.req.header("If-None-Match"), etag)) {
+        return c.body(null, 304, { ETag: etag, "Cache-Control": CACHE_CONTROL });
+      }
+      if (cache?.key !== key) {
+        building ??= build().finally(() => (building = null));
+        cache = await building;
+      }
+      return c.body(cache.body, 200, {
+        "Content-Type": "application/json; charset=utf-8",
+        ETag: `"${cache.key}"`,
+        "Cache-Control": CACHE_CONTROL,
+      });
     });
-  });
+  }
+
+  cachedJson(
+    "/players",
+    async () => {
+      const latest = await repo.latestCapturedAt();
+      return latest === null ? null : toIso(latest);
+    },
+    async () => {
+      const response = buildPlayersResponse(await repo.bootstrapRows());
+      return { key: response.meta.sources.bootstrap.capturedAt, body: JSON.stringify(response) };
+    },
+  );
+
+  // Keyed on both captures: a new bootstrap (Clubs, deadlines) or a new fixture list refreshes it.
+  const fixturesKey = (bootstrapAt: string, fixturesAt: string) => `${bootstrapAt}|${fixturesAt}`;
+  cachedJson(
+    "/fixtures",
+    async () => {
+      const [b, f] = await Promise.all([repo.latestCapturedAt(), repo.latestFixturesCapturedAt()]);
+      return b === null || f === null ? null : fixturesKey(toIso(b), toIso(f));
+    },
+    async () => {
+      const response = buildFixturesResponse(await repo.fixturesRows());
+      const { bootstrap, fixtures } = response.meta.sources;
+      return { key: fixturesKey(bootstrap.capturedAt, fixtures.capturedAt), body: JSON.stringify(response) };
+    },
+  );
 
   app.get("/health", async (c) => {
     c.header("Cache-Control", "no-store");
