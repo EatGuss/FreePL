@@ -4,3 +4,5 @@ export * from "./availability.js";
 export * from "./freshness.js";
 export * from "./rows.js";
 export * from "./response.js";
+export * from "./fixtures.js";
+export * from "./ticker.js";
