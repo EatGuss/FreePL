@@ -102,7 +102,13 @@
   .legend .fxc { display: inline-block; min-width: 22px; }
   .table-box th .gwday { display: block; font-weight: 500; text-transform: none; letter-spacing: 0; font-size: 11px; }
   /* Ticker: a narrow pinned Club code so Avg + six gameweeks fit 390px (spec 0003). */
-  .table-box.ticker th:first-child, .table-box.ticker td:first-child { min-width: 0; padding: 8px 6px 8px 10px; }
+  /* Club and Avg both stay pinned while the gameweeks scroll: the sort value never leaves the screen. */
+  .table-box.ticker tr > :first-child { width: 52px; min-width: 52px; max-width: 52px; padding: 8px 4px 8px 10px; border-right: 0; }
+  .table-box.ticker tr > :nth-child(2) {
+    position: sticky; left: 52px; z-index: 1; background: var(--surface);
+    border-right: 1px solid var(--line); text-align: right; padding-right: 8px;
+  }
+  .table-box.ticker thead tr > :nth-child(2) { z-index: 2; }
   .table-box.ticker tbody th { font: 600 13px var(--font-body); color: var(--ink); text-transform: none; letter-spacing: 0; cursor: default; position: sticky; left: 0; z-index: 1; }
   .table-box.ticker th, .table-box.ticker td { padding-left: 4px; padding-right: 4px; }
   .table-box.ticker .fxs { min-width: 46px; }

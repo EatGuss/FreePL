@@ -69,7 +69,7 @@ Doubles stack two chips in one cell; blanks are a dashed "Blank" chip, never an 
 A provisional fixture (kick-off not confirmed) keeps its fill but gets a dotted border and a
 small "TBC", so it reads without colour; it still fits stacked in a double.
 
-**Fixtures grid.** Club pinned left; then a narrow "Avg" column with the fixture count
+**Fixtures grid.** Club pinned left; then a narrow "Avg" column, also pinned, with the fixture count
 under it ("2.4 / 6 fx"); then one column per gameweek, headed "GW9" with the deadline day
 underneath ("Sat 25", local time), scrolling sideways. Cells are fixture cells as above.
 Cells are not tappable in v1.
