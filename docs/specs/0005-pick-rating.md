@@ -1,7 +1,6 @@
 # Spec 0005 — Pick rating
 
-Status: draft · built after spec 0003 ships (needs `difficultyFor`) · weights set with the
-spec 0002 mockup in front of us
+Status: **current** · decisions from review 2026-10-22 (Q70–Q78) recorded below
 Depends on spec 0002 (table, contract), spec 0003 (`difficultyFor`), ADR 0002 (amended)
 
 ## Goal
@@ -29,7 +28,8 @@ pattern.
 ## Inputs per position
 
 Per-90 rates are season-to-date. "Fixtures" is the next 3 gameweeks from the upcoming
-gameweek via `difficultyFor`. "Nailedness" is starts ÷ gameweeks played so far.
+gameweek via `difficultyFor`. "Nailedness" is starts ÷ the player's Club's **finished
+matches** so far, capped at 1 (not gameweeks: a blank or double would skew it).
 
 | Position | Inputs |
 | --- | --- |
@@ -61,6 +61,11 @@ show a penalty-taker badge beside xG rather than trying to derive npxG.
 
 ## Per-gameweek data
 
+**v1 decision (Q71):** v1 uses the season per-90 average (`defensive_contribution_per_90`,
+which is CBIT for defenders and CBIRT for midfielders) and does **not** build
+`season_gameweek_live`. The hit rate below is a later improvement, with its own prerequisite
+check.
+
 DefCon hit rate and last-6-gameweek rates need per-match numbers. Spec 0001 already
 captures `event/{gw}/live` once per settled gameweek (`post_gw`). A view
 `season_gameweek_live` expands every such row for the current season — one row per player
@@ -87,8 +92,29 @@ If not, DefCon falls back to the season per-90 average and this view is not buil
    | OK | 25–40% |
    | — | everyone else (no label) |
 
-Weights: **to be set** with the mockup. Constraints already agreed: G+A/90 low; price
-absent; no weight fitted to data.
+Percentiles (Q73): rank within position among eligible players, ties share the average rank,
+"lower is better" inputs inverted. The score is the weighted mean of those percentiles.
+
+Band cutoffs (Q74) round **up**: Best = the top ⌈5% × n⌉ players by score, Great up to
+⌈15% × n⌉, Good up to ⌈25% × n⌉, OK up to ⌈40% × n⌉. So every position has at least one Best
+(20 eligible keepers → Best 1, Great 2, Good 2, OK 3).
+
+**Weights (Q70, set 2026-10-22)**, each position summing to 100. They live in one table in
+the contract package beside `pickRatingFor`; changing one is that table plus a note here (Q78).
+
+| Input | GKP | DEF | MID | FWD |
+| --- | --- | --- | --- | --- |
+| xGC/90 (lower is better) | 35 | 25 | – | – |
+| Saves/90 | 15 | – | – | – |
+| xG/90 | – | – | 25 | 35 |
+| xA/90 | – | – | 20 | 15 |
+| (xG + xA)/90 | – | 20 | – | – |
+| DefCon/90 (CBIT or CBIRT) | – | 15 | 10 | – |
+| G+A/90 | – | – | 5 | 5 |
+| Fixtures, next 3 GWs | 25 | 20 | 20 | 25 |
+| Nailedness | 25 | 20 | 20 | 20 |
+
+Constraints kept: G+A/90 low; price absent; no weight fitted to data.
 
 **Fixtures input (settled):** the sum of ease (`6 − difficulty`) over every fixture in the
 next 3 gameweeks. A blank contributes nothing and a double contributes twice: two games
@@ -103,7 +129,8 @@ Colours and component looks: `docs/design.md`.
 
 ### Picks tab
 
-Becomes the **landing tab** when this spec ships, until spec 0004's My squad takes over
+Becomes the **landing tab** when this spec ships (Q75; tab order Picks · Players · Fixtures ·
+Injury watch), until spec 0004's My squad takes over
 (order and fallback in spec 0002 "Table").
 
 **Focused view:** opened from My squad's attention line for a flagged player, Picks shows
@@ -154,6 +181,14 @@ Exact values live in the web theme tokens, light and dark.
 - Rated players outside the top 40% show **Below OK** in the Players tab and the Squad
   (spec 0004), never in Picks. Not rated is never shown as Below OK.
 - On Picks, players already in the Entry's Squad carry an "In squad" tag (spec 0004 data).
+
+## v1 scope and where it runs
+
+- **Out of v1 (Q76):** the "In squad" tag and the focused "Replacements for {player}" view;
+  both need spec 0004's Squad data. Everything else ships: Picks tables, budget slider,
+  rating column with Below OK on Players, the breakdown sheet.
+- **Computed in the browser (Q77)** from `/api/players` and `/api/fixtures`; no new route.
+  Memoised per data load, never per tap.
 
 ## Testing
 
