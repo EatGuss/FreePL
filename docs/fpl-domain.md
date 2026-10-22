@@ -67,6 +67,17 @@ over this file — verify against a live payload before hardcoding anything.
   - Goals conceded: −1 per **two** conceded (GK/DEF). Saves: +1 per **three** (GK). These are floor functions.
   - **Bonus**: top 3 by BPS in each match get 3/2/1; ties share. Provisional until `data_checked`.
   - **Defensive contributions (DefCon)**, since 2025/26: points for reaching a threshold of defensive actions — 10 for defenders, 12 for midfielders and forwards. Outfield players only: goalkeepers never earn DefCon.
+- **2026/27 values, read from `bootstrap-static` → `game_config.scoring` on 2026-10-22** (for
+  reasoning and docs only; code still reads them from the payload):
+
+  | Stat | GKP | DEF | MID | FWD |
+  | --- | --- | --- | --- | --- |
+  | `goals_scored` | 10 | 6 | 5 | 4 |
+  | `assists` | 3 | 3 | 3 | 3 |
+  | `clean_sheets` | 4 | 4 | 1 | 0 |
+  | `defensive_contribution` (on reaching the threshold) | 0 | 2 | 2 | 2 |
+
+  `assists` is a single number, not per position.
 - `event/{gw}/live` includes an `explain` breakdown per player showing exactly how points were awarded. Use it as ground truth for tests.
 
 ## Player status (`elements[].status`)

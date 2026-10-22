@@ -120,8 +120,9 @@ Constraints kept: G+A/90 low; price absent; no weight fitted to data.
 
 - *2026-10-22, DEF:* xGC/90 25 → 20, (xG + xA)/90 20 → 25, G+A/90 added at 5, DefCon/90
   15 → 10. Reason (from first look at live ratings): wing-backs and attacking full-backs
-  playing high up (e.g. De Cuyper) earn most of their points going forward. Attacking share
-  20 → 30; G+A kept low for the same reason as MID/FWD.
+  playing high up (e.g. De Cuyper) earn most of their points going forward, and a
+  defender's goal is worth 6 against a midfielder's 5 (2026/27 scoring, `fpl-domain.md`).
+  Attacking share 20 → 30; G+A kept low for the same reason as MID/FWD.
 
 **Fixtures input (settled):** the sum of ease (`6 − difficulty`) over every fixture in the
 next 3 gameweeks. A blank contributes nothing and a double contributes twice: two games
