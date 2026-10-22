@@ -34,7 +34,7 @@ matches** so far, capped at 1 (not gameweeks: a blank or double would skew it).
 | Position | Inputs |
 | --- | --- |
 | GK | xGC/90 (lower is better), saves/90, fixtures, nailedness |
-| DEF | xGC/90 (lower is better), (xG + xA)/90, CBIT/90, fixtures, nailedness |
+| DEF | xGC/90 (lower is better), (xG + xA)/90, G+A/90 (low weight), CBIT/90, fixtures, nailedness |
 | MID | xG/90, xA/90, CBIRT/90, G+A/90 (low weight), fixtures, nailedness |
 | FWD | xG/90, xA/90, G+A/90 (low weight), fixtures, nailedness |
 
@@ -104,17 +104,25 @@ the contract package beside `pickRatingFor`; changing one is that table plus a n
 
 | Input | GKP | DEF | MID | FWD |
 | --- | --- | --- | --- | --- |
-| xGC/90 (lower is better) | 35 | 25 | – | – |
+| xGC/90 (lower is better) | 35 | 20 | – | – |
 | Saves/90 | 15 | – | – | – |
 | xG/90 | – | – | 25 | 35 |
 | xA/90 | – | – | 20 | 15 |
-| (xG + xA)/90 | – | 20 | – | – |
-| DefCon/90 (CBIT or CBIRT) | – | 15 | 10 | – |
-| G+A/90 | – | – | 5 | 5 |
+| (xG + xA)/90 | – | 25 | – | – |
+| DefCon/90 (CBIT or CBIRT) | – | 10 | 10 | – |
+| G+A/90 | – | 5 | 5 | 5 |
 | Fixtures, next 3 GWs | 25 | 20 | 20 | 25 |
 | Nailedness | 25 | 20 | 20 | 20 |
 
 Constraints kept: G+A/90 low; price absent; no weight fitted to data.
+
+**Weight changes:**
+
+- *2026-10-22, DEF:* xGC/90 25 → 20, (xG + xA)/90 20 → 25, G+A/90 added at 5, DefCon/90
+  15 → 10. Reason (from first look at live ratings): wing-backs and attacking full-backs
+  playing high up (e.g. De Cuyper) earn most of their points going forward, and a
+  defender's goal is worth 6 against a midfielder's 5 (2026/27 scoring, `fpl-domain.md`).
+  Attacking share 20 → 30; G+A kept low for the same reason as MID/FWD.
 
 **Fixtures input (settled):** the sum of ease (`6 − difficulty`) over every fixture in the
 next 3 gameweeks. A blank contributes nothing and a double contributes twice: two games
