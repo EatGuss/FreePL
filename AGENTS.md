@@ -6,7 +6,11 @@ optimiser, logged before each deadline, with a public scorecard.
 
 ## Current phase
 
-**Spec 0003: the fixture difficulty ticker.** Spec: `docs/specs/0003-fixture-difficulty-ticker.md`.
+**Spec 0005: the pick rating.** Spec: `docs/specs/0005-pick-rating.md`. Chosen ahead of 0004
+(2026-10-22): it builds on shipped data only; 0004 carries the FPL-from-Vercel risk.
+
+Spec 0003 (fixture difficulty ticker) **shipped** 2026-10-21; its double/blank check waits for
+FPL to publish one.
 
 Spec 0002 (stats table, contract, `server/`, `web/`, Vercel) is **done** as of 2026-10-21:
 live at free-pl.vercel.app, every acceptance criterion ticked.
@@ -21,9 +25,9 @@ Order of work:
 | Spec | What | Status |
 | --- | --- | --- |
 | `0002-player-stats-table.md` | Stats table + injury watch; stands up contract, `server/`, `web/`, Vercel | done |
-| `0003-fixture-difficulty-ticker.md` | Club × gameweek difficulty grid | **current** |
+| `0003-fixture-difficulty-ticker.md` | Club × gameweek difficulty grid | done (DGW/BGW check pending) |
+| `0005-pick-rating.md` | Best/Great/Good/OK band per player within position | **current** |
 | `0004-entry-view.md` | Current Squad, sell prices, FTs, chips, transfer what-if (ADR 0003) | draft |
-| `0005-pick-rating.md` | Best/Great/Good/OK band per player within position | draft |
 | `0006-shortlist-and-saved-plans.md` | Starred players and transfer plans, kept in the URL | draft |
 
 Spec 0002 scaffolds `packages/`, `server/`, `api/` and `web/` as its "Files" section lists.
@@ -38,12 +42,13 @@ db/migrations/0001_api_snapshots.sql   applied by hand in Neon SQL editor
 db/migrations/0002_api_snapshots_season.sql  adds api_snapshots.season; applied by hand
 db/roles/0002_reader.sql               freepl_reader role; applied by hand, password set in the editor only
 db/views/0002_current.sql              views over the latest capture (ADR 0002); applied by hand
+db/views/0003_fixtures.sql             latest_fixtures, current_fixtures (spec 0003); applied by hand
 requirements.txt                       httpx, psycopg[binary], python-dotenv — nothing else without asking
 package.json, pnpm-workspace.yaml      pnpm workspace root (Node 22, see .nvmrc); tsconfig.base.json
 packages/contract/                     zod schemas + types, shared by server/ and web/; ships to the browser
 server/                                Hono app, platform-agnostic; reads the views as freepl_reader
 api/index.js, vercel.json              the one Vercel function (re-exports the server/dist bundle); rewrites /api/*
-web/                                   Vite + React + Tailwind app (spec 0002 Players, Injury watch)
+web/                                   Vite + React + Tailwind app: Picks, Players, Fixtures, Injury watch
 .github/workflows/ci.yml               on pull_request: install, typecheck, test, build
 docs/                                  human-facing docs; read on demand, not always
   specs/ decisions/ roadmap.md fpl-domain.md design.md design/mockup.html

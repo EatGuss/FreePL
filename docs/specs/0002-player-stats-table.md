@@ -223,8 +223,8 @@ client concerns; keeping them there is what makes the table feel instant.
 | **Fixtures** | Club × gameweek difficulty grid | spec 0003 |
 | **Injury watch** | Every flagged player, newest news first | this spec |
 
-**Landing tab** follows the build order: Players (this spec) → Picks (when spec 0005
-ships) → My squad (when spec 0004 ships). If spec 0004's rollout finds FPL blocks requests
+**Landing tab** follows the build order: Players (this spec) → Picks (spec 0005, built
+second, 2026-10-22) → My squad (when spec 0004 ships). If spec 0004's rollout finds FPL blocks requests
 from Vercel, Picks stays the landing tab. This spec builds the tab bar with Players and
 Injury watch.
 

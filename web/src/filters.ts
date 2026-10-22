@@ -19,9 +19,12 @@ export interface Filters {
   /** Fixtures tab (spec 0003): gameweeks shown, and the row order. */
   window: number;
   tickerSort: TickerSort;
+  /** Picks tab (spec 0005): max price in tenths, null = any. */
+  budget: number | null;
 }
 
-export const TABS = ["players", "fixtures", "injury"] as const;
+/** Picks is the landing tab (spec 0005) until spec 0004's My squad ships. */
+export const TABS = ["picks", "players", "fixtures", "injury"] as const;
 export type Tab = (typeof TABS)[number];
 const TICKER_SORTS: readonly TickerSort[] = ["mean", "sum", "count"];
 
@@ -29,8 +32,9 @@ export const GROUP_KEYS = ["Overview", "Attack", "Defence", "Expected", "Value"]
 export type GroupKey = (typeof GROUP_KEYS)[number];
 
 export const DEFAULT_FILTERS: Filters = {
-  tab: "players", pos: null, clubs: [], minPrice: null, maxPrice: null, minMinutes: 0, q: "",
+  tab: "picks", pos: null, clubs: [], minPrice: null, maxPrice: null, minMinutes: 0, q: "",
   showOut: false, group: "Overview", sort: "epNext", desc: true, window: WINDOW_DEFAULT, tickerSort: "mean",
+  budget: null,
 };
 
 const intParam = (s: string | null): number | null => (s !== null && /^\d+$/.test(s) ? Number(s) : null);
@@ -39,7 +43,7 @@ export function filtersFromSearch(search: string): Filters {
   const p = new URLSearchParams(search);
   const group = p.get("group");
   return {
-    tab: (TABS as readonly string[]).includes(p.get("tab") ?? "") ? (p.get("tab") as Tab) : "players",
+    tab: (TABS as readonly string[]).includes(p.get("tab") ?? "") ? (p.get("tab") as Tab) : "picks",
     pos: p.get("pos") || null,
     clubs: (p.get("club") ?? "").split(",").filter(Boolean),
     minPrice: intParam(p.get("minp")),
@@ -52,13 +56,14 @@ export function filtersFromSearch(search: string): Filters {
     desc: p.get("dir") !== "asc",
     window: Math.min(WINDOW_MAX, Math.max(WINDOW_MIN, intParam(p.get("gws")) ?? WINDOW_DEFAULT)),
     tickerSort: TICKER_SORTS.includes(p.get("fsort") as TickerSort) ? (p.get("fsort") as TickerSort) : "mean",
+    budget: intParam(p.get("budget")),
   };
 }
 
 /** Only non-default values go in the URL, so the bare URL is the landing view. */
 export function filtersToSearch(f: Filters): string {
   const p = new URLSearchParams();
-  if (f.tab !== "players") p.set("tab", f.tab);
+  if (f.tab !== "picks") p.set("tab", f.tab);
   if (f.pos) p.set("pos", f.pos);
   if (f.clubs.length) p.set("club", f.clubs.join(","));
   if (f.minPrice !== null) p.set("minp", String(f.minPrice));
@@ -71,6 +76,7 @@ export function filtersToSearch(f: Filters): string {
   if (!f.desc) p.set("dir", "asc");
   if (f.window !== WINDOW_DEFAULT) p.set("gws", String(f.window));
   if (f.tickerSort !== "mean") p.set("fsort", f.tickerSort);
+  if (f.budget !== null) p.set("budget", String(f.budget));
   const s = p.toString();
   return s ? `?${s}` : "";
 }

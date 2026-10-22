@@ -115,6 +115,51 @@
   .table-box td.avg { font-weight: 600; }
   .table-box td.avg small { display: block; font-weight: 400; font-size: 11px; color: var(--muted); }
 
+  /* Pick rating (spec 0005, docs/design.md). */
+  .band {
+    display: inline-flex; align-items: center; justify-content: center; min-width: 52px;
+    font: 600 12px var(--font-body); border-radius: 5px; padding: 4px 7px; border: 0; cursor: pointer;
+  }
+  .band.best { background: var(--band-best); color: var(--band-best-fg); }
+  .band.great { background: var(--band-great); color: var(--band-great-fg); }
+  .band.good { background: var(--band-good); color: var(--band-good-fg); }
+  .band.ok { background: var(--band-ok); color: var(--band-ok-fg); }
+  .band.below { background: var(--band-low); color: #fff; }
+  .band.none { background: none; color: var(--muted); font-weight: 500; }
+  .legend .band { cursor: default; min-width: 0; }
+  .table-box tr.row-best td { background: color-mix(in srgb, var(--band-best) 42%, var(--surface)); }
+  .table-box tr.row-great td { background: color-mix(in srgb, var(--band-great) 42%, var(--surface)); }
+  .table-box tr.row-good td { background: color-mix(in srgb, var(--band-good) 30%, var(--surface)); }
+  .table-box tr.row-best td:first-child { box-shadow: inset 6px 0 0 var(--band-best); }
+  .table-box tr.row-great td:first-child { box-shadow: inset 6px 0 0 var(--band-great); }
+  .table-box tr.row-good td:first-child { box-shadow: inset 6px 0 0 var(--band-good); }
+  .table-box tr.row-ok td:first-child { box-shadow: inset 6px 0 0 var(--line); }
+  .table-box tr.row-best .pmeta, .table-box tr.row-great .pmeta { color: var(--ink); }
+  .table-box tr.tap { cursor: pointer; }
+  .table-box tr.tap td:first-child { padding-left: 14px; }
+  .bandword { font-weight: 700; }
+  .picks { display: flex; flex-direction: column; gap: 18px; }
+  .pos-block { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .pos-block h2 { font-family: var(--font-display); font-size: 21px; font-weight: 700; margin: 0; display: flex; align-items: baseline; gap: 8px; }
+  .pos-block h2 span { font-family: var(--font-body); font-size: 12px; font-weight: 500; color: var(--muted); }
+  .pos-block .empty { font-size: 13px; color: var(--muted); padding: 6px 0; }
+  .sheet-backdrop { position: fixed; inset: 0; background: rgb(0 0 0 / 0.35); display: flex; align-items: flex-end; justify-content: center; z-index: 10; }
+  .sheet {
+    background: var(--surface); color: var(--ink); width: 100%; max-width: 520px; border-radius: 14px 14px 0 0;
+    padding: 16px max(16px, env(safe-area-inset-left, 0px)) calc(20px + env(safe-area-inset-bottom, 0px));
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .sheet h2 { font-family: var(--font-display); font-size: 22px; margin: 0; }
+  .sheet .sub { font-size: 13px; color: var(--muted); }
+  .sheet .sub b { color: var(--ink); }
+  .bars { display: flex; flex-direction: column; gap: 8px; }
+  .bar { display: grid; grid-template-columns: 110px 1fr 40px; gap: 8px; align-items: center; font-size: 13px; }
+  .bar .track { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; }
+  .bar .fill { display: block; height: 100%; background: var(--accent); }
+  .bar .w { font-size: 11px; color: var(--muted); }
+  .bar .pct { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+  .sheet .close { align-self: flex-end; }
+
   .notice { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px; font-size: 13px; }
   .notice.bad { border-color: var(--bad); color: var(--bad); background: var(--bad-bg); }
   details.more summary { cursor: pointer; font: 600 13px var(--font-body); color: var(--accent); }

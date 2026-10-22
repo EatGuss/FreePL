@@ -1,6 +1,6 @@
 # Spec 0003 — Fixture difficulty ticker
 
-Status: **current** · spec 0002 shipped 2026-10-21; decisions from review 2026-10-21 (Q62–Q69) below
+Status: **shipped 2026-10-21** (PRs #19, #20) · one criterion waits for FPL to publish a double or blank
 Depends on spec 0002 (contract package, API shape, table/mobile patterns)
 
 ## Goal
@@ -144,11 +144,15 @@ window change for no benefit.
 
 ## Rollout
 
-1. Confirm the 2026/27 `fixtures` field names against a real capture (read-only query).
-2. `db/views/0003_fixtures.sql`: `latest_fixtures`, `current_fixtures`, `select` granted to
+1. *Done 2026-10-21:* all 380 fixtures carry the listed fields; 0 unscheduled.
+   Confirm the 2026/27 `fixtures` field names against a real capture (read-only query).
+2. *Done 2026-10-21:* applied; 380 rows, `freepl_reader` can select.
+   `db/views/0003_fixtures.sql`: `latest_fixtures`, `current_fixtures`, `select` granted to
    `freepl_reader`. Applied by hand in the Neon SQL editor, like 0002.
-3. Contract (`difficultyFor`, cell model, aggregates), `GET /api/fixtures`, the Fixtures tab.
-4. Local check against real data (doubles/blanks against the official schedule), then
+3. *Done 2026-10-21.* Contract (`difficultyFor`, cell model, aggregates), `GET /api/fixtures`, the Fixtures tab.
+4. *Done 2026-10-21:* `check:contract` on real data: 380 fixtures, 0 parse failures, no doubles
+   or blanks published yet; live on Vercel, grid starts at GW8, Club and Avg pinned on a phone.
+   Local check against real data (doubles/blanks against the official schedule), then
    deploy; one PR.
 
 ## Testing
@@ -160,12 +164,17 @@ Checking a real double/blank against the official schedule is a local script aga
 
 ## Acceptance criteria
 
+Ticked 2026-10-21. Open: the first criterion, until FPL publishes a double or blank; then
+run `pnpm check:contract`, which lists them, and compare the grid with the official schedule.
+The double/blank, mean, unscheduled, provisional and sort behaviour is covered by synthetic
+tests (`packages/contract/test/ticker.test.ts`) and a browser check on a synthetic season.
+
 - [ ] A known double gameweek renders both fixtures in one cell; a known blank renders as
       blank, and both are correct against the official schedule.
-- [ ] `difficultyMean` for a Club with a blank in the window divides by the real fixture
+- [x] `difficultyMean` for a Club with a blank in the window divides by the real fixture
       count, and that count is visible in the row.
-- [ ] Fixtures with `event: null` appear in the unscheduled count and in no column.
-- [ ] Provisional fixtures are distinguishable from confirmed ones without hovering.
-- [ ] Sorting by mean, sum and count each produce different, correct orderings.
-- [ ] The window starts at the upcoming gameweek, adjusts 3–10 and survives refresh via the URL.
-- [ ] No component references `team_h_difficulty` or `team_a_difficulty` directly.
+- [x] Fixtures with `event: null` appear in the unscheduled count and in no column.
+- [x] Provisional fixtures are distinguishable from confirmed ones without hovering.
+- [x] Sorting by mean, sum and count each produce different, correct orderings.
+- [x] The window starts at the upcoming gameweek, adjusts 3–10 and survives refresh via the URL.
+- [x] No component references `team_h_difficulty` or `team_a_difficulty` directly.
