@@ -45,6 +45,8 @@ describe("URL state", () => {
   it("keeps the Fixtures tab's window and sort in the URL, clamped to 3–10", () => {
     const f = { ...DEFAULT_FILTERS, tab: "fixtures" as const, window: 8, tickerSort: "count" as const };
     expect(filtersToSearch(f)).toBe("?tab=fixtures&gws=8&fsort=count");
+    expect(filtersToSearch({ ...DEFAULT_FILTERS, tab: "players" })).toBe("?tab=players");
+    expect(filtersFromSearch("?budget=65").budget).toBe(65);
     expect(filtersFromSearch(filtersToSearch(f))).toEqual(f);
     expect(filtersFromSearch("?gws=40").window).toBe(10);
     expect(filtersFromSearch("?gws=1").window).toBe(3);

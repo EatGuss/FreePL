@@ -1,25 +1,47 @@
-import { upcomingGameweek } from "@freepl/contract";
+import { useCallback, useMemo, useState } from "react";
+import { buildRatingContext, pickRatingFor, upcomingGameweek } from "@freepl/contract";
 import { FixturesTab } from "./FixturesTab.js";
 import { Freshness } from "./Freshness.js";
 import { InjuryTab } from "./InjuryTab.js";
+import { PicksTab } from "./PicksTab.js";
 import { PlayersTab } from "./PlayersTab.js";
+import { RatingSheet } from "./Rating.js";
 import { useFixtures, useNow, usePlayers } from "./data.js";
 import type { Tab } from "./filters.js";
 import { localDateTime } from "./format.js";
 import { useFilters } from "./useFilters.js";
 
-const TITLES: Record<Tab, string> = { players: "Players", fixtures: "Fixtures", injury: "Injury watch" };
+const TITLES: Record<Tab, string> = { picks: "Picks", players: "Players", fixtures: "Fixtures", injury: "Injury watch" };
 
 export function App() {
   const [filters, update] = useFilters();
   const players = usePlayers();
-  const fixtures = useFixtures(filters.tab === "fixtures");
+  // Picks and the Players rating column need fixtures too; Injury watch does not.
+  const fixtures = useFixtures(filters.tab !== "injury");
   const now = useNow();
   const data = players.data;
   const next = data ? upcomingGameweek(data.gameweeks, now) : null;
   const flaggedCount = data ? data.players.filter((p) => p.status !== "a").length : 0;
-  const onFixtures = filters.tab === "fixtures";
-  const active = onFixtures ? fixtures : players;
+
+  // Built once per data load (and when a deadline passes, which moves the fixture window),
+  // never per tap.
+  const nextGwId = next?.id ?? null;
+  const ratings = useMemo(
+    () => (data && fixtures.data
+      ? buildRatingContext(data.players, data.positions, fixtures.data.fixtures, fixtures.data.gameweeks)
+      : null),
+    // nextGwId stands in for "now": the rating only changes when the upcoming gameweek does.
+    [data, fixtures.data, nextGwId],
+  );
+  const [sheetFor, setSheetFor] = useState<number | null>(null);
+  const openSheet = useCallback((id: number) => setSheetFor(id), []);
+  const closeSheet = useCallback(() => setSheetFor(null), []);
+  const sheetPlayer = sheetFor === null ? undefined : data?.players.find((p) => p.id === sheetFor);
+
+  const needsFixtures = filters.tab === "picks" || filters.tab === "fixtures";
+  const pending = players.isPending || (needsFixtures && fixtures.isPending);
+  const failed = players.isError || (needsFixtures && fixtures.isError);
+  const retry = () => { void players.refetch(); void fixtures.refetch(); };
 
   return (
     <main className="mx-auto flex max-w-[720px] flex-col gap-3">
@@ -28,7 +50,7 @@ export function App() {
         {next && <div className="deadline">GW{next.id} deadline <b>{localDateTime(next.deadlineTime)}</b></div>}
       </header>
 
-      {onFixtures
+      {needsFixtures
         ? fixtures.data && (
           <Freshness now={now} sources={{
             bootstrap: fixtures.data.meta.sources.bootstrap.capturedAt,
@@ -38,25 +60,35 @@ export function App() {
         : data && <Freshness sources={{ bootstrap: data.meta.sources.bootstrap.capturedAt }} now={now} />}
 
       <nav className="views" role="tablist">
-        <button role="tab" aria-selected={filters.tab === "players"} onClick={() => update({ tab: "players" })}>Players</button>
-        <button role="tab" aria-selected={onFixtures} onClick={() => update({ tab: "fixtures" })}>Fixtures</button>
+        {(["picks", "players", "fixtures"] as const).map((t) => (
+          <button key={t} role="tab" aria-selected={filters.tab === t} onClick={() => update({ tab: t })}>{TITLES[t]}</button>
+        ))}
         <button role="tab" aria-selected={filters.tab === "injury"} onClick={() => update({ tab: "injury" })}>
           Injury watch{data && <span className="count">{flaggedCount}</span>}
         </button>
       </nav>
 
-      {active.isPending && <p className="notice">Loading {onFixtures ? "fixtures" : "players"}…</p>}
-      {active.isError && (
+      {pending && <p className="notice">Loading…</p>}
+      {failed && (
         <p className="notice bad">
-          Couldn't load {onFixtures ? "fixture" : "player"} data.{" "}
-          <button className="linkish" onClick={() => active.refetch()}>Try again</button>
+          Couldn't load the data. <button className="linkish" onClick={retry}>Try again</button>
         </p>
       )}
-      {onFixtures
-        ? fixtures.data && <FixturesTab data={fixtures.data} filters={filters} update={update} now={now} />
-        : data && (filters.tab === "injury"
-          ? <InjuryTab data={data} now={now} />
-          : <PlayersTab data={data} filters={filters} update={update} now={now} />)}
+      {filters.tab === "picks" && data && fixtures.data && ratings && (
+        <PicksTab players={data} fixtures={fixtures.data} ratings={ratings} filters={filters} update={update} now={now} onOpen={openSheet} />
+      )}
+      {filters.tab === "players" && data && (
+        <PlayersTab data={data} filters={filters} update={update} now={now} ratings={ratings} onOpenRating={openSheet} />
+      )}
+      {filters.tab === "fixtures" && fixtures.data && (
+        <FixturesTab data={fixtures.data} filters={filters} update={update} now={now} />
+      )}
+      {filters.tab === "injury" && data && <InjuryTab data={data} now={now} />}
+
+      {sheetPlayer && ratings && (
+        <RatingSheet player={sheetPlayer} rating={pickRatingFor(sheetPlayer, ratings)}
+          position={data?.positions.find((p) => p.id === sheetPlayer.positionId)} onClose={closeSheet} />
+      )}
     </main>
   );
 }

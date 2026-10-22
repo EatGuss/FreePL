@@ -2,11 +2,12 @@ import { Fragment, memo, useCallback, useMemo, useState } from "react";
 import {
   createColumnHelper, flexRender, getCoreRowModel, getSortedRowModel, useReactTable, type SortingState,
 } from "@tanstack/react-table";
-import type { ClubRow, PlayerRow, PlayersResponse, PositionRow } from "@freepl/contract";
+import { pickRatingFor, type ClubRow, type PlayerRow, type PlayersResponse, type PositionRow, type RatingContext } from "@freepl/contract";
 import { FIXED_COLUMNS, GROUPS, type StatColumn } from "./columns.js";
 import { applyFilters, filtersToSearch, GROUP_KEYS, makeLookups, type Filters } from "./filters.js";
 import { Flag } from "./Flag.js";
 import { ago, formatPrice } from "./format.js";
+import { RatingChip } from "./Rating.js";
 import { ageHours } from "@freepl/contract";
 
 const helper = createColumnHelper<PlayerRow>();
@@ -14,8 +15,10 @@ const PRICE_STEP = 5; // £0.5m
 /** Rows drawn per step. Sorting and filtering always cover every player; only drawing is capped. */
 const ROW_STEP = 100;
 
-export function PlayersTab({ data, filters, update, now }: {
+export function PlayersTab({ data, filters, update, now, ratings, onOpenRating }: {
   data: PlayersResponse; filters: Filters; update: (p: Partial<Filters>) => void; now: number;
+  /** Spec 0005 rating; null until the fixtures it needs have loaded. */
+  ratings: RatingContext | null; onOpenRating: (playerId: number) => void;
 }) {
   const lookups = useMemo(() => makeLookups(data.clubs, data.positions), [data]);
   const [openNews, setOpenNews] = useState<number | null>(null);
@@ -34,7 +37,17 @@ export function PlayersTab({ data, filters, update, now }: {
   const limit = drawn.viewKey === viewKey ? drawn.n : ROW_STEP;
   const { rows, hiddenOut } = useMemo(() => applyFilters(data.players, shown, lookups), [data, shown, lookups]);
 
-  const statColumns: StatColumn[] = useMemo(() => [...FIXED_COLUMNS, ...GROUPS[shown.group]], [shown.group]);
+  // The pick rating is the first column after the player (spec 0002 "Table"), sortable by score.
+  const ratingColumn: StatColumn | null = useMemo(() => ratings && {
+    id: "rating",
+    label: "Rating",
+    value: (p: PlayerRow) => { const r = pickRatingFor(p, ratings); return r.rated ? Math.round(r.score * 1000) / 10 : null; },
+    format: (v: number | null) => (v === null ? "—" : String(v)),
+  }, [ratings]);
+  const statColumns: StatColumn[] = useMemo(
+    () => [...(ratingColumn ? [ratingColumn] : []), ...FIXED_COLUMNS, ...GROUPS[shown.group]],
+    [ratingColumn, shown.group],
+  );
   const toggleNews = useCallback((id: number) => setOpenNews((cur) => (cur === id ? null : id)), []);
 
   const columns = useMemo(
@@ -146,7 +159,7 @@ export function PlayersTab({ data, filters, update, now }: {
       <div className="groups" role="group" aria-label="Column group">
         {GROUP_KEYS.map((g) => (
           <button key={g} aria-pressed={filters.group === g}
-            onClick={() => update(GROUPS[g].some((c) => c.id === filters.sort) || FIXED_COLUMNS.some((c) => c.id === filters.sort)
+            onClick={() => update(filters.sort === "rating" || GROUPS[g].some((c) => c.id === filters.sort) || FIXED_COLUMNS.some((c) => c.id === filters.sort)
               ? { group: g } : { group: g, sort: "epNext", desc: true })}>
             {g}
           </button>
@@ -181,7 +194,7 @@ export function PlayersTab({ data, filters, update, now }: {
             {table.getRowModel().rows.slice(0, limit).map(({ original: p }) => (
               <Row key={p.id} player={p} columns={statColumns} club={lookups.clubById.get(p.clubId)}
                 position={lookups.positionById.get(p.positionId)} newsOpen={openNews === p.id}
-                onToggleNews={toggleNews} now={now} />
+                onToggleNews={toggleNews} now={now} ratings={ratings} onOpenRating={onOpenRating} />
             ))}
           </tbody>
         </table>
@@ -206,9 +219,10 @@ export function PlayersTab({ data, filters, update, now }: {
 }
 
 /** One table row. Memoised so a filter change only builds the rows that are new. */
-const Row = memo(function Row({ player: p, columns, club, position, newsOpen, onToggleNews, now }: {
+const Row = memo(function Row({ player: p, columns, club, position, newsOpen, onToggleNews, now, ratings, onOpenRating }: {
   player: PlayerRow; columns: StatColumn[]; club: ClubRow | undefined; position: PositionRow | undefined;
   newsOpen: boolean; onToggleNews: (id: number) => void; now: number;
+  ratings: RatingContext | null; onOpenRating: (id: number) => void;
 }) {
   return (
     <Fragment>
@@ -221,6 +235,9 @@ const Row = memo(function Row({ player: p, columns, club, position, newsOpen, on
           <div className="pmeta">{club?.short} · {position?.short} · <b>{formatPrice(p.nowCost)}</b></div>
         </td>
         {columns.map((c) => {
+          if (c.id === "rating" && ratings) {
+            return <td key={c.id}><RatingChip rating={pickRatingFor(p, ratings)} onOpen={() => onOpenRating(p.id)} /></td>;
+          }
           const v = c.value(p);
           return <td key={c.id} className={[c.strong ? "num-strong" : "", v === null ? "null" : ""].join(" ").trim() || undefined}>{c.format(v)}</td>;
         })}
