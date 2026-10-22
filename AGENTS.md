@@ -42,12 +42,13 @@ db/migrations/0001_api_snapshots.sql   applied by hand in Neon SQL editor
 db/migrations/0002_api_snapshots_season.sql  adds api_snapshots.season; applied by hand
 db/roles/0002_reader.sql               freepl_reader role; applied by hand, password set in the editor only
 db/views/0002_current.sql              views over the latest capture (ADR 0002); applied by hand
+db/views/0003_fixtures.sql             latest_fixtures, current_fixtures (spec 0003); applied by hand
 requirements.txt                       httpx, psycopg[binary], python-dotenv — nothing else without asking
 package.json, pnpm-workspace.yaml      pnpm workspace root (Node 22, see .nvmrc); tsconfig.base.json
 packages/contract/                     zod schemas + types, shared by server/ and web/; ships to the browser
 server/                                Hono app, platform-agnostic; reads the views as freepl_reader
 api/index.js, vercel.json              the one Vercel function (re-exports the server/dist bundle); rewrites /api/*
-web/                                   Vite + React + Tailwind app (spec 0002 Players, Injury watch)
+web/                                   Vite + React + Tailwind app: Picks, Players, Fixtures, Injury watch
 .github/workflows/ci.yml               on pull_request: install, typecheck, test, build
 docs/                                  human-facing docs; read on demand, not always
   specs/ decisions/ roadmap.md fpl-domain.md design.md design/mockup.html
