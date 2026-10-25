@@ -59,11 +59,11 @@ export const INPUTS: Record<InputKey, InputDef> = {
   },
 };
 
-/** Weights per position, each summing to 100 (spec 0005, set 2026-10-22; DEF revised the same day). */
+/** Weights per position, each summing to 100 (spec 0005, set 2026-10-22; DEF and MID revised the same day). */
 export const WEIGHTS: Record<string, Partial<Record<InputKey, number>>> = {
   GKP: { xgc90: 35, saves90: 15, fixtures: 25, nailed: 25 },
   DEF: { xgc90: 20, xgi90: 25, ga90: 5, defcon90: 10, fixtures: 20, nailed: 20 },
-  MID: { xg90: 25, xa90: 20, defcon90: 10, ga90: 5, fixtures: 20, nailed: 20 },
+  MID: { xg90: 20, xa90: 15, defcon90: 15, ga90: 10, fixtures: 20, nailed: 20 },
   FWD: { xg90: 35, xa90: 15, ga90: 5, fixtures: 25, nailed: 20 },
 };
 

@@ -106,11 +106,11 @@ the contract package beside `pickRatingFor`; changing one is that table plus a n
 | --- | --- | --- | --- | --- |
 | xGC/90 (lower is better) | 35 | 20 | – | – |
 | Saves/90 | 15 | – | – | – |
-| xG/90 | – | – | 25 | 35 |
-| xA/90 | – | – | 20 | 15 |
+| xG/90 | – | – | 20 | 35 |
+| xA/90 | – | – | 15 | 15 |
 | (xG + xA)/90 | – | 25 | – | – |
-| DefCon/90 (CBIT or CBIRT) | – | 10 | 10 | – |
-| G+A/90 | – | 5 | 5 | 5 |
+| DefCon/90 (CBIT or CBIRT) | – | 10 | 15 | – |
+| G+A/90 | – | 5 | 10 | 5 |
 | Fixtures, next 3 GWs | 25 | 20 | 20 | 25 |
 | Nailedness | 25 | 20 | 20 | 20 |
 
@@ -123,6 +123,10 @@ Constraints kept: G+A/90 low; price absent; no weight fitted to data.
   playing high up (e.g. De Cuyper) earn most of their points going forward, and a
   defender's goal is worth 6 against a midfielder's 5 (2026/27 scoring, `fpl-domain.md`).
   Attacking share 20 → 30; G+A kept low for the same reason as MID/FWD.
+- *2026-10-22, MID (owner's call):* xG/90 25 → 20, xA/90 20 → 15, DefCon/90 10 → 15, G+A/90
+  5 → 10. Reason: DefCon pays midfielders 2 points per threshold reached, so holding and
+  box-to-box midfielders were under-rated; attacking share 50 → 45. G+A/90 at 10 is a
+  deliberate exception to "G+A low", accepting more weight on actual returns.
 
 **Fixtures input (settled):** the sum of ease (`6 − difficulty`) over every fixture in the
 next 3 gameweeks. A blank contributes nothing and a double contributes twice: two games
