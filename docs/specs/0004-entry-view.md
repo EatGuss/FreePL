@@ -242,11 +242,14 @@ On the **Picks** tab (spec 0005), players in the Squad carry an "In squad" tag.
 
 ## API
 
-`GET /api/entry/me` → `{ meta, squad, state }`.
+`GET /api/entry/{id}` → `{ meta, squad, state }`.
 
-Entry id from env (`FPL_ENTRY_ID`), one Entry. The route is `/entry/me` rather than
-`/entry/{id}` deliberately — an id parameter invites the caching and rate-limiting work
-that multi-user drags in.
+*(Q79, 2026-10-26.)* Any Entry by numeric team id, typed into a "Your team ID" box on My
+squad, kept in the URL (`?entry=1234567`) and remembered in the browser; with none, the
+page shows `FPL_ENTRY_ID`. Not authentication: FPL publishes these endpoints for every
+Entry. Guardrails are in ADR 0003 point 7 (integer-only id, per-id 5-minute cache at the
+server and the edge, bounded cache, nothing stored or logged, a visible note). This
+supersedes the earlier single-Entry `/api/entry/me`.
 
 `squad[]` carries, per player: id, GW n slot (XI/bench order, C/V), purchase price and its
 source (`transfer` | `launch`), and whether it is a pending transfer in. Sell price is
