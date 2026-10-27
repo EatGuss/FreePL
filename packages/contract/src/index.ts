@@ -7,3 +7,4 @@ export * from "./response.js";
 export * from "./fixtures.js";
 export * from "./ticker.js";
 export * from "./pickRating.js";
+export * from "./entry.js";
