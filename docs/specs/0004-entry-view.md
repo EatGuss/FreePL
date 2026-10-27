@@ -15,8 +15,13 @@ drafts; the UI tab is "My squad", the code and docs say **Entry**.
 - **Q81:** keep ADR 0003's fetching discipline, ≥1 s pacing included. A cold load is about
   four requests (entry, history, transfers, picks), roughly 3–4 s; then the 5-minute cache
   answers. The page renders everything that doesn't need the Entry while it loads.
-- **Q82:** My squad becomes the landing tab. With no id remembered it shows `FPL_ENTRY_ID`'s
-  team, and the bar says "Enter your team ID to see yours".
+- **Q82:** My squad becomes the landing tab. *(Revised 2026-10-27, owner's choice:)* **no
+  default team.** With no id in the URL or remembered on the device, the tab asks for a team
+  id and fetches nothing, so a visitor never sees the owner's team. `FPL_ENTRY_ID` is not set
+  on Vercel; the server's default-id route stays but is unused by the web app.
+- *Layout tweaks (2026-10-27):* pitch cards show the sell price under the fixture; the list
+  view has a Sell column after the fixtures; the player sheet leads with the current value
+  ("Current value £x · sells for £y · bought £z").
 - **Q83:** ship without waiting for the two "confirm on first occurrence" items
   (`element_out_cost` on a sale at a profit; the Free Hit chip name). Their safeguards stay.
 - **Q84:** two PRs. **Part 1:** the data and a read-only My squad (pitch and list views,

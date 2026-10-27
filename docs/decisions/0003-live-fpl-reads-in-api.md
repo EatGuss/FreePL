@@ -38,7 +38,8 @@ irrecoverable data and spends storage on the one free tier with a measured ceili
 6. An upstream failure degrades the page, it does not blank it. Render what the cache or
    the snapshot views can supply and show the error inline.
 7. *(Amended 2026-10-26, spec 0004 Q79.)* The Entry view may show **any** Entry by its
-   numeric team id, typed by the viewer, defaulting to `FPL_ENTRY_ID`. This is not
+   numeric team id, typed by the viewer. *(2026-10-27: no default team — the web app asks for
+   an id rather than showing `FPL_ENTRY_ID`'s team to every visitor.)* This is not
    authentication: FPL publishes these endpoints for every Entry. Guardrails, because the
    API is now a public way to cause FPL requests:
    - the id must be a plain positive integer; nothing else ever reaches the URL sent to FPL;
