@@ -3,7 +3,14 @@ import { RawClub, RawGameweek, RawPlayer, RawPosition, instant } from "./rows.js
 
 /** What the API sends and the browser reads: camelCase, numbers parsed, prices int tenths. */
 
-export const PositionRow = z.object({ id: z.number().int(), short: z.string(), plural: z.string() });
+export const PositionRow = z.object({
+  id: z.number().int(),
+  short: z.string(),
+  plural: z.string(),
+  /** Starters allowed in this position (element_types squad_min_play / squad_max_play). */
+  minPlay: z.number().int().nullable(),
+  maxPlay: z.number().int().nullable(),
+});
 export type PositionRow = z.infer<typeof PositionRow>;
 
 export const ClubRow = z.object({
@@ -145,6 +152,8 @@ export function buildPlayersResponse(raw: RawBootstrapRows): PlayersResponse {
     id: p.id,
     short: p.singular_name_short,
     plural: p.plural_name,
+    minPlay: p.squad_min_play,
+    maxPlay: p.squad_max_play,
   }));
   const clubs = parseAll(RawClub, raw.clubs, "club").map((c) => ({
     id: c.id,

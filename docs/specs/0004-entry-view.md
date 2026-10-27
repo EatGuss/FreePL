@@ -19,6 +19,8 @@ drafts; the UI tab is "My squad", the code and docs say **Entry**.
   default team.** With no id in the URL or remembered on the device, the tab asks for a team
   id and fetches nothing, so a visitor never sees the owner's team. `FPL_ENTRY_ID` is not set
   on Vercel; the server's default-id route stays but is unused by the web app.
+- *Part 1 checked on the live site (2026-10-27, owner's Entry):* squad value £101.5m, all 15
+  sell prices and the free-transfer count match the FPL site's Transfers page.
 - *Layout tweaks (2026-10-27):* pitch cards show the sell price under the fixture; the list
   view has a Sell column after the fixtures; the player sheet leads with the current value
   ("Current value £x · sells for £y · bought £z").
