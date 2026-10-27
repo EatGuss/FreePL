@@ -6,11 +6,12 @@ optimiser, logged before each deadline, with a public scorecard.
 
 ## Current phase
 
-**Next: spec 0004, the Entry view (My squad).** Spec: `docs/specs/0004-entry-view.md`. Still a
-draft: it starts with a review round, including the open FPL-from-Vercel risk.
+**Spec 0004: the Entry view (My squad).** Spec: `docs/specs/0004-entry-view.md`. Reviewed
+2026-10-27 (Q79–Q84); FPL answers Vercel (probe, 2026-10-27). Part 1 (data and read-only My
+squad) built; part 2 (the what-if) next.
 
-Spec 0005 (pick rating) **shipped** 2026-10-26: Picks is the landing tab; weights accepted
-by the owner on live data.
+Spec 0005 (pick rating) **shipped** 2026-10-26; weights accepted by the owner on live data.
+My squad replaces Picks as the landing tab with spec 0004.
 
 Spec 0003 (fixture difficulty ticker) **shipped** 2026-10-21; its double/blank check waits for
 FPL to publish one.
@@ -30,7 +31,7 @@ Order of work:
 | `0002-player-stats-table.md` | Stats table + injury watch; stands up contract, `server/`, `web/`, Vercel | done |
 | `0003-fixture-difficulty-ticker.md` | Club × gameweek difficulty grid | done (DGW/BGW check pending) |
 | `0005-pick-rating.md` | Best/Great/Good/OK band per player within position | done |
-| `0004-entry-view.md` | Current Squad, sell prices, FTs, chips, transfer what-if (ADR 0003) | **next** (draft) |
+| `0004-entry-view.md` | Current Squad, sell prices, FTs, chips, transfer what-if (ADR 0003) | **current** (part 1 built) |
 | `0006-shortlist-and-saved-plans.md` | Starred players and transfer plans, kept in the URL | draft |
 
 Spec 0002 scaffolds `packages/`, `server/`, `api/` and `web/` as its "Files" section lists.
