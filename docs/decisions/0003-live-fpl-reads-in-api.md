@@ -19,7 +19,8 @@ irrecoverable data and spends storage on the one free tier with a measured ceili
 ## Decision
 
 1. `api/` may fetch the FPL API directly for **entry-scoped, re-fetchable** endpoints:
-   `entry/{id}/history`, `entry/{id}/transfers`, `entry/{id}/event/{gw}/picks`.
+   `entry/{id}/history`, `entry/{id}/transfers`, `entry/{id}/event/{gw}/picks`, and
+   *(amended 2026-10-26, spec 0004 Q80)* `entry/{id}/` for the team and manager name.
 2. Those responses are **never written to Postgres**. The snapshot job remains the only
    writer, and `api_snapshots` remains a record of what the archive captured, not a cache.
 3. Everything not entry-scoped — players, teams, fixtures, events — is read from the

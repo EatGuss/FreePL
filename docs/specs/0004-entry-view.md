@@ -1,9 +1,27 @@
 # Spec 0004 — Entry view
 
-Status: draft · hardens once spec 0002 ships
+Status: **current** · review 2026-10-27 (Q79–Q84) below; built in two PRs (Q84)
 Depends on spec 0002 (contract, API, patterns), spec 0003 (`difficultyFor`, fixture cells),
 spec 0005 (row colours) and ADR 0003 (live entry reads). Called "My Team" in earlier
 drafts; the UI tab is "My squad", the code and docs say **Entry**.
+
+## Decisions from review (2026-10-27)
+
+- **Q79:** any Entry by numeric team id, defaulting to `FPL_ENTRY_ID` (see "API", ADR 0003
+  point 7).
+- **Q80:** a bar at the top of My squad: "Showing: {team name} ({manager}) · Change team".
+  Needs `entry/{id}/` (team and manager name), added to ADR 0003's allowed live reads. An
+  unknown id shows "No FPL team with ID …", not an error page.
+- **Q81:** keep ADR 0003's fetching discipline, ≥1 s pacing included. A cold load is about
+  four requests (entry, history, transfers, picks), roughly 3–4 s; then the 5-minute cache
+  answers. The page renders everything that doesn't need the Entry while it loads.
+- **Q82:** My squad becomes the landing tab. With no id remembered it shows `FPL_ENTRY_ID`'s
+  team, and the bar says "Enter your team ID to see yours".
+- **Q83:** ship without waiting for the two "confirm on first occurrence" items
+  (`element_out_cost` on a sale at a profit; the Free Hit chip name). Their safeguards stay.
+- **Q84:** two PRs. **Part 1:** the data and a read-only My squad (pitch and list views,
+  dashboard strip, needs-attention line, team-id bar, player sheet without Move/Replace).
+  **Part 2:** the what-if (Replace and planned transfers; Move and the planned lineup).
 
 ## The constraint, first
 
