@@ -7,12 +7,14 @@ import { Flag } from "./Flag.js";
 import { f1, f2, int } from "./format.js";
 
 /**
- * Player sheet (docs/design.md): eight stat tiles, the next 3 fixtures and the rating, for a
- * Squad player. Move and Replace arrive with the what-if (spec 0004 part 2).
+ * Player sheet (docs/design.md, spec 0004 "Player sheet"): stat tiles, the next 3 fixtures,
+ * Captain / Vice-captain ticks (starters only), Move, Replace and the rating. Tapping a player
+ * opens this sheet, never the transfer list directly.
  */
-export function PlayerSheet({ player, slot, club, position, cells, gwIds, clubById, rating, onWhy, onClose }: {
+export function PlayerSheet({ player, slot, club, position, cells, gwIds, clubById, rating, starter, onCaptain, onVice, onMove, onReplace, onWhy, onClose }: {
   player: PlayerRow; slot: SquadSlot | undefined; club: ClubRow | undefined; position: PositionRow | undefined;
   cells: TickerCell[]; gwIds: number[]; clubById: Map<number, ClubRow>; rating: PickRating | null;
+  starter: boolean; onCaptain: () => void; onVice: () => void; onMove: () => void; onReplace: () => void;
   onWhy: () => void; onClose: () => void;
 }) {
   useEffect(() => {
@@ -43,6 +45,15 @@ export function PlayerSheet({ player, slot, club, position, cells, gwIds, clubBy
           {cells.map((c, i) => (
             <div key={c.gameweek}>GW{gwIds[i]}<FixtureCell fixtures={c.fixtures} clubById={clubById} /></div>
           ))}
+        </div>
+        <div className="ticks">
+          <label><input type="checkbox" checked={slot?.isCaptain ?? false} disabled={!starter} onChange={onCaptain} /> Captain</label>
+          <label><input type="checkbox" checked={slot?.isVice ?? false} disabled={!starter} onChange={onVice} /> Vice-captain</label>
+          {!starter && <span className="hint">Bench players can't wear the armband.</span>}
+        </div>
+        <div className="actions">
+          <button type="button" className="chip" onClick={onMove}>Move</button>
+          <button type="button" className="chip primary" onClick={onReplace}>Replace</button>
         </div>
         <div className="sub">
           {rating?.rated

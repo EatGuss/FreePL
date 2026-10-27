@@ -226,6 +226,29 @@
   .pfx { display: flex; gap: 4px; }
   .pfx > div { flex: 1; display: flex; flex-direction: column; gap: 2px; text-align: center; font-size: 10px; color: var(--muted); }
 
+  /* What-if (spec 0004 part 2). */
+  .lineup-note { font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 4px; }
+  .lineup-note b { color: var(--ink); }
+  .lineup-note .warn, .plan .warn { color: var(--bad); font-weight: 600; }
+  .plan { background: var(--surface); border: 1px solid var(--accent); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+  .plan .row { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+  .movebar { position: relative; z-index: 2; display: flex; justify-content: space-between; gap: 8px; align-items: center; background: var(--accent-soft); color: var(--accent); border-radius: 8px; padding: 8px 12px; font-size: 13px; font-weight: 600; }
+  .movebar button { background: none; border: 0; color: var(--accent); font: 700 13px var(--font-body); cursor: pointer; }
+  .pcard.dim { opacity: .35; }
+  .pcard.target .box { outline: 3px solid #fff; outline-offset: 1px; }
+  .pcard.moving .box { outline: 3px dashed #fff; outline-offset: 1px; }
+  .ticks { display: flex; gap: 16px; flex-wrap: wrap; }
+  .ticks label { display: flex; align-items: center; gap: 6px; font-weight: 600; cursor: pointer; }
+  .ticks input { width: 20px; height: 20px; accent-color: var(--accent); }
+  .ticks .hint { font-size: 12px; color: var(--muted); font-weight: 400; }
+  .actions { display: flex; gap: 8px; }
+  .actions .chip { flex: 1; }
+  .actions .chip.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .cands { display: flex; flex-direction: column; gap: 6px; max-height: 55vh; overflow-y: auto; }
+  .cand { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: center; text-align: left; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; cursor: pointer; font: 14px var(--font-body); }
+  .cand .after { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .cand .why { grid-column: 1 / -1; font-size: 12px; color: var(--muted); }
+
   .notice { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px; font-size: 13px; }
   .notice.bad { border-color: var(--bad); color: var(--bad); background: var(--bad-bg); }
   details.more summary { cursor: pointer; font: 600 13px var(--font-body); color: var(--accent); }
