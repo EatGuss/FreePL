@@ -51,7 +51,7 @@ package.json, pnpm-workspace.yaml      pnpm workspace root (Node 22, see .nvmrc)
 packages/contract/                     zod schemas + types, shared by server/ and web/; ships to the browser
 server/                                Hono app, platform-agnostic; reads the views as freepl_reader
 api/index.js, vercel.json              the one Vercel function (re-exports the server/dist bundle); rewrites /api/*
-web/                                   Vite + React + Tailwind app: Picks, Players, Fixtures, Injury watch
+web/                                   Vite + React + Tailwind app: My squad, Picks, Players, Fixtures, Injury watch
 .github/workflows/ci.yml               on pull_request: install, typecheck, test, build
 docs/                                  human-facing docs; read on demand, not always
   specs/ decisions/ roadmap.md fpl-domain.md design.md design/mockup.html
