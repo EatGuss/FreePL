@@ -79,6 +79,8 @@ describe("buildEntryView", () => {
     // bank 5 + 52 − 60 = −3 is possible arithmetic; FPL itself would have refused, but we report it.
     expect(v.state).toMatchObject({ bank: -3, pendingTransfers: 1, squadValue: 1000, freeTransfers: 3, gwPoints: 50 });
     expect(v.state.sellingValue).toBe(v.squad.reduce((s, x) => s + x.sellPrice!, 0) - 3);
+    // Live value: current prices of the 15 now held (14 × 50, player 8 sold, player 16 at 60); no bank.
+    expect(v.state.squadValueLive).toBe(14 * 50 + 60);
   });
 
   it("applies a two-batch Wildcard in time order, including a player bought then sold", () => {

@@ -22,9 +22,9 @@ export function PlayerSheet({ player, slot, club, position, cells, gwIds, clubBy
   }, [onClose]);
 
   const money = [
-    slot?.sellPrice != null ? `Sells ${formatPrice(slot.sellPrice)}` : null,
-    slot?.purchasePrice != null ? `bought ${formatPrice(slot.purchasePrice)}${slot.purchaseSource === "launch" ? " (launch)" : ""}` : null,
-    `now ${formatPrice(player.nowCost)}`,
+    `Current value ${formatPrice(player.nowCost)}`,
+    slot?.sellPrice != null ? `sells for ${formatPrice(slot.sellPrice)}` : null,
+    slot?.purchasePrice != null ? `bought ${formatPrice(slot.purchasePrice)}${slot.purchaseSource === "launch" ? " (launch price)" : ""}` : null,
   ].filter(Boolean).join(" · ");
   const tiles: [string, string][] = [
     ["Pts", int(player.totalPoints)], ["Form", f1(player.form)], ["xP next", f1(player.epNext)], ["Mins", int(player.minutes)],
@@ -35,7 +35,8 @@ export function PlayerSheet({ player, slot, club, position, cells, gwIds, clubBy
     <div className="sheet-backdrop" onClick={onClose}>
       <div className="sheet" role="dialog" aria-modal="true" aria-label={player.webName} onClick={(e) => e.stopPropagation()}>
         <h2 className="flex items-center gap-2">{player.webName} <Flag player={player} long /></h2>
-        <div className="sub">{club?.name} · {position?.short} · {money}</div>
+        <div className="sub">{club?.name} · {position?.short}</div>
+        <div className="sub"><b>{money}</b></div>
         {player.news && <div className="sub">{player.news}</div>}
         <div className="pstats">{tiles.map(([k, v]) => <div key={k}><span>{k}</span><b>{v}</b></div>)}</div>
         <div className="pfx">

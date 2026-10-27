@@ -15,8 +15,13 @@ drafts; the UI tab is "My squad", the code and docs say **Entry**.
 - **Q81:** keep ADR 0003's fetching discipline, ≥1 s pacing included. A cold load is about
   four requests (entry, history, transfers, picks), roughly 3–4 s; then the 5-minute cache
   answers. The page renders everything that doesn't need the Entry while it loads.
-- **Q82:** My squad becomes the landing tab. With no id remembered it shows `FPL_ENTRY_ID`'s
-  team, and the bar says "Enter your team ID to see yours".
+- **Q82:** My squad becomes the landing tab. *(Revised 2026-10-27, owner's choice:)* **no
+  default team.** With no id in the URL or remembered on the device, the tab asks for a team
+  id and fetches nothing, so a visitor never sees the owner's team. `FPL_ENTRY_ID` is not set
+  on Vercel; the server's default-id route stays but is unused by the web app.
+- *Layout tweaks (2026-10-27):* pitch cards show the sell price under the fixture; the list
+  view has a Sell column after the fixtures; the player sheet leads with the current value
+  ("Current value £x · sells for £y · bought £z").
 - **Q83:** ship without waiting for the two "confirm on first occurrence" items
   (`element_out_cost` on a sale at a profit; the Free Hit chip name). Their safeguards stay.
 - **Q84:** two PRs. **Part 1:** the data and a read-only My squad (pitch and list views,
@@ -142,6 +147,13 @@ is the quiet budget inflation that makes FPL backtests cheat.
   number under that label. Its make-up (market vs selling prices, bank in or out) is not
   needed and not assumed: never compute with it — budgets use our own selling value.
   Never call it bare "team value".
+  *Revised 2026-10-27 (live check, Entry 436573):* `history.current[n].value` is **frozen at
+  gameweek n** — FreePL showed £102.0m (GW8) while the FPL site showed £101.5m with £0.6m in
+  the bank and current prices. The owner's own sum of the 15 current prices came to about
+  £101.5m, so the site's "Squad value" is **players only, bank excluded**, at current prices.
+  The dashboard shows that live figure (current `now_cost` of the 15 held now, pending
+  transfers included), with FPL's frozen GW n figure in small print. Display only; budgets
+  still use the selling value.
 - **Free transfers available**, per `docs/fpl-domain.md`, as a pure tested function over
   `history.current[]` and `history.chips`:
   - Transfers before the GW1 deadline are unlimited and free; GW2 starts with 1.

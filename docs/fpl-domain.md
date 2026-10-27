@@ -22,6 +22,10 @@ over this file — verify against a live payload before hardcoding anything.
   - Purchase price = what you paid when the player joined your squad: the transfer-in cost, or the launch price for players in your original squad.
   - Confirmed against the FPL site (2026/27): bought 155, now 156 → sells 155; bought 55, now 59 → sells 57.
   - Never assume a player sells for `now_cost`. Purchase price per player must be tracked.
+- **"Squad value" on the FPL site** = the current prices (`now_cost`) of the 15 players held,
+  **bank not included** (the bank is shown beside it). Verified 2026-10-27: site £101.5m,
+  bank £0.6m, sum of the 15 current prices ≈ £101.5m. `entry/{id}/history.current[n].value`
+  is the same kind of figure but **frozen at gameweek n** (£102.0m for GW8 that day).
 
 ## Gameweeks and deadlines
 

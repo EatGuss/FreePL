@@ -29,7 +29,8 @@ export function MySquadTab({ players, fixtures, ratings, filters, update, now, o
 }) {
   const [remembered] = useState(readRemembered);
   const id = filters.entry ?? remembered;
-  const entry = useEntry(id, true);
+  // No default team (owner's choice, 2026-10-27): nothing is fetched until a team id is given.
+  const entry = useEntry(id, id !== null);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const [sheetFor, setSheetFor] = useState<number | null>(null);
@@ -60,20 +61,19 @@ export function MySquadTab({ players, fixtures, ratings, filters, update, now, o
 
   const teamBar = (
     <div className="teambar">
-      {editing || (entry.isError && entry.error instanceof EntryLoadError && entry.error.status === 404) ? (
+      {editing || id === null || (entry.isError && entry.error instanceof EntryLoadError && entry.error.status === 404) ? (
         <form onSubmit={submit}>
           <label htmlFor="teamid">Team ID</label>
           <input id="teamid" className="numin" inputMode="numeric" pattern="[0-9]*" placeholder="e.g. 1234567"
             value={draft} onChange={(e) => setDraft(e.target.value.replace(/\D/g, ""))} autoFocus />
           <button className="chip small" type="submit" disabled={entryParam(draft) === null}>Show</button>
-          {editing && <button className="linkish" type="button" onClick={() => setEditing(false)}>Cancel</button>}
+          {editing && id !== null && <button className="linkish" type="button" onClick={() => setEditing(false)}>Cancel</button>}
           <span className="pmeta">Find it in the address of your Points page: …/entry/<b>1234567</b>/event/…</span>
         </form>
       ) : (
         <>
           <span>
             {view ? <>Showing: <b>{view.entry.name}</b> ({view.entry.manager})</> : "Loading team…"}
-            {id === null && view && <span className="pmeta"> · enter your team ID to see yours</span>}
           </span>
           <button className="linkish" onClick={() => { setDraft(id ? String(id) : ""); setEditing(true); }}>Change team</button>
         </>
@@ -81,6 +81,15 @@ export function MySquadTab({ players, fixtures, ratings, filters, update, now, o
     </div>
   );
 
+  if (id === null) {
+    return (
+      <section className="flex flex-col gap-2.5">
+        <p className="notice">Enter your FPL team ID to see your squad, selling prices, free transfers and chips.
+          It's remembered on this device only. The data comes live from FPL's public pages and isn't saved.</p>
+        {teamBar}
+      </section>
+    );
+  }
   if (entry.isPending) return <section className="flex flex-col gap-2.5">{teamBar}<p className="notice">Loading the team from FPL…</p></section>;
   if (entry.isError) {
     const e = entry.error;
@@ -130,7 +139,7 @@ export function MySquadTab({ players, fixtures, ratings, filters, update, now, o
           <span className="nm">{r.player.webName}</span>
           <span className="bw">{rating?.rated ? BAND_LABEL[rating.band] : "Not rated"}</span>
           <span className="fx1"><FixtureCell fixtures={r.cells[0]?.fixtures ?? []} clubById={clubById} /></span>
-          <span className="pr">{r.slot.sellPrice !== null ? formatPrice(r.slot.sellPrice) : formatPrice(r.player.nowCost)}</span>
+          <span className="pr" title="Sell price">{r.slot.sellPrice !== null ? formatPrice(r.slot.sellPrice) : "—"}</span>
         </span>
       </button>
     );
@@ -167,7 +176,8 @@ export function MySquadTab({ players, fixtures, ratings, filters, update, now, o
           <div className="m"><span className="k">Bank</span><span className={`v ${s.bank !== null && s.bank < 0 ? "bad" : ""}`}>{s.bank === null ? "—" : money(s.bank)}</span><span className="n">now</span></div>
           <div className="m"><span className="k">Free transfers</span><span className="v">{s.freeTransfers ?? "∞"}</span><span className="n">{ftNote}</span></div>
           <div className="m"><span className="k">Selling value</span><span className="v">{s.sellingValue === null ? "—" : money(s.sellingValue)}</span><span className="n">{s.sellingValue === null ? "buy price unknown" : "live"}</span></div>
-          <div className="m"><span className="k">Squad value</span><span className="v">{s.squadValue === null ? "—" : formatPrice(s.squadValue)}</span><span className="n">FPL · GW{v.gameweek}</span></div>
+          <div className="m"><span className="k">Squad value</span><span className="v">{s.squadValueLive === null ? "—" : money(s.squadValueLive)}</span>
+            <span className="n" title="FPL's own figure, frozen at that gameweek">{s.squadValue === null ? "live" : `live · GW${v.gameweek} ${formatPrice(s.squadValue)}`}</span></div>
           <div className="row2">
             <span className="chipset">
               {CHIPS.map((c) => {
@@ -200,6 +210,7 @@ export function MySquadTab({ players, fixtures, ratings, filters, update, now, o
                 <tr>
                   <th scope="col">Player</th>
                   {nextGws.map((g) => <th key={g.id} scope="col" style={{ textAlign: "center" }}>GW{g.id}</th>)}
+                  <th scope="col">Sell</th>
                   <th scope="col">xP next</th>
                 </tr>
               </thead>
@@ -220,12 +231,12 @@ export function MySquadTab({ players, fixtures, ratings, filters, update, now, o
                           {r.slot.pendingIn && <span className="tag new">New</span>}
                         </div>
                         <div className="pmeta">
-                          <span className="bandword">{rating?.rated ? BAND_LABEL[rating.band] : "Not rated"}</span> · {clubById.get(r.player.clubId)?.short} ·{" "}
-                          <b>{r.slot.sellPrice !== null ? `sells ${formatPrice(r.slot.sellPrice)}` : formatPrice(r.player.nowCost)}</b>
+                          <span className="bandword">{rating?.rated ? BAND_LABEL[rating.band] : "Not rated"}</span> · {clubById.get(r.player.clubId)?.short}
                         </div>
                       </td>
                       {r.cells.map((c) => <td key={c.gameweek} className="fx"><FixtureCell fixtures={c.fixtures} clubById={clubById} /></td>)}
-                      <td className="num-strong">{f1(r.player.epNext)}</td>
+                      <td className="num-strong">{r.slot.sellPrice !== null ? formatPrice(r.slot.sellPrice) : "—"}</td>
+                      <td>{f1(r.player.epNext)}</td>
                     </tr>
                   );
                 })}
