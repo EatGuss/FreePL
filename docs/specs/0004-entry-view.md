@@ -303,7 +303,11 @@ are local and commit nothing.
 
 ## Rollout
 
-1. **Before building anything on live reads:** from a Vercel preview deployment, make one
+1. *Done 2026-10-27:* a temporary `/api/probe/fpl` on a Vercel preview (region `iad1`) got
+   `200 application/json` from both `entry/{id}/history` (115 ms) and `entry/{id}/transfers`
+   (86 ms), with the descriptive User-Agent and no contact string. FPL answers Vercel; ADR
+   0003 stands. The probe branch was never merged.
+   **Before building anything on live reads:** from a Vercel preview deployment, make one
    request to `entry/{FPL_ENTRY_ID}/history` and confirm FPL answers datacenter IPs with
    JSON, not a block page. If it doesn't, stop and revisit ADR 0003. Context: the two
    known constraints are CORS and User-Agent filtering. CORS does not apply — every FPL call
