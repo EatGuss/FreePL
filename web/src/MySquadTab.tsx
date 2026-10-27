@@ -1,8 +1,11 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useCallback, useMemo, useState, type FormEvent } from "react";
 import {
-  BAND_LABEL, CHIPS, CHIP_LABEL, FIXTURE_GAMEWEEKS, availabilityFor, buildTicker, formatPrice, pickRatingFor, tickerWindow,
-  type FixturesResponse, type PlayerRow, type PlayersResponse, type RatingContext, type SquadSlot, type TickerCell,
+  BAND_LABEL, CHIPS, CHIP_LABEL, FIXTURE_GAMEWEEKS, availabilityFor, buildTicker, canSwap, evaluatePlan, formatPrice,
+  pickRatingFor, planTransfer, setArmband, startPlan, swapPlayers, tickerWindow, undoTransfer,
+  type EntryView, type FixturesResponse, type Plan, type PlanSlot, type PlayerRow, type PlayersResponse, type RatingContext,
+  type TickerCell,
 } from "@freepl/contract";
+import { ReplaceSheet } from "./ReplaceSheet.js";
 import { FixtureCell } from "./FixtureChip.js";
 import { Flag } from "./Flag.js";
 import { PlayerSheet } from "./PlayerSheet.js";
@@ -20,9 +23,12 @@ const remember = (id: number) => { try { window.localStorage.setItem(REMEMBER_KE
 /** Signed money in tenths: a planned or reported negative bank is shown, never hidden. */
 const money = (t: number) => (t < 0 ? `−${formatPrice(-t)}` : formatPrice(t));
 
-interface Row { slot: SquadSlot; player: PlayerRow; cells: TickerCell[] }
+interface Row { slot: PlanSlot; player: PlayerRow; cells: TickerCell[] }
 
-/** Spec 0004 part 1: the Entry's Squad, money and transfer state, read live and never stored. */
+/**
+ * Spec 0004: the Entry's Squad, money and transfer state, read live and never stored, plus the
+ * what-if (planned transfers and lineup) — client side only, lost on refresh, never sent to FPL.
+ */
 export function MySquadTab({ players, fixtures, ratings, filters, update, now, onOpenRating }: {
   players: PlayersResponse; fixtures: FixturesResponse | undefined; ratings: RatingContext | null;
   filters: Filters; update: (p: Partial<Filters>) => void; now: number; onOpenRating: (id: number) => void;
@@ -45,10 +51,23 @@ export function MySquadTab({ players, fixtures, ratings, filters, update, now, o
   }, [fixtures, nextGws]);
 
   const view = entry.data?.view;
-  const rows: Row[] = useMemo(() => (view?.squad ?? []).flatMap((slot) => {
+  // The plan belongs to the view it was made on; a new team (or new data) starts afresh.
+  const [planState, setPlanState] = useState<{ view: EntryView; plan: Plan } | null>(null);
+  const basePlan = useMemo(() => (view && view.squad.length ? startPlan(view) : null), [view]);
+  const plan = planState && planState.view === view ? planState.plan : basePlan;
+  const setPlan = useCallback((p: Plan) => { if (view) setPlanState({ view, plan: p }); }, [view]);
+  const result = useMemo(
+    () => (view && plan ? evaluatePlan(view, plan, players.players, players.positions) : null),
+    [view, plan, players],
+  );
+  const positionOf = useCallback((pid: number) => { const p = byId.get(pid); return p ? posById.get(p.positionId) : undefined; }, [byId, posById]);
+  const [moving, setMoving] = useState<number | null>(null);
+  const [replaceFor, setReplaceFor] = useState<number | null>(null);
+
+  const rows: Row[] = useMemo(() => (result?.squad ?? []).flatMap((slot) => {
     const player = byId.get(slot.playerId);
     return player ? [{ slot, player, cells: cellsByClub.get(player.clubId) ?? [] }] : [];
-  }), [view, byId, cellsByClub]);
+  }), [result, byId, cellsByClub]);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -117,22 +136,36 @@ export function MySquadTab({ players, fixtures, ratings, filters, update, now, o
   const bench = rows.filter((r) => r.slot.slot > 11).sort((a, b) => a.slot.slot - b.slot.slot);
   const flagged = rows.filter((r) => r.player.status !== "a");
   const blanks = nextGws.map((g, i) => ({ gw: g.id, n: xi.filter((r) => r.cells[i]?.fixtures.length === 0).length })).filter((b) => b.n > 0);
-  const noCaptain = !xi.some((r) => r.slot.isCaptain);
+  const r0 = result!;
+  const p0 = plan!;
+  const noCaptain = r0.noCaptain;
   const s = v.state;
   const upcoming = v.gameweek + 1;
   const set = upcoming <= 19 ? 1 : 2;
-  const ftNote = s.freeTransfers === null ? "unlimited" : s.pendingTransfers ? `${s.pendingTransfers} pending` : "available";
+  const planned = p0.transfers.length;
+  const ftNote = s.freeTransfers === null ? "unlimited"
+    : r0.hitPoints ? `−${r0.hitPoints} pts hit`
+    : planned ? `after ${planned} planned` : s.pendingTransfers ? `${s.pendingTransfers} pending` : "available";
   const sheetRow = rows.find((r) => r.player.id === sheetFor);
+  const replaceRow = rows.find((r) => r.player.id === replaceFor);
+  const inSquad = new Set(rows.map((r) => r.player.id));
+  const tapPlayer = (pid: number) => {
+    if (moving === null) { setSheetFor(pid); return; }
+    if (pid !== moving && canSwap(p0, moving, pid, players.positions, positionOf)) setPlan(swapPlayers(p0, moving, pid, players.positions, positionOf));
+    setMoving(null);
+  };
+  const movingName = moving === null ? null : byId.get(moving)?.webName;
 
   const card = (r: Row) => {
     const rating = ratings ? pickRatingFor(r.player, ratings) : null;
     const band = rating?.rated ? rating.band : "unrated";
     const isGk = posById.get(r.player.positionId)?.short === "GKP";
     return (
-      <button key={r.player.id} type="button" className="pcard" onClick={() => setSheetFor(r.player.id)}
+      <button key={r.player.id} type="button" onClick={() => tapPlayer(r.player.id)}
+        className={`pcard ${moving === null ? "" : moving === r.player.id ? "moving" : canSwap(p0, moving, r.player.id, players.positions, positionOf) ? "target" : "dim"}`}
         aria-label={`${r.player.webName}${r.slot.isCaptain ? ", captain" : r.slot.isVice ? ", vice-captain" : ""}`}>
         <span className="fl"><Flag player={r.player} /></span>
-        {r.slot.pendingIn ? <span className="badge new">NEW</span> : r.slot.isCaptain ? <span className="badge">C</span> : r.slot.isVice ? <span className="badge">V</span> : null}
+        {r.slot.planned || r.slot.pendingIn ? <span className="badge new">NEW</span> : r.slot.isCaptain ? <span className="badge">C</span> : r.slot.isVice ? <span className="badge">V</span> : null}
         <Shirt keeper={isGk} />
         <span className="box">
           <span className={`strip ${band}`} />
@@ -167,15 +200,42 @@ export function MySquadTab({ players, fixtures, ratings, filters, update, now, o
         {!flagged.length && !blanks.length && !noCaptain && <span className="ok">Nothing needs attention</span>}
       </div>
 
+      <div className="lineup-note">
+        <span>Planned lineup <b>{r0.formation}</b> · starts from your GW{v.gameweek} XI. A what-if only: set your real XI, bench and
+          captain on the FPL site.</span>
+        {r0.noCaptain && <span className="warn">No captain: tick one in a starter's sheet.</span>}
+        {r0.noVice && <span className="warn">No vice-captain.</span>}
+      </div>
+
+      {planned > 0 && (
+        <div className="plan">
+          <div className="row"><b>Planned transfers</b><button className="linkish" onClick={() => setPlan(startPlan(v))}>Clear plan</button></div>
+          {p0.transfers.map((t) => {
+            const out = byId.get(t.outId), inn = byId.get(t.inId);
+            const sell = v.squad.find((x) => x.playerId === t.outId)?.sellPrice;
+            return (
+              <div className="row" key={t.inId}>
+                <span>{out?.webName} ({sell != null ? formatPrice(sell) : "?"}) → <b>{inn?.webName}</b> ({inn ? formatPrice(inn.nowCost) : "?"})</span>
+                <button className="linkish" onClick={() => setPlan(undoTransfer(p0, t.inId))}>Undo</button>
+              </div>
+            );
+          })}
+          {r0.overBudgetBy > 0 && <div className="warn">Over budget by {formatPrice(r0.overBudgetBy)}. Sell more or pick cheaper to make this plan valid.</div>}
+          {r0.clubsOver.length > 0 && <div className="warn">More than 3 from {r0.clubsOver.map((c) => clubById.get(c)?.short).join(", ")}. FPL won't allow this.</div>}
+          {r0.hitPoints > 0 && <div className="warn">{r0.hitPoints / 4} extra transfer{r0.hitPoints > 4 ? "s" : ""}: −{r0.hitPoints} points</div>}
+          <div className="pmeta">Incoming players are valued at today's price, which can change overnight.</div>
+        </div>
+      )}
+
       <div className={`squadview ${filters.squadView === "pitch" ? "attached" : ""}`}>
         <div className="viewseg" role="group" aria-label="Squad view">
           <button className="chip" aria-pressed={filters.squadView === "pitch"} onClick={() => update({ squadView: "pitch" })}>Pitch</button>
           <button className="chip" aria-pressed={filters.squadView === "list"} onClick={() => update({ squadView: "list" })}>List</button>
         </div>
         <div className="dash">
-          <div className="m"><span className="k">Bank</span><span className={`v ${s.bank !== null && s.bank < 0 ? "bad" : ""}`}>{s.bank === null ? "—" : money(s.bank)}</span><span className="n">now</span></div>
-          <div className="m"><span className="k">Free transfers</span><span className="v">{s.freeTransfers ?? "∞"}</span><span className="n">{ftNote}</span></div>
-          <div className="m"><span className="k">Selling value</span><span className="v">{s.sellingValue === null ? "—" : money(s.sellingValue)}</span><span className="n">{s.sellingValue === null ? "buy price unknown" : "live"}</span></div>
+          <div className="m"><span className="k">Bank</span><span className={`v ${r0.bank !== null && r0.bank < 0 ? "bad" : ""}`}>{r0.bank === null ? "—" : money(r0.bank)}</span><span className="n">{planned ? "after plan" : "now"}</span></div>
+          <div className="m"><span className="k">Free transfers</span><span className={`v ${r0.hitPoints ? "bad" : ""}`}>{r0.freeTransfersLeft ?? "∞"}</span><span className="n">{ftNote}</span></div>
+          <div className="m"><span className="k">Selling value</span><span className="v">{r0.sellingValue === null ? "—" : money(r0.sellingValue)}</span><span className="n">{r0.sellingValue === null ? "buy price unknown" : "live"}</span></div>
           <div className="m"><span className="k">Squad value</span><span className="v">{s.squadValueLive === null ? "—" : money(s.squadValueLive)}</span>
             <span className="n" title="FPL's own figure, frozen at that gameweek">{s.squadValue === null ? "live" : `live · GW${v.gameweek} ${formatPrice(s.squadValue)}`}</span></div>
           <div className="row2">
@@ -192,6 +252,7 @@ export function MySquadTab({ players, fixtures, ratings, filters, update, now, o
         {filters.squadView === "pitch" ? (
           <>
             <div className="pitch">
+              {movingName && <div className="movebar"><span>Tap a highlighted player to swap with {movingName}</span><button onClick={() => setMoving(null)}>Cancel</button></div>}
               <div className="turf" aria-hidden="true" /><div className="goalarea" aria-hidden="true" /><div className="goalframe" aria-hidden="true" />
               {players.positions.map((pos) => {
                 const line = xi.filter((r) => r.player.positionId === pos.id);
@@ -220,8 +281,9 @@ export function MySquadTab({ players, fixtures, ratings, filters, update, now, o
                   const band = rating?.rated ? rating.band : null;
                   const cls = band && band !== "below" ? `row-${band}` : "";
                   return (
-                    <tr key={r.player.id} className={`${cls} tap`} tabIndex={0} onClick={() => setSheetFor(r.player.id)}
-                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSheetFor(r.player.id); } }}>
+                    <tr key={r.player.id} className={`${cls} tap`} tabIndex={0} onClick={() => tapPlayer(r.player.id)}
+                      style={moving !== null && moving !== r.player.id && !canSwap(p0, moving, r.player.id, players.positions, positionOf) ? { opacity: 0.35 } : undefined}
+                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); tapPlayer(r.player.id); } }}>
                       <td>
                         <div className="pname">
                           <span className="nm">{r.player.webName}</span><Flag player={r.player} />
@@ -229,6 +291,7 @@ export function MySquadTab({ players, fixtures, ratings, filters, update, now, o
                           {r.slot.isVice && <span className="tag">V</span>}
                           {r.slot.slot > 11 && <span className="tag">Bench {r.slot.slot - 11}</span>}
                           {r.slot.pendingIn && <span className="tag new">New</span>}
+                          {r.slot.planned && <span className="tag new">Planned</span>}
                         </div>
                         <div className="pmeta">
                           <span className="bandword">{rating?.rated ? BAND_LABEL[rating.band] : "Not rated"}</span> · {clubById.get(r.player.clubId)?.short}
@@ -254,7 +317,18 @@ export function MySquadTab({ players, fixtures, ratings, filters, update, now, o
         <PlayerSheet player={sheetRow.player} slot={sheetRow.slot} club={clubById.get(sheetRow.player.clubId)}
           position={posById.get(sheetRow.player.positionId)} cells={sheetRow.cells} gwIds={nextGws.map((g) => g.id)}
           clubById={clubById} rating={ratings ? pickRatingFor(sheetRow.player, ratings) : null}
+          starter={sheetRow.slot.slot <= 11}
+          onCaptain={() => setPlan(setArmband(p0, sheetRow.player.id, "captain"))}
+          onVice={() => setPlan(setArmband(p0, sheetRow.player.id, "vice"))}
+          onMove={() => { setMoving(sheetRow.player.id); setSheetFor(null); }}
+          onReplace={() => { setReplaceFor(sheetRow.player.id); setSheetFor(null); }}
           onWhy={() => { const pid = sheetRow.player.id; setSheetFor(null); onOpenRating(pid); }} onClose={() => setSheetFor(null)} />
+      )}
+      {replaceRow && (
+        <ReplaceSheet out={replaceRow.player} sellPrice={replaceRow.slot.sellPrice} bank={r0.bank} ratings={ratings} clubById={clubById}
+          candidates={players.players.filter((p) => p.positionId === replaceRow.player.positionId && !inSquad.has(p.id))}
+          onPick={(inId) => { setPlan(planTransfer(p0, replaceRow.player.id, inId)); setReplaceFor(null); }}
+          onClose={() => setReplaceFor(null)} />
       )}
     </section>
   );
