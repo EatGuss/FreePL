@@ -1,6 +1,7 @@
 # ADR 0003 — The API may read the FPL API live for entry-scoped data, and never stores it
 
-Date: 2026-10-14 · Status: accepted · Amended 2026-10-15 (point 4: client lives in `server/`)
+Date: 2026-10-14 · Status: accepted · Amended 2026-10-15 (point 4: client lives in `server/`),
+2026-10-26 (point 7: any Entry id, read-only)
 
 ## Context
 
@@ -18,7 +19,8 @@ irrecoverable data and spends storage on the one free tier with a measured ceili
 ## Decision
 
 1. `api/` may fetch the FPL API directly for **entry-scoped, re-fetchable** endpoints:
-   `entry/{id}/history`, `entry/{id}/transfers`, `entry/{id}/event/{gw}/picks`.
+   `entry/{id}/history`, `entry/{id}/transfers`, `entry/{id}/event/{gw}/picks`, and
+   *(amended 2026-10-26, spec 0004 Q80)* `entry/{id}/` for the team and manager name.
 2. Those responses are **never written to Postgres**. The snapshot job remains the only
    writer, and `api_snapshots` remains a record of what the archive captured, not a cache.
 3. Everything not entry-scoped — players, teams, fixtures, events — is read from the
@@ -35,6 +37,18 @@ irrecoverable data and spends storage on the one free tier with a measured ceili
    this does not need Redis.
 6. An upstream failure degrades the page, it does not blank it. Render what the cache or
    the snapshot views can supply and show the error inline.
+7. *(Amended 2026-10-26, spec 0004 Q79.)* The Entry view may show **any** Entry by its
+   numeric team id, typed by the viewer, defaulting to `FPL_ENTRY_ID`. This is not
+   authentication: FPL publishes these endpoints for every Entry. Guardrails, because the
+   API is now a public way to cause FPL requests:
+   - the id must be a plain positive integer; nothing else ever reaches the URL sent to FPL;
+   - per-id cache of point 5, plus `Cache-Control` so Vercel's edge caches each id for the
+     same 5 minutes — many viewers of one Entry cost at most one FPL fetch per window;
+   - the in-process cache is bounded (about 200 ids, least recently used evicted);
+   - responses for other Entries are never stored or logged, same as point 2;
+   - the page says the data comes live from FPL's public endpoints and is not saved.
+   The snapshot job, the AI account and the scorecard still track only `FPL_ENTRY_ID`.
+   Point 5's "one user, one entry id" no longer holds; the bounded cache replaces it.
 
 ## Consequences
 

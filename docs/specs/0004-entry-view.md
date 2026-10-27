@@ -1,9 +1,27 @@
 # Spec 0004 — Entry view
 
-Status: draft · hardens once spec 0002 ships
+Status: **current** · review 2026-10-27 (Q79–Q84) below; built in two PRs (Q84)
 Depends on spec 0002 (contract, API, patterns), spec 0003 (`difficultyFor`, fixture cells),
 spec 0005 (row colours) and ADR 0003 (live entry reads). Called "My Team" in earlier
 drafts; the UI tab is "My squad", the code and docs say **Entry**.
+
+## Decisions from review (2026-10-27)
+
+- **Q79:** any Entry by numeric team id, defaulting to `FPL_ENTRY_ID` (see "API", ADR 0003
+  point 7).
+- **Q80:** a bar at the top of My squad: "Showing: {team name} ({manager}) · Change team".
+  Needs `entry/{id}/` (team and manager name), added to ADR 0003's allowed live reads. An
+  unknown id shows "No FPL team with ID …", not an error page.
+- **Q81:** keep ADR 0003's fetching discipline, ≥1 s pacing included. A cold load is about
+  four requests (entry, history, transfers, picks), roughly 3–4 s; then the 5-minute cache
+  answers. The page renders everything that doesn't need the Entry while it loads.
+- **Q82:** My squad becomes the landing tab. With no id remembered it shows `FPL_ENTRY_ID`'s
+  team, and the bar says "Enter your team ID to see yours".
+- **Q83:** ship without waiting for the two "confirm on first occurrence" items
+  (`element_out_cost` on a sale at a profit; the Free Hit chip name). Their safeguards stay.
+- **Q84:** two PRs. **Part 1:** the data and a read-only My squad (pitch and list views,
+  dashboard strip, needs-attention line, team-id bar, player sheet without Move/Replace).
+  **Part 2:** the what-if (Replace and planned transfers; Move and the planned lineup).
 
 ## The constraint, first
 
@@ -242,11 +260,14 @@ On the **Picks** tab (spec 0005), players in the Squad carry an "In squad" tag.
 
 ## API
 
-`GET /api/entry/me` → `{ meta, squad, state }`.
+`GET /api/entry/{id}` → `{ meta, squad, state }`.
 
-Entry id from env (`FPL_ENTRY_ID`), one Entry. The route is `/entry/me` rather than
-`/entry/{id}` deliberately — an id parameter invites the caching and rate-limiting work
-that multi-user drags in.
+*(Q79, 2026-10-26.)* Any Entry by numeric team id, typed into a "Your team ID" box on My
+squad, kept in the URL (`?entry=1234567`) and remembered in the browser; with none, the
+page shows `FPL_ENTRY_ID`. Not authentication: FPL publishes these endpoints for every
+Entry. Guardrails are in ADR 0003 point 7 (integer-only id, per-id 5-minute cache at the
+server and the edge, bounded cache, nothing stored or logged, a visible note). This
+supersedes the earlier single-Entry `/api/entry/me`.
 
 `squad[]` carries, per player: id, GW n slot (XI/bench order, C/V), purchase price and its
 source (`transfer` | `launch`), and whether it is a pending transfer in. Sell price is
@@ -300,7 +321,11 @@ are local and commit nothing.
 
 ## Rollout
 
-1. **Before building anything on live reads:** from a Vercel preview deployment, make one
+1. *Done 2026-10-27:* a temporary `/api/probe/fpl` on a Vercel preview (region `iad1`) got
+   `200 application/json` from both `entry/{id}/history` (115 ms) and `entry/{id}/transfers`
+   (86 ms), with the descriptive User-Agent and no contact string. FPL answers Vercel; ADR
+   0003 stands. The probe branch was never merged.
+   **Before building anything on live reads:** from a Vercel preview deployment, make one
    request to `entry/{FPL_ENTRY_ID}/history` and confirm FPL answers datacenter IPs with
    JSON, not a block page. If it doesn't, stop and revisit ADR 0003. Context: the two
    known constraints are CORS and User-Agent filtering. CORS does not apply — every FPL call

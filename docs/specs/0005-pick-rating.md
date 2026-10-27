@@ -1,6 +1,6 @@
 # Spec 0005 — Pick rating
 
-Status: **current** · decisions from review 2026-10-22 (Q70–Q78) recorded below
+Status: **shipped 2026-10-26** (PRs #21–#23) · decisions from review 2026-10-22 (Q70–Q78) recorded below
 Depends on spec 0002 (table, contract), spec 0003 (`difficultyFor`), ADR 0002 (amended)
 
 ## Goal
@@ -210,13 +210,18 @@ in the fixture window, a `d` player).
 
 ## Acceptance criteria
 
-- [ ] Bands are computed within position; a goalkeeper is never compared with a forward.
-- [ ] Band sizes match the table above for each position.
-- [ ] Every rating's breakdown shows each input's rank within position and its weight.
-- [ ] Picks is the landing tab until My squad ships: four position tables, rows coloured by band with the band
+Ticked 2026-10-26. Band logic, eligibility, the fixtures input and weights are covered by
+`packages/contract/test/pickRating.test.ts`; the Picks tab, breakdown and Players column by a
+browser check on a synthetic season; the weights by the owner on live data (DEF and MID
+revised, all positions accepted 2026-10-26). `pickRatingFor` has no importers outside `web/`.
+
+- [x] Bands are computed within position; a goalkeeper is never compared with a forward.
+- [x] Band sizes match the table above for each position.
+- [x] Every rating's breakdown shows each input's rank within position and its weight.
+- [x] Picks is the landing tab until My squad ships: four position tables, rows coloured by band with the band
       word visible, next 3 fixtures shown with doubles stacked and blanks marked.
-- [ ] A player with a double gameweek in the window gets both fixtures counted in the
+- [x] A player with a double gameweek in the window gets both fixtures counted in the
       fixtures input; a blank counts zero.
-- [ ] Players under 270 minutes or flagged `i`/`s`/`u`/`n` have no band.
-- [ ] No code outside `pickRatingFor` computes or reads band thresholds.
-- [ ] Nothing in the decision log, model or backtest imports `pickRatingFor`.
+- [x] Players under 270 minutes or flagged `i`/`s`/`u`/`n` have no band.
+- [x] No code outside `pickRatingFor` computes or reads band thresholds.
+- [x] Nothing in the decision log, model or backtest imports `pickRatingFor`.
