@@ -3,6 +3,7 @@ import { buildRatingContext, pickRatingFor, upcomingGameweek } from "@freepl/con
 import { FixturesTab } from "./FixturesTab.js";
 import { Freshness } from "./Freshness.js";
 import { InjuryTab } from "./InjuryTab.js";
+import { MySquadTab } from "./MySquadTab.js";
 import { PicksTab } from "./PicksTab.js";
 import { PlayersTab } from "./PlayersTab.js";
 import { RatingSheet } from "./Rating.js";
@@ -11,7 +12,7 @@ import type { Tab } from "./filters.js";
 import { localDateTime } from "./format.js";
 import { useFilters } from "./useFilters.js";
 
-const TITLES: Record<Tab, string> = { picks: "Picks", players: "Players", fixtures: "Fixtures", injury: "Injury watch" };
+const TITLES: Record<Tab, string> = { squad: "My squad", picks: "Picks", players: "Players", fixtures: "Fixtures", injury: "Injury watch" };
 
 export function App() {
   const [filters, update] = useFilters();
@@ -38,7 +39,7 @@ export function App() {
   const closeSheet = useCallback(() => setSheetFor(null), []);
   const sheetPlayer = sheetFor === null ? undefined : data?.players.find((p) => p.id === sheetFor);
 
-  const needsFixtures = filters.tab === "picks" || filters.tab === "fixtures";
+  const needsFixtures = filters.tab === "squad" || filters.tab === "picks" || filters.tab === "fixtures";
   const pending = players.isPending || (needsFixtures && fixtures.isPending);
   const failed = players.isError || (needsFixtures && fixtures.isError);
   const retry = () => { void players.refetch(); void fixtures.refetch(); };
@@ -60,7 +61,7 @@ export function App() {
         : data && <Freshness sources={{ bootstrap: data.meta.sources.bootstrap.capturedAt }} now={now} />}
 
       <nav className="views" role="tablist">
-        {(["picks", "players", "fixtures"] as const).map((t) => (
+        {(["squad", "picks", "players", "fixtures"] as const).map((t) => (
           <button key={t} role="tab" aria-selected={filters.tab === t} onClick={() => update({ tab: t })}>{TITLES[t]}</button>
         ))}
         <button role="tab" aria-selected={filters.tab === "injury"} onClick={() => update({ tab: "injury" })}>
@@ -73,6 +74,9 @@ export function App() {
         <p className="notice bad">
           Couldn't load the data. <button className="linkish" onClick={retry}>Try again</button>
         </p>
+      )}
+      {filters.tab === "squad" && data && (
+        <MySquadTab players={data} fixtures={fixtures.data} ratings={ratings} filters={filters} update={update} now={now} onOpenRating={openSheet} />
       )}
       {filters.tab === "picks" && data && fixtures.data && ratings && (
         <PicksTab players={data} fixtures={fixtures.data} ratings={ratings} filters={filters} update={update} now={now} onOpen={openSheet} />

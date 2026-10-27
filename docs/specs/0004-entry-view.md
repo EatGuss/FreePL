@@ -22,6 +22,10 @@ drafts; the UI tab is "My squad", the code and docs say **Entry**.
 - **Q84:** two PRs. **Part 1:** the data and a read-only My squad (pitch and list views,
   dashboard strip, needs-attention line, team-id bar, player sheet without Move/Replace).
   **Part 2:** the what-if (Replace and planned transfers; Move and the planned lineup).
+- *Part 1 as built (2026-10-27):* tapping a flagged player in "Needs attention" opens their
+  player sheet, not Picks' focused view (that view is out of spec 0005 v1, Q76). Shirts use
+  the design's neutral kit (keepers in their own) until a Club colour table exists. The
+  sheet shows C/V as badges; the Captain/Vice ticks belong to the planned lineup (part 2).
 
 ## The constraint, first
 

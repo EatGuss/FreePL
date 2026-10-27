@@ -46,6 +46,9 @@ describe("URL state", () => {
     const f = { ...DEFAULT_FILTERS, tab: "fixtures" as const, window: 8, tickerSort: "count" as const };
     expect(filtersToSearch(f)).toBe("?tab=fixtures&gws=8&fsort=count");
     expect(filtersToSearch({ ...DEFAULT_FILTERS, tab: "players" })).toBe("?tab=players");
+    expect(filtersToSearch({ ...DEFAULT_FILTERS, tab: "picks" })).toBe("?tab=picks");
+    expect(filtersFromSearch("?entry=1234567&sview=list")).toMatchObject({ tab: "squad", entry: 1234567, squadView: "list" });
+    expect(filtersFromSearch("?entry=12ab").entry).toBeNull();
     expect(filtersFromSearch("?budget=65").budget).toBe(65);
     expect(filtersFromSearch(filtersToSearch(f))).toEqual(f);
     expect(filtersFromSearch("?gws=40").window).toBe(10);
