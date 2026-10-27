@@ -144,11 +144,11 @@ is the quiet budget inflation that makes FPL backtests cheat.
   Never call it bare "team value".
   *Revised 2026-10-27 (live check, Entry 436573):* `history.current[n].value` is **frozen at
   gameweek n** — FreePL showed £102.0m (GW8) while the FPL site showed £101.5m with £0.6m in
-  the bank and current prices. The dashboard now shows a **live** squad value: current
-  `now_cost` of the 15 held now (pending transfers included) plus bank, with FPL's GW n
-  figure in small print. To confirm on the live site: the live figure equals the FPL site's
-  "Squad value". If it doesn't, revert to FPL's figure with a "GW n" label. Display only;
-  budgets still use the selling value.
+  the bank and current prices. The owner's own sum of the 15 current prices came to about
+  £101.5m, so the site's "Squad value" is **players only, bank excluded**, at current prices.
+  The dashboard shows that live figure (current `now_cost` of the 15 held now, pending
+  transfers included), with FPL's frozen GW n figure in small print. Display only; budgets
+  still use the selling value.
 - **Free transfers available**, per `docs/fpl-domain.md`, as a pure tested function over
   `history.current[]` and `history.chips`:
   - Transfers before the GW1 deadline are unlimited and free; GW2 starts with 1.

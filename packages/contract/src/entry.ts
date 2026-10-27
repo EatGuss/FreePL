@@ -116,9 +116,9 @@ export interface EntryView {
     /** FPL's own figure for `gameweek` (`history.value`): frozen at that gameweek. */
     squadValue: number | null;
     /**
-     * Live squad value: current prices of the current 15 (pending transfers included) plus
-     * bank — FPL's "Squad value" definition as observed (spec 0004, 2026-10-27). Display only;
-     * budgets use the selling value.
+     * Live squad value: current prices of the 15 held now (pending transfers included), bank
+     * excluded — what the FPL site labels "Squad value" (verified 2026-10-27, fpl-domain.md
+     * "Money"). Display only; budgets use the selling value.
      */
     squadValueLive: number | null;
     freeTransfers: number | null;
@@ -223,7 +223,7 @@ export function buildEntryView(input: EntryInput): EntryView {
   const bank = row === null ? null : row.bank + pending.reduce((sum, t) => sum + t.element_out_cost - t.element_in_cost, 0);
   const sellingValue = allKnown && bank !== null ? squad.reduce((sum, s) => sum + s.sellPrice!, 0) + bank : null;
   const allPriced = squad.every((s) => byId.has(s.playerId));
-  const squadValueLive = allPriced && bank !== null ? squad.reduce((sum, s) => sum + byId.get(s.playerId)!.nowCost, 0) + bank : null;
+  const squadValueLive = allPriced ? squad.reduce((sum, s) => sum + byId.get(s.playerId)!.nowCost, 0) : null;
 
   return {
     entry,
