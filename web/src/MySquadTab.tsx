@@ -167,7 +167,8 @@ export function MySquadTab({ players, fixtures, ratings, filters, update, now, o
           <div className="m"><span className="k">Bank</span><span className={`v ${s.bank !== null && s.bank < 0 ? "bad" : ""}`}>{s.bank === null ? "—" : money(s.bank)}</span><span className="n">now</span></div>
           <div className="m"><span className="k">Free transfers</span><span className="v">{s.freeTransfers ?? "∞"}</span><span className="n">{ftNote}</span></div>
           <div className="m"><span className="k">Selling value</span><span className="v">{s.sellingValue === null ? "—" : money(s.sellingValue)}</span><span className="n">{s.sellingValue === null ? "buy price unknown" : "live"}</span></div>
-          <div className="m"><span className="k">Squad value</span><span className="v">{s.squadValue === null ? "—" : formatPrice(s.squadValue)}</span><span className="n">FPL · GW{v.gameweek}</span></div>
+          <div className="m"><span className="k">Squad value</span><span className="v">{s.squadValueLive === null ? "—" : money(s.squadValueLive)}</span>
+            <span className="n" title="FPL's own figure, frozen at that gameweek">{s.squadValue === null ? "live" : `live · GW${v.gameweek} ${formatPrice(s.squadValue)}`}</span></div>
           <div className="row2">
             <span className="chipset">
               {CHIPS.map((c) => {

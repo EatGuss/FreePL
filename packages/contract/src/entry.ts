@@ -113,8 +113,14 @@ export interface EntryView {
   state: {
     bank: number | null;
     sellingValue: number | null;
-    /** FPL's own "Squad value" for `gameweek`; never computed with. */
+    /** FPL's own figure for `gameweek` (`history.value`): frozen at that gameweek. */
     squadValue: number | null;
+    /**
+     * Live squad value: current prices of the current 15 (pending transfers included) plus
+     * bank — FPL's "Squad value" definition as observed (spec 0004, 2026-10-27). Display only;
+     * budgets use the selling value.
+     */
+    squadValueLive: number | null;
     freeTransfers: number | null;
     pendingTransfers: number;
     gwPoints: number | null;
@@ -167,7 +173,7 @@ export function buildEntryView(input: EntryInput): EntryView {
     return {
       entry, gameweek: n, squad: [],
       state: {
-        bank: null, sellingValue: null, squadValue: null, freeTransfers: null, pendingTransfers: 0,
+        bank: null, sellingValue: null, squadValue: null, squadValueLive: null, freeTransfers: null, pendingTransfers: 0,
         gwPoints: null, totalPoints: null, overallRank: null, chips, set1ExpiresAt: set1Deadline,
       },
     };
@@ -216,6 +222,8 @@ export function buildEntryView(input: EntryInput): EntryView {
   const row = history.current.find((h) => h.event === n) ?? null;
   const bank = row === null ? null : row.bank + pending.reduce((sum, t) => sum + t.element_out_cost - t.element_in_cost, 0);
   const sellingValue = allKnown && bank !== null ? squad.reduce((sum, s) => sum + s.sellPrice!, 0) + bank : null;
+  const allPriced = squad.every((s) => byId.has(s.playerId));
+  const squadValueLive = allPriced && bank !== null ? squad.reduce((sum, s) => sum + byId.get(s.playerId)!.nowCost, 0) + bank : null;
 
   return {
     entry,
@@ -225,6 +233,7 @@ export function buildEntryView(input: EntryInput): EntryView {
       bank,
       sellingValue,
       squadValue: row?.value ?? null,
+      squadValueLive,
       freeTransfers: freeTransfersFor(n + 1, history),
       pendingTransfers: pending.length,
       gwPoints: row?.points ?? null,
