@@ -3,7 +3,7 @@ import {
   BAND_LABEL, CHIPS, CHIP_LABEL, FIXTURE_GAMEWEEKS, availabilityFor, buildTicker, canSwap, evaluatePlan, formatPrice,
   pickRatingFor, planTransfer, setArmband, startPlan, swapPlayers, tickerWindow, undoTransfer,
   type EntryView, type FixturesResponse, type Plan, type PlanSlot, type PlayerRow, type PlayersResponse, type RatingContext,
-  type TickerCell,
+  type ShirtColours, type TickerCell, shirtFor,
 } from "@freepl/contract";
 import { ReplaceSheet } from "./ReplaceSheet.js";
 import { FixtureCell } from "./FixtureChip.js";
@@ -166,7 +166,7 @@ export function MySquadTab({ players, fixtures, ratings, filters, update, now, o
         aria-label={`${r.player.webName}${r.slot.isCaptain ? ", captain" : r.slot.isVice ? ", vice-captain" : ""}`}>
         <span className="fl"><Flag player={r.player} /></span>
         {r.slot.planned || r.slot.pendingIn ? <span className="badge new">NEW</span> : r.slot.isCaptain ? <span className="badge">C</span> : r.slot.isVice ? <span className="badge">V</span> : null}
-        <Shirt keeper={isGk} />
+        <Shirt colours={shirtFor(clubById.get(r.player.clubId)?.short, isGk)} />
         <span className="box">
           <span className={`strip ${band}`} />
           <span className="nm">{r.player.webName}</span>
@@ -334,11 +334,8 @@ export function MySquadTab({ players, fixtures, ratings, filters, update, now, o
   );
 }
 
-/** Club shirt (docs/design.md). Club colours need a colour table not built yet, so every
- *  Club is the neutral kit the design allows; keepers get their own kit. */
-function Shirt({ keeper }: { keeper: boolean }) {
-  const body = keeper ? "#e2b53a" : "#c9d1cd";
-  const trim = keeper ? "#6b5310" : "#59645f";
+/** Club shirt (docs/design.md): body and trim from the contract's colour table. */
+function Shirt({ colours: { body, trim } }: { colours: ShirtColours }) {
   return (
     <svg viewBox="0 0 32 32" aria-hidden="true">
       <path d="M11 3 L5 6 L1 12 L5.5 15 L8 12.5 L8 29 L24 29 L24 12.5 L26.5 15 L31 12 L27 6 L21 3 C20 6.5 12 6.5 11 3 Z" fill={body} stroke="rgb(0 0 0 / .35)" strokeWidth=".8" />

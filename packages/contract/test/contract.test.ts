@@ -111,3 +111,13 @@ describe("upcomingGameweek", () => {
     expect(upcomingGameweek(gameweeks, Date.parse("2031-01-01T00:00:00Z"))).toBeNull();
   });
 });
+
+import { CLUB_COLOURS, KEEPER_SHIRT, NEUTRAL_SHIRT, shirtFor } from "../src/index.js";
+describe("shirtFor", () => {
+  it("uses the Club's colours, the keeper kit for keepers, and the neutral kit for an unknown Club", () => {
+    expect(shirtFor("ARS", false)).toEqual(CLUB_COLOURS.ARS);
+    expect(shirtFor("ARS", true)).toBe(KEEPER_SHIRT);
+    expect(shirtFor("XYZ", false)).toBe(NEUTRAL_SHIRT);
+    expect(Object.keys(CLUB_COLOURS)).toHaveLength(20);
+  });
+});
