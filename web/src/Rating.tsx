@@ -1,5 +1,15 @@
 import { useEffect } from "react";
-import { BAND_LABEL, ordinal, type PickRating, type PlayerRow, type PositionRow } from "@freepl/contract";
+import { BAND_LABEL, MIN_MINUTES, ordinal, type PickRating, type PlayerRow, type PositionRow } from "@freepl/contract";
+
+/**
+ * The band word for cards and rows. Unrated is almost always low minutes (an injured player
+ * with the minutes is still rated), so the minutes are what it shows.
+ */
+export function bandWord(player: PlayerRow, rating: PickRating | null): string {
+  if (!rating) return "";
+  if (rating.rated) return BAND_LABEL[rating.band];
+  return player.minutes !== null && player.minutes < MIN_MINUTES ? `Not rated · ${player.minutes} min` : "Not rated";
+}
 
 /** Band chip for the Players table; the word always shows (never colour alone). */
 export function RatingChip({ rating, onOpen }: { rating: PickRating; onOpen: () => void }) {
@@ -31,8 +41,11 @@ export function RatingSheet({ player, rating, position, onClose }: {
         {rating.rated ? (
           <>
             <div className="sub">
-              <b>{BAND_LABEL[rating.band]}</b> · {ordinal(rating.rank)} of {rating.of} rated {position?.plural ?? rating.positionShort}
+              <b>{BAND_LABEL[rating.band]}</b> · {rating.unavailable ? "would be " : ""}{ordinal(rating.rank)} of {rating.of} rated {position?.plural ?? rating.positionShort}
             </div>
+            {rating.unavailable && (
+              <div className="sub">Unavailable now, so rated against the {rating.of} available without taking a place among them, and left out of Picks.</div>
+            )}
             <div className="bars">
               {rating.inputs.map((i) => (
                 <div className="bar" key={i.key}>

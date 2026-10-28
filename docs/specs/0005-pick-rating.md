@@ -79,6 +79,11 @@ If not, DefCon falls back to the season per-90 average and this view is not buil
 
 1. **Eligible:** at least 270 minutes, and `status` not in `i`/`s`/`u`/`n`. Doubtful (`d`)
    players are rated and keep their warning badge.
+   **Flagged players (owner, 2026-10-28):** an `i`/`s`/`u`/`n` player with 270+ minutes is
+   rated too, but placed *against* the eligible pool without joining it: each input's
+   percentile is his position among the eligible values, and his band is the best one whose
+   last member's score he matches or beats. So injured players never push fit ones down a
+   band. He shows his band in My squad and Players (with his flag), never in Picks.
 2. Each input → percentile within position among eligible players ("lower is better"
    inputs inverted).
 3. Weighted mean of percentiles with the fixed weights below.
@@ -163,8 +168,8 @@ only that position with the budget set to bank + that player's selling price, un
 - **Fixture cells** follow spec 0003's cell model: opponent short name plus H/A, coloured
   by `difficultyFor` on a green (easy) → red (hard) scale. A double shows both opponents
   stacked; a blank shows an explicit "Blank".
-- Doubtful players keep their amber % badge. `i`/`s`/`u`/`n` players are never rated, so
-  never appear.
+- Doubtful players keep their amber % badge. `i`/`s`/`u`/`n` players never appear (they
+  are rated against the pool, but can't be picked for next week).
 - Tapping a row opens the breakdown.
 
 ### Band colours
@@ -198,7 +203,9 @@ Exact values live in the web theme tokens, light and dark.
 
 - **Out of v1 (Q76):** the "In squad" tag and the focused "Replacements for {player}" view;
   both need spec 0004's Squad data. Everything else ships: Picks tables, budget slider,
-  rating column with Below OK on Players, the breakdown sheet.
+  rating column with Below OK on Players, the breakdown sheet. The "In squad" tag shipped
+  with spec 0004 (2026-10-28), for the team My squad last showed; the Replace list in My
+  squad covers the focused view.
 - **Computed in the browser (Q77)** from `/api/players` and `/api/fixtures`; no new route.
   Memoised per data load, never per tap.
 
@@ -222,6 +229,7 @@ revised, all positions accepted 2026-10-26). `pickRatingFor` has no importers ou
       word visible, next 3 fixtures shown with doubles stacked and blanks marked.
 - [x] A player with a double gameweek in the window gets both fixtures counted in the
       fixtures input; a blank counts zero.
-- [x] Players under 270 minutes or flagged `i`/`s`/`u`/`n` have no band.
+- [x] Players under 270 minutes have no band. Flagged `i`/`s`/`u`/`n` players with the
+  minutes get a band without changing anyone else's (revised 2026-10-28), and never show on Picks.
 - [x] No code outside `pickRatingFor` computes or reads band thresholds.
 - [x] Nothing in the decision log, model or backtest imports `pickRatingFor`.

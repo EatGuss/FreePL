@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { EntryView, FixturesResponse, PlayersResponse } from "@freepl/contract";
 import { useEffect, useState } from "react";
+import { entryParam } from "./filters.js";
 
 /** The browser's HTTP cache sends If-None-Match, so a repeat load is a 304. */
 export function usePlayers() {
@@ -44,6 +45,13 @@ export class EntryLoadError extends Error {
 }
 
 /** Spec 0004: an Entry read live from FPL by the API (null id = the server's default team). */
+const REMEMBER_KEY = "freepl.entry";
+/** The team id this browser last opened in My squad (spec 0004); only ever local. */
+export const readRememberedEntry = (): number | null => {
+  try { return entryParam(window.localStorage.getItem(REMEMBER_KEY)); } catch { return null; }
+};
+export const rememberEntry = (id: number) => { try { window.localStorage.setItem(REMEMBER_KEY, String(id)); } catch { /* private mode */ } };
+
 export function useEntry(id: number | null, enabled: boolean) {
   return useQuery({
     queryKey: ["entry", id],

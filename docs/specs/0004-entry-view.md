@@ -240,8 +240,8 @@ Tapping a player — on the pitch or a list row — opens a sheet, never the tra
 directly:
 
 - Club, position, band word, now price, sell price (or buy price if planned), injury news.
-- Eight brief stats: xP next, form, points, minutes, then by position — GK: clean sheets,
-  xGC/90, saves/90, bonus; DEF: clean sheets, xGC/90, xG/90, xA/90; MID/FWD: goals,
+- Brief stats: xP next, form, points, minutes, then by position — GK: clean sheets,
+  xGC/90, saves/90 (three only; owner, 2026-10-28); DEF: clean sheets, xGC/90, xG/90, xA/90; MID/FWD: goals,
   assists, xG/90, xA/90.
 - Next 3 fixtures.
 - **Captain** and **Vice-captain** tick boxes, FPL-style. Ticking Captain on the current
@@ -269,10 +269,11 @@ Row and card colours (spec 0005 bands, plus two Squad-only states):
 | --- | --- |
 | Best / Great / Good / OK | as spec 0005 |
 | Below OK — rated, outside the top 40% | muted red tint and stripe |
-| Not rated — under 270 minutes or `i`/`s`/`u`/`n` | no tint, dashed grey stripe, "Not rated · 180 min" / "· injured" |
+| Not rated — under 270 minutes | no tint, dashed grey stripe, "Not rated · 180 min" |
 
 Not rated is never coloured as Below OK: a new signing or a returning player is not a bad
-pick. Availability badges show whatever the status — this is your own Squad.
+pick. An `i`/`s`/`u`/`n` player with the minutes **is** rated (owner, 2026-10-28: an injured
+player can still be a reliable pick once fit) — see spec 0005 Method step 1. Availability badges show whatever the status — this is your own Squad.
 
 On the **Picks** tab (spec 0005), players in the Squad carry an "In squad" tag.
 
