@@ -253,7 +253,7 @@ export function MySquadTab({ players, fixtures, ratings, filters, update, now, o
           <>
             <div className="pitch">
               {movingName && <div className="movebar"><span>Tap a highlighted player to swap with {movingName}</span><button onClick={() => setMoving(null)}>Cancel</button></div>}
-              <div className="turf" aria-hidden="true" /><div className="goalarea" aria-hidden="true" /><div className="goalframe" aria-hidden="true" />
+              <div className="turf" aria-hidden="true"><div className="goalarea" /><div className="goalframe" /></div>
               {players.positions.map((pos) => {
                 const line = xi.filter((r) => r.player.positionId === pos.id);
                 return line.length ? <div className="prow" key={pos.id}>{line.map(card)}</div> : null;

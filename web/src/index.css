@@ -195,6 +195,7 @@
     background: repeating-linear-gradient(180deg, var(--pitch) 0 34px, color-mix(in srgb, var(--pitch) 86%, #fff) 34px 68px); box-shadow: 0 -8px 24px rgb(0 0 0 / .25) inset; }
   .turf::before { content: ""; position: absolute; left: 0; right: 0; top: 55%; border-top: 2px solid var(--pitch-line); }
   .turf::after { content: ""; position: absolute; left: 50%; top: 55%; width: 96px; height: 96px; margin: -48px 0 0 -48px; border: 2px solid var(--pitch-line); border-radius: 50%; }
+  /* Goal and boxes sit inside .turf so they tilt with it. */
   .goalarea { position: absolute; left: 50%; top: 0; transform: translateX(-50%); width: 62%; height: 112px; border: 2px solid var(--pitch-line); border-top: 0; }
   .goalarea::before { content: ""; position: absolute; left: 50%; top: 0; transform: translateX(-50%); width: 46%; height: 40px; border: 2px solid var(--pitch-line); border-top: 0; }
   .goalarea::after { content: ""; position: absolute; left: 50%; bottom: -18px; transform: translateX(-50%); width: 36%; height: 18px; border: 2px solid var(--pitch-line); border-top: 0; border-radius: 0 0 60px 60px / 0 0 18px 18px; }
