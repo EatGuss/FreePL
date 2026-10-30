@@ -45,7 +45,7 @@ What is publicly reachable:
 
 | Wanted | Source | Public? |
 | --- | --- | --- |
-| Squad composition right now | latest `picks` + pending transfers from `entry/{id}/transfers` | Yes, reconstructable |
+| Squad composition right now | latest `picks` + pending transfers from `entry/{id}/transfers` | **No** — see below |
 | Upcoming XI, bench order, captain | `my-team/{id}` only | **No** |
 | Chip active for the upcoming gameweek | `my-team/{id}` only | **No** |
 | XI, captain, auto-subs for a started gameweek | `entry/{id}/event/{gw}/picks` | Yes, from that gameweek's deadline |
@@ -53,6 +53,14 @@ What is publicly reachable:
 | Chips already used | `entry/{id}/history.chips` | Yes |
 | Transfers made, with in/out costs | `entry/{id}/transfers` | Yes |
 | Purchase and selling prices | `my-team/{id}` directly; **reconstructable** otherwise | Yes, see "Selling prices" |
+
+**Pending transfers are private too (verified 2026-10-30, owner's Entry).** Transfers made
+for GW9 an hour before, shown on the FPL site, were absent from `entry/{id}/transfers`
+hours later; its newest rows were still `event` 8. The public list only gains a gameweek's
+transfers at that gameweek's deadline. So the public Squad is the one **as at the last
+deadline**, and bank and free transfers likewise. The page says so, and the owner adds
+transfers made since through Replace (the what-if). The pending-transfer code stays: it is
+a no-op today and correct if FPL ever publishes them earlier.
 
 So the shape of this feature is: **the current Squad with sell prices, the latest started
 gameweek's XI and captain, the money and transfer state, and a transfer what-if.** It is
@@ -314,8 +322,10 @@ are local and commit nothing.
 
 ## Acceptance criteria
 
-- [ ] Immediately after making a transfer on the FPL site, the Squad reflects it within
-      the cache TTL — including while gameweek n is still being played.
+- [ ] ~~Immediately after making a transfer on the FPL site, the Squad reflects it within
+      the cache TTL.~~ Not possible from public data (2026-10-30, "The constraint, first").
+      Replaced by: the page labels the Squad "as at the GW n deadline", and after the GW n+1
+      deadline it shows the transfers made before it.
 - [ ] A Wildcard week (many transfers in one event) reconstructs to exactly 15 players.
 - [ ] The week after a Free Hit, the Squad is the pre-Free-Hit Squad.
 - [ ] All 15 sell prices match the FPL site's transfers page. If any purchase price is

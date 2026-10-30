@@ -180,6 +180,13 @@ export function MySquadTab({ players, fixtures, ratings, filters, update, now, o
         <p className="notice bad">FPL isn't answering. Showing this team as it was {ago(ageHours(meta.sources.entry.fetchedAt, now))}.</p>
       )}
 
+      {s.pendingTransfers === 0 && (
+        // Verified 2026-10-30: FPL's public transfers list hides transfers for the upcoming
+        // gameweek until its deadline, so this Squad can't include them (spec 0004).
+        <p className="notice">Squad, bank and free transfers as at the GW{v.gameweek} deadline. FPL keeps transfers made since
+          then private until the GW{v.gameweek + 1} deadline; add them with Replace to see your squad as it is now.</p>
+      )}
+
       <div className="attention">
         <span className="k">Needs attention:</span>
         {flagged.map((r) => {
@@ -228,7 +235,7 @@ export function MySquadTab({ players, fixtures, ratings, filters, update, now, o
           <button className="chip" aria-pressed={filters.squadView === "list"} onClick={() => update({ squadView: "list" })}>List</button>
         </div>
         <div className="dash">
-          <div className="m"><span className="k">Bank</span><span className={`v ${r0.bank !== null && r0.bank < 0 ? "bad" : ""}`}>{r0.bank === null ? "—" : money(r0.bank)}</span><span className="n">{planned ? "after plan" : "now"}</span></div>
+          <div className="m"><span className="k">Bank</span><span className={`v ${r0.bank !== null && r0.bank < 0 ? "bad" : ""}`}>{r0.bank === null ? "—" : money(r0.bank)}</span><span className="n">{planned ? "after plan" : s.pendingTransfers ? "now" : `at GW${v.gameweek} deadline`}</span></div>
           <div className="m"><span className="k">Free transfers</span><span className={`v ${r0.hitPoints ? "bad" : ""}`}>{r0.freeTransfersLeft ?? "∞"}</span><span className="n">{ftNote}</span></div>
           <div className="m"><span className="k">Selling value</span><span className="v">{r0.sellingValue === null ? "—" : money(r0.sellingValue)}</span><span className="n">{r0.sellingValue === null ? "buy price unknown" : "live"}</span></div>
           <div className="m"><span className="k">Squad value</span><span className="v">{s.squadValueLive === null ? "—" : money(s.squadValueLive)}</span>
