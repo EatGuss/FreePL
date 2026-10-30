@@ -45,6 +45,9 @@ over this file — verify against a live payload before hardcoding anything.
 - **1 free transfer per GW** from GW2 (GW2 starts with 1); unused FTs bank, **up to a maximum of 5**.
 - Each transfer beyond available FTs costs **−4 points** (a "hit").
 - Transfers made before a deadline apply to that GW.
+- **Public visibility:** `entry/{id}/transfers` does not list transfers for the upcoming GW
+  until its deadline passes (verified 2026-10-30). Before then only the logged-in
+  `my-team/{id}` shows them, which this project never reads.
 
 ## Chips (2026/27)
 
