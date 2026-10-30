@@ -1,10 +1,11 @@
 import { useEffect } from "react";
 import {
-  BAND_LABEL, formatPrice, type ClubRow, type PickRating, type PlayerRow, type PositionRow, type SquadSlot, type TickerCell,
+  formatPrice, type ClubRow, type PickRating, type PlayerRow, type PositionRow, type SquadSlot, type TickerCell,
 } from "@freepl/contract";
 import { FixtureCell } from "./FixtureChip.js";
 import { Flag } from "./Flag.js";
 import { f1, f2, int } from "./format.js";
+import { bandWord } from "./Rating.js";
 
 /**
  * Player sheet (docs/design.md, spec 0004 "Player sheet"): stat tiles, the next 3 fixtures,
@@ -28,9 +29,15 @@ export function PlayerSheet({ player, slot, club, position, cells, gwIds, clubBy
     slot?.sellPrice != null ? `sells for ${formatPrice(slot.sellPrice)}` : null,
     slot?.purchasePrice != null ? `bought ${formatPrice(slot.purchasePrice)}${slot.purchaseSource === "launch" ? " (launch price)" : ""}` : null,
   ].filter(Boolean).join(" · ");
+  // Four common tiles, then what matters for the position (owner, 2026-10-28; keepers get three).
+  const byPosition: Record<string, [string, string][]> = {
+    GKP: [["Clean sheets", int(player.cleanSheets)], ["xGC/90", f2(player.xGCPer90)], ["Saves/90", f1(player.savesPer90)]],
+    DEF: [["Clean sheets", int(player.cleanSheets)], ["xGC/90", f2(player.xGCPer90)], ["xG/90", f2(player.xGPer90)], ["xA/90", f2(player.xAPer90)]],
+    MID: [["Goals", int(player.goals)], ["Assists", int(player.assists)], ["xG/90", f2(player.xGPer90)], ["xA/90", f2(player.xAPer90)]],
+  };
   const tiles: [string, string][] = [
-    ["Pts", int(player.totalPoints)], ["Form", f1(player.form)], ["xP next", f1(player.epNext)], ["Mins", int(player.minutes)],
-    ["xG/90", f2(player.xGPer90)], ["xA/90", f2(player.xAPer90)], ["DefCon/90", f1(player.defensiveContributionPer90)], ["Sel %", f1(player.selectedByPercent)],
+    ["xP next", f1(player.epNext)], ["Form", f1(player.form)], ["Pts", int(player.totalPoints)], ["Mins", int(player.minutes)],
+    ...(byPosition[position?.short ?? ""] ?? byPosition.MID!),
   ];
 
   return (
@@ -56,9 +63,7 @@ export function PlayerSheet({ player, slot, club, position, cells, gwIds, clubBy
           <button type="button" className="chip primary" onClick={onReplace}>Replace</button>
         </div>
         <div className="sub">
-          {rating?.rated
-            ? <>Pick rating: <b>{BAND_LABEL[rating.band]}</b> · </>
-            : <>Pick rating: not rated · </>}
+          Pick rating: <b>{bandWord(player, rating) || "—"}</b> · 
           <button className="linkish" onClick={onWhy}>Why?</button>
         </div>
         <button type="button" className="chip close" onClick={onClose}>Close</button>

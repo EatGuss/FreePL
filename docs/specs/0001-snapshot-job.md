@@ -254,6 +254,14 @@ from api_snapshots group by endpoint;
 
 Also check Neon's dashboard storage figure, which includes more than logical rows.
 
+*Done 2026-10-28 (18 days after the first capture, 2026-10-10):* `api_snapshots` 14 MB, 91
+rows; database 22 MB. `bootstrap-static` is nearly all of it: 42 rows, 78 MB raw stored as
+12 MB (ratio 6.4). `fixtures` 19 rows, 5.6 MB → 1.3 MB (4.4); each `event/{gw}/live` ~500 kB
+→ ~43 kB (≈12); entry rows under 1 kB each. Growth ≈ 0.8 MB/day projects to ≈ 180 MB at
+season end, under the 350 MB trigger: **no lever needed**; routine `bootstrap-static` stays
+at >11h. Deadline captures verified the same day: GW7 at 09:15 for 10:00, GW8 at 17:07 for
+17:30, both before the deadline. Neon's dashboard figure not yet recorded.
+
 **If projected season storage > ~350 MB** (cap is 500 MB), first lever: change routine
 `bootstrap-static` from >11h to >23h, timed after the overnight price change. Deadline
 captures stay untouched. Second lever (later, only if needed): gzip payloads into `bytea`.

@@ -4,6 +4,7 @@ import {
   type Band, type FixturesResponse, type PickRating, type PlayerRow, type PlayersResponse, type RatingContext, type TickerCell,
 } from "@freepl/contract";
 import { FixtureCell } from "./FixtureChip.js";
+import { readRememberedEntry, useEntry } from "./data.js";
 import { Flag } from "./Flag.js";
 import type { Filters } from "./filters.js";
 import { formatPrice } from "./format.js";
@@ -23,6 +24,11 @@ export function PicksTab({ players, fixtures, ratings, filters, update, now, onO
   update: (p: Partial<Filters>) => void; now: number; onOpen: (playerId: number) => void;
 }) {
   const [openOk, setOpenOk] = useState<Record<number, boolean>>({});
+  // "In squad" tags (spec 0005) come from the team My squad shows; shared query, no extra read.
+  const [remembered] = useState(readRememberedEntry);
+  const entryId = filters.entry ?? remembered;
+  const entry = useEntry(entryId, entryId !== null);
+  const owned = useMemo(() => new Set(entry.data?.view.squad.map((s) => s.playerId) ?? []), [entry.data]);
   const clubById = useMemo(() => new Map(fixtures.clubs.map((c) => [c.id, c])), [fixtures]);
   const nextGws = useMemo(() => tickerWindow(fixtures.gameweeks, FIXTURE_GAMEWEEKS, now), [fixtures, now]);
   const cellsByClub = useMemo(() => {
@@ -38,7 +44,8 @@ export function PicksTab({ players, fixtures, ratings, filters, update, now, onO
     const out = new Map<number, Rated[]>();
     for (const p of players.players) {
       const r = pickRatingFor(p, ratings);
-      if (!r.rated || r.band === "below") continue;
+      // Flagged players are rated (for My squad and Players) but can't be picked for next week.
+      if (!r.rated || r.band === "below" || r.unavailable) continue;
       const list = out.get(p.positionId) ?? [];
       list.push({ player: p, rating: r });
       out.set(p.positionId, list);
@@ -91,7 +98,7 @@ export function PicksTab({ players, fixtures, ratings, filters, update, now, onO
                     <tbody>
                       {rows.map((r) => (
                         <PickRow key={r.player.id} item={r} clubShort={clubById.get(r.player.clubId)?.short ?? "?"}
-                          cells={cellsByClub.get(r.player.clubId) ?? []} clubById={clubById} onOpen={onOpen} />
+                          cells={cellsByClub.get(r.player.clubId) ?? []} clubById={clubById} onOpen={onOpen} owned={owned.has(r.player.id)} />
                       ))}
                     </tbody>
                   </table>
@@ -114,15 +121,16 @@ export function PicksTab({ players, fixtures, ratings, filters, update, now, onO
   );
 }
 
-const PickRow = memo(function PickRow({ item, clubShort, cells, clubById, onOpen }: {
+const PickRow = memo(function PickRow({ item, clubShort, cells, clubById, onOpen, owned }: {
   item: Rated; clubShort: string; cells: TickerCell[]; clubById: Map<number, import("@freepl/contract").ClubRow>; onOpen: (id: number) => void;
+  owned: boolean;
 }) {
   const { player: p, rating } = item;
   return (
     <tr className={`row-${rating.band} tap`} tabIndex={0} onClick={() => onOpen(p.id)}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen(p.id); } }}>
       <td>
-        <div className="pname"><span className="nm">{p.webName}</span><Flag player={p} /></div>
+        <div className="pname"><span className="nm">{p.webName}</span><Flag player={p} />{owned && <span className="tag">In squad</span>}</div>
         <div className="pmeta"><span className="bandword">{BAND_LABEL[rating.band]}</span> · {clubShort} · <b>{formatPrice(p.nowCost)}</b></div>
       </td>
       {cells.map((c) => <td key={c.gameweek} className="fx"><FixtureCell fixtures={c.fixtures} clubById={clubById} /></td>)}

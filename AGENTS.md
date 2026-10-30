@@ -21,8 +21,9 @@ live at free-pl.vercel.app, every acceptance criterion ticked.
 
 Task 0 (spec 0001, the snapshot job) is **done** as of 2026-10-17: hourly runs green since
 2026-10-14, healthchecks pinging, and the first deadline capture (GW7) verified in Neon.
-The job keeps running unchanged; its two-week compression check (~2026-10-28) and the
-"Known limits" items in spec 0001 are still to do on their own schedule.
+The job keeps running unchanged. Its storage check (2026-10-28) projects ≈ 180 MB at season
+end, under the 350 MB trigger, so no lever is needed; the "Known limits" items in spec 0001
+are still to do on their own schedule.
 
 Order of work:
 

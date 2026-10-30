@@ -64,6 +64,38 @@ describe("bands within a position", () => {
   });
 });
 
+describe("flagged players", () => {
+  // Keeper 1 is the best on every input but injured: he gets Best without taking a place,
+  // so the 20 available keepers keep exactly the bands they had without him.
+  const keepers = players(Array.from({ length: 21 }, (_, k) => ({
+    id: k + 1, element_type: 1, team: 1, minutes: 900, starts: 1, status: k === 0 ? "i" : "a",
+    expected_goals_conceded_per_90: 0.4 + k * 0.1, saves_per_90: 5.1 - k * 0.1,
+  })));
+  const ctx = buildRatingContext(keepers, buildPlayersResponse(bootstrap()).positions, fixtures, gameweeks, now);
+  const r = (id: number) => rated(pickRatingFor(keepers[id - 1]!, ctx));
+
+  it("leaves the available players' bands and ranks unchanged", () => {
+    expect(keepers.slice(1).map((p) => r(p.id).band)).toEqual([
+      "best", "great", "great", "good", "good", "ok", "ok", "ok", ...Array(12).fill("below"),
+    ]);
+    expect(r(2)).toMatchObject({ rank: 1, of: 20, unavailable: false });
+  });
+  it("places the flagged player against them", () => {
+    expect(r(1)).toMatchObject({ band: "best", rank: 1, of: 20, unavailable: true });
+    expect(r(1).inputs[0]).toMatchObject({ rank: 1, percentile: 1 });
+  });
+  it("gives a flagged twin of an available player that player's band", () => {
+    const twin = players([...Array.from({ length: 20 }, (_, k) => ({
+      id: k + 1, element_type: 1, team: 1, minutes: 900, starts: 1,
+      expected_goals_conceded_per_90: 0.5 + k * 0.1, saves_per_90: 5 - k * 0.1,
+    })), { id: 99, element_type: 1, team: 1, minutes: 900, starts: 1, status: "i", expected_goals_conceded_per_90: 1.0, saves_per_90: 4.5 }]);
+    const c = buildRatingContext(twin, buildPlayersResponse(bootstrap()).positions, fixtures, gameweeks, now);
+    // Level with keeper 6 (OK) on both inputs.
+    expect(rated(pickRatingFor(twin[20]!, c))).toMatchObject({ band: "ok" });
+    expect(rated(pickRatingFor(twin[5]!, c)).band).toBe("ok");
+  });
+});
+
 describe("eligibility", () => {
   const group = players([
     { id: 1, element_type: 3, team: 1, minutes: 270 },
@@ -74,11 +106,13 @@ describe("eligibility", () => {
   ]);
   const ctx = buildRatingContext(group, buildPlayersResponse(bootstrap()).positions, fixtures, gameweeks, now);
 
-  it("rates exactly 270 minutes and doubtful players; not 269 minutes or suspended", () => {
+  it("rates exactly 270 minutes and doubtful players; not 269 minutes", () => {
     expect(pickRatingFor(group[0]!, ctx).rated).toBe(true);
-    expect(pickRatingFor(group[1]!, ctx)).toEqual({ rated: false, reason: "Under 270 minutes this season" });
-    expect(pickRatingFor(group[2]!, ctx).rated).toBe(true);
-    expect(pickRatingFor(group[3]!, ctx)).toEqual({ rated: false, reason: "Unavailable, so not rated" });
+    expect(pickRatingFor(group[1]!, ctx)).toEqual({ rated: false, reason: "Under 270 minutes this season (269 so far)" });
+    expect(rated(pickRatingFor(group[2]!, ctx)).unavailable).toBe(false);
+  });
+  it("rates a suspended player with the minutes, marked unavailable, outside the ranked pool", () => {
+    expect(rated(pickRatingFor(group[3]!, ctx))).toMatchObject({ unavailable: true, of: 2 });
   });
   it("never compares across positions", () => {
     expect(rated(pickRatingFor(group[4]!, ctx))).toMatchObject({ positionShort: "GKP", of: 1, rank: 1, band: "best" });

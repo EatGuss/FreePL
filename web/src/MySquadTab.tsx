@@ -1,24 +1,19 @@
 import { useCallback, useMemo, useState, type FormEvent } from "react";
 import {
-  BAND_LABEL, CHIPS, CHIP_LABEL, FIXTURE_GAMEWEEKS, availabilityFor, buildTicker, canSwap, evaluatePlan, formatPrice,
+  BAND_LABEL, CHIPS, CHIP_LABEL, MIN_MINUTES, FIXTURE_GAMEWEEKS, availabilityFor, buildTicker, canSwap, evaluatePlan, formatPrice,
   pickRatingFor, planTransfer, setArmband, startPlan, swapPlayers, tickerWindow, undoTransfer,
-  type EntryView, type FixturesResponse, type Plan, type PlanSlot, type PlayerRow, type PlayersResponse, type RatingContext,
-  type TickerCell,
+  type Band, type EntryView, type FixturesResponse, type Plan, type PlanSlot, type PlayerRow, type PlayersResponse, type RatingContext,
+  type ShirtColours, type TickerCell, shirtFor,
 } from "@freepl/contract";
 import { ReplaceSheet } from "./ReplaceSheet.js";
 import { FixtureCell } from "./FixtureChip.js";
 import { Flag } from "./Flag.js";
 import { PlayerSheet } from "./PlayerSheet.js";
-import { EntryLoadError, useEntry } from "./data.js";
+import { bandWord } from "./Rating.js";
+import { EntryLoadError, readRememberedEntry as readRemembered, rememberEntry as remember, useEntry } from "./data.js";
 import { entryParam, type Filters } from "./filters.js";
 import { ago, f1, localDateTime } from "./format.js";
 import { ageHours } from "@freepl/contract";
-
-const REMEMBER_KEY = "freepl.entry";
-const readRemembered = (): number | null => {
-  try { return entryParam(window.localStorage.getItem(REMEMBER_KEY)); } catch { return null; }
-};
-const remember = (id: number) => { try { window.localStorage.setItem(REMEMBER_KEY, String(id)); } catch { /* private mode */ } };
 
 /** Signed money in tenths: a planned or reported negative bank is shown, never hidden. */
 const money = (t: number) => (t < 0 ? `−${formatPrice(-t)}` : formatPrice(t));
@@ -166,11 +161,11 @@ export function MySquadTab({ players, fixtures, ratings, filters, update, now, o
         aria-label={`${r.player.webName}${r.slot.isCaptain ? ", captain" : r.slot.isVice ? ", vice-captain" : ""}`}>
         <span className="fl"><Flag player={r.player} /></span>
         {r.slot.planned || r.slot.pendingIn ? <span className="badge new">NEW</span> : r.slot.isCaptain ? <span className="badge">C</span> : r.slot.isVice ? <span className="badge">V</span> : null}
-        <Shirt keeper={isGk} />
+        <Shirt colours={shirtFor(clubById.get(r.player.clubId)?.short, isGk)} />
         <span className="box">
           <span className={`strip ${band}`} />
           <span className="nm">{r.player.webName}</span>
-          <span className="bw">{rating?.rated ? BAND_LABEL[rating.band] : "Not rated"}</span>
+          <span className="bw">{bandWord(r.player, rating)}</span>
           <span className="fx1"><FixtureCell fixtures={r.cells[0]?.fixtures ?? []} clubById={clubById} /></span>
           <span className="pr" title="Sell price">{r.slot.sellPrice !== null ? formatPrice(r.slot.sellPrice) : "—"}</span>
         </span>
@@ -294,7 +289,7 @@ export function MySquadTab({ players, fixtures, ratings, filters, update, now, o
                           {r.slot.planned && <span className="tag new">Planned</span>}
                         </div>
                         <div className="pmeta">
-                          <span className="bandword">{rating?.rated ? BAND_LABEL[rating.band] : "Not rated"}</span> · {clubById.get(r.player.clubId)?.short}
+                          <span className="bandword">{bandWord(r.player, rating)}</span> · {clubById.get(r.player.clubId)?.short}
                         </div>
                       </td>
                       {r.cells.map((c) => <td key={c.gameweek} className="fx"><FixtureCell fixtures={c.fixtures} clubById={clubById} /></td>)}
@@ -307,6 +302,19 @@ export function MySquadTab({ players, fixtures, ratings, filters, update, now, o
             </table>
           </div>
         )}
+      </div>
+
+      <div className="legend">
+        <span>Card stripe:</span>
+        {(["best", "great", "good", "ok", "below"] as Band[]).map((b) => <span key={b} className={`band ${b}`}>{BAND_LABEL[b]}</span>)}
+        <span>· not rated = under {MIN_MINUTES} minutes</span>
+      </div>
+      <div className="legend">
+        <span>Fixtures, easy to hard:</span>
+        {[1, 2, 3, 4, 5].map((d) => <span key={d} className={`fxc d${d}`}>{d}</span>)}
+      </div>
+      <div className="subrow">
+        <span>Sell price: what you paid plus half of any rise since, rounded down to £0.1m; a fall is taken in full.</span>
       </div>
 
       <div className="subrow">
@@ -334,11 +342,8 @@ export function MySquadTab({ players, fixtures, ratings, filters, update, now, o
   );
 }
 
-/** Club shirt (docs/design.md). Club colours need a colour table not built yet, so every
- *  Club is the neutral kit the design allows; keepers get their own kit. */
-function Shirt({ keeper }: { keeper: boolean }) {
-  const body = keeper ? "#e2b53a" : "#c9d1cd";
-  const trim = keeper ? "#6b5310" : "#59645f";
+/** Club shirt (docs/design.md): body and trim from the contract's colour table. */
+function Shirt({ colours: { body, trim } }: { colours: ShirtColours }) {
   return (
     <svg viewBox="0 0 32 32" aria-hidden="true">
       <path d="M11 3 L5 6 L1 12 L5.5 15 L8 12.5 L8 29 L24 29 L24 12.5 L26.5 15 L31 12 L27 6 L21 3 C20 6.5 12 6.5 11 3 Z" fill={body} stroke="rgb(0 0 0 / .35)" strokeWidth=".8" />
