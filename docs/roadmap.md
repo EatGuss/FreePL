@@ -19,8 +19,8 @@ it if FreePL ever becomes multi-user. FPL login stays out regardless.
 
 Trigger: the price-change predictor or the projection model, both of which read across
 captures per player per day. Views over the latest capture (ADR 0002) cannot serve that.
-Gets its own spec, written once we know which fields the model uses. Spec 0005's
-`season_gameweek_live` view is the first cross-capture read and is not a substitute.
+Gets its own spec, written once we know which fields the model uses. Spec 0007's
+per-gameweek view will be the first cross-capture read and is not a substitute.
 
 ## Price-change predictor inputs
 
@@ -34,6 +34,13 @@ features, a baseline to beat, or both.
 ## Per-gameweek history in the UI
 
 Points, minutes and underlying stats per gameweek since GW1 for each player. Not needed by
-the stats table. The data already exists as `post_gw` `event/{gw}/live` captures; spec 0005
-reads it for the rating. Revisit if role changes or rotation patterns prove hard to see
+the stats table. The data already exists as `post_gw` `event/{gw}/live` captures; spec 0007
+(draft) will read it for the pick rating. Revisit if role changes or rotation patterns prove hard to see
 from season totals.
+
+## Penalty-taker badge
+
+Spec 0005 planned a badge beside xG for a player's Club penalty order, standing in for
+npxG (which FPL's data can't give). `penaltiesOrder` already reaches the contract
+(`bootstrap-static.elements[].penalties_order`); only the web side is missing. Moved here
+from spec 0005 in its 2026-10-31 review.
