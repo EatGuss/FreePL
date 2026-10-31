@@ -57,6 +57,13 @@ A gameweek in which a Club has two or more fixtures.
 A fixture not yet assigned to any gameweek.
 _Avoid_: Postponed fixture (a postponed fixture may already be rescheduled)
 
+**Flagged**:
+A player whose FPL status is anything other than Available: doubtful or ruled out.
+
+**Ruled out**:
+A flagged player who cannot play the upcoming gameweek, always shown with FPL's reason: Injured, Suspended, Unavailable (left the club or out long-term) or Not eligible (usually a loanee facing his parent club).
+_Avoid_: Red flag, out
+
 **Pick rating**:
 A band (Best, Great, Good, OK) ranking a player against others in the same position on underlying stats, fixtures and nailedness. A browsing aid only: not a projection, and never an input to the Entry's logged decisions.
 _Avoid_: Score, projection, prediction
@@ -65,7 +72,7 @@ _Avoid_: Score, projection, prediction
 A rated player outside the top 40% of their position. Shown for the Squad and in the full player table, never among picks.
 
 **Not rated**:
-A player with no pick rating: too few minutes to judge, or ruled out. Not the same as Below OK.
+A player with no pick rating: too few minutes this season to judge, or Unavailable. Not the same as Below OK. Other ruled-out players are still rated.
 
 **Purchase price**:
 What the Entry paid for a player when they joined the Squad.
