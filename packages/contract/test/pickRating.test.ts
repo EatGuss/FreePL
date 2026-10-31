@@ -64,9 +64,11 @@ describe("bands within a position", () => {
   });
 });
 
-describe("flagged players", () => {
-  // Keeper 1 is the best on every input but injured: he gets Best without taking a place,
-  // so the 20 available keepers keep exactly the bands they had without him.
+describe("ruled-out players", () => {
+  // Keeper 1 is the best on xGC and saves but injured: he takes no place among the 20
+  // available keepers and gets no credit for fixtures. Every keeper is at Club 1 (fixtures 15,
+  // nailed 100%), so the available ones score 0.5 on both; keeper 1 scores 35 + 15 + 0 + 12.5
+  // = 0.625, between the 5th (0.645, last Good) and 6th (0.618) available → OK, 6th.
   const keepers = players(Array.from({ length: 21 }, (_, k) => ({
     id: k + 1, element_type: 1, team: 1, minutes: 900, starts: 1, status: k === 0 ? "i" : "a",
     expected_goals_conceded_per_90: 0.4 + k * 0.1, saves_per_90: 5.1 - k * 0.1,
@@ -78,21 +80,25 @@ describe("flagged players", () => {
     expect(keepers.slice(1).map((p) => r(p.id).band)).toEqual([
       "best", "great", "great", "good", "good", "ok", "ok", "ok", ...Array(12).fill("below"),
     ]);
-    expect(r(2)).toMatchObject({ rank: 1, of: 20, unavailable: false });
+    expect(r(2)).toMatchObject({ rank: 1, of: 20, ruledOut: false });
   });
-  it("places the flagged player against them", () => {
-    expect(r(1)).toMatchObject({ band: "best", rank: 1, of: 20, unavailable: true });
+  it("places the ruled-out player against them with no credit for fixtures", () => {
+    expect(r(1)).toMatchObject({ band: "ok", rank: 6, of: 20, ruledOut: true });
     expect(r(1).inputs[0]).toMatchObject({ rank: 1, percentile: 1 });
+    expect(r(1).inputs.find((i) => i.key === "fixtures")).toMatchObject({ value: 0, display: "0 (ruled out)", percentile: 0 });
   });
-  it("gives a flagged twin of an available player that player's band", () => {
+  it("gives a ruled-out twin of the last Best player the same score and band", () => {
+    // With only this fixture list, Club 2 has a finished match but nothing in the window, so fixtures are 0 for everyone
+    // and the twin differs from keeper 1 only in being injured.
+    const quiet = [fx(1, 2, 1, 3, 3, true)];
     const twin = players([...Array.from({ length: 20 }, (_, k) => ({
-      id: k + 1, element_type: 1, team: 1, minutes: 900, starts: 1,
+      id: k + 1, element_type: 1, team: 2, minutes: 900, starts: 1,
       expected_goals_conceded_per_90: 0.5 + k * 0.1, saves_per_90: 5 - k * 0.1,
-    })), { id: 99, element_type: 1, team: 1, minutes: 900, starts: 1, status: "i", expected_goals_conceded_per_90: 1.0, saves_per_90: 4.5 }]);
-    const c = buildRatingContext(twin, buildPlayersResponse(bootstrap()).positions, fixtures, gameweeks, now);
-    // Level with keeper 6 (OK) on both inputs.
-    expect(rated(pickRatingFor(twin[20]!, c))).toMatchObject({ band: "ok" });
-    expect(rated(pickRatingFor(twin[5]!, c)).band).toBe("ok");
+    })), { id: 99, element_type: 1, team: 2, minutes: 900, starts: 1, status: "i", expected_goals_conceded_per_90: 0.5, saves_per_90: 5 }]);
+    const c = buildRatingContext(twin, buildPlayersResponse(bootstrap()).positions, quiet, gameweeks, now);
+    const best = rated(pickRatingFor(twin[0]!, c));
+    expect(best.band).toBe("best");
+    expect(rated(pickRatingFor(twin[20]!, c))).toMatchObject({ band: "best", score: best.score, rank: 1 });
   });
 });
 
@@ -103,16 +109,20 @@ describe("eligibility", () => {
     { id: 3, element_type: 3, team: 1, minutes: 900, status: "d", chance_of_playing_next_round: 50 },
     { id: 4, element_type: 3, team: 1, minutes: 900, status: "s" },
     { id: 5, element_type: 1, team: 1, minutes: 900 },
+    { id: 6, element_type: 3, team: 1, minutes: 900, status: "u" },
   ]);
   const ctx = buildRatingContext(group, buildPlayersResponse(bootstrap()).positions, fixtures, gameweeks, now);
 
   it("rates exactly 270 minutes and doubtful players; not 269 minutes", () => {
     expect(pickRatingFor(group[0]!, ctx).rated).toBe(true);
     expect(pickRatingFor(group[1]!, ctx)).toEqual({ rated: false, reason: "Under 270 minutes this season (269 so far)" });
-    expect(rated(pickRatingFor(group[2]!, ctx)).unavailable).toBe(false);
+    expect(rated(pickRatingFor(group[2]!, ctx)).ruledOut).toBe(false);
   });
-  it("rates a suspended player with the minutes, marked unavailable, outside the ranked pool", () => {
-    expect(rated(pickRatingFor(group[3]!, ctx))).toMatchObject({ unavailable: true, of: 2 });
+  it("rates a suspended player with the minutes, marked ruled out, outside the ranked pool", () => {
+    expect(rated(pickRatingFor(group[3]!, ctx))).toMatchObject({ ruledOut: true, of: 2 });
+  });
+  it("does not rate an Unavailable player, whatever his minutes", () => {
+    expect(pickRatingFor(group[5]!, ctx)).toEqual({ rated: false, reason: "Unavailable" });
   });
   it("never compares across positions", () => {
     expect(rated(pickRatingFor(group[4]!, ctx))).toMatchObject({ positionShort: "GKP", of: 1, rank: 1, band: "best" });
