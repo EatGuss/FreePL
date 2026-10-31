@@ -1,6 +1,7 @@
 # Spec 0005 — Pick rating
 
-Status: **shipped 2026-10-26** (PRs #21–#23) · decisions from review 2026-10-22 (Q70–Q78) recorded below
+Status: **shipped 2026-10-26** (PRs #21–#23) · decisions from review 2026-10-22 (Q70–Q78) recorded below ·
+revised 2026-10-31 after a second review (ruled-out players, Unavailable, known limits)
 Depends on spec 0002 (table, contract), spec 0003 (`difficultyFor`), ADR 0002 (amended)
 
 ## Goal
@@ -31,9 +32,14 @@ Per-90 rates are season-to-date. "Fixtures" is the next 3 gameweeks from the upc
 gameweek via `difficultyFor`. "Nailedness" is starts ÷ the player's Club's **finished
 matches** so far, capped at 1 (not gameweeks: a blank or double would skew it).
 
+**Known limit (2026-10-31):** a player who joined his Club mid-season is judged on season
+starts against his current Club's matches. One arriving from abroad looks rotated; one moving
+between Premier League clubs is flattered (the cap hides it). Nailedness since joining needs
+per-gameweek starts and is spec 0007's job.
+
 | Position | Inputs |
 | --- | --- |
-| GK | xGC/90 (lower is better), saves/90, fixtures, nailedness |
+| GKP | xGC/90 (lower is better), saves/90, fixtures, nailedness |
 | DEF | xGC/90 (lower is better), (xG + xA)/90, G+A/90 (low weight), CBIT/90, fixtures, nailedness |
 | MID | xG/90, xA/90, CBIRT/90, G+A/90 (low weight), fixtures, nailedness |
 | FWD | xG/90, xA/90, G+A/90 (low weight), fixtures, nailedness |
@@ -49,15 +55,15 @@ Notes on choices made in review:
   penalty takers outperform xG for years, and FPL pays out on actual goals.
 - **xGC/90** stands in for clean-sheet odds; betting odds would be a new data source.
 - **CBIT / CBIRT** match the DefCon definitions in `docs/fpl-domain.md` (defenders: 10;
-  midfielders and forwards: 12). Because DefCon pays per match on reaching the threshold,
-  the input is the **DefCon hit rate** (share of appearances reaching it) once per-gameweek
-  data is available, falling back to the per-90 average.
+  midfielders and forwards: 12). DefCon pays per match on reaching the threshold, so the
+  **DefCon hit rate** (share of appearances reaching it) would fit better; it needs
+  per-gameweek data and waits for spec 0007. v1 uses the per-90 average (Q71).
 
 Field names are verified (spec 0002, "Database"). `defensive_contribution` **is** the DefCon action count
 (confirmed on a defender: CBIT = `clearances_blocks_interceptions` + `tackles`), so use it
 and `defensive_contribution_per_90` directly. Confirmed on a midfielder as CBIRT (adds
-`recoveries`). `penalties_order` is available too:
-show a penalty-taker badge beside xG rather than trying to derive npxG.
+`recoveries`). `penalties_order` is available too. A penalty-taker badge beside xG (rather
+than trying to derive npxG) was planned but **not built**; it is in `docs/roadmap.md`.
 
 ## Per-gameweek data
 
@@ -66,24 +72,27 @@ which is CBIT for defenders and CBIRT for midfielders) and does **not** build
 `season_gameweek_live`. The hit rate below is a later improvement, with its own prerequisite
 check.
 
-DefCon hit rate and last-6-gameweek rates need per-match numbers. Spec 0001 already
-captures `event/{gw}/live` once per settled gameweek (`post_gw`). A view
-`season_gameweek_live` expands every such row for the current season — one row per player
-per settled gameweek. This is the first read across captures; ADR 0002 records it.
-
-**Prerequisite:** confirm the `event/{gw}/live` payload carries the defensive fields
-(`clearances_blocks_interceptions`, `tackles`, `recoveries` or `defensive_contribution`).
-If not, DefCon falls back to the season per-90 average and this view is not built.
+DefCon hit rate and nailedness since joining a Club need per-match numbers. Both moved to
+spec 0007 (draft, 2026-10-31), which owns the per-gameweek view, its prerequisite check on
+the `event/{gw}/live` payload, and the ADR 0002 amendment for the first read across
+captures.
 
 ## Method
 
 1. **Eligible:** at least 270 minutes, and `status` not in `i`/`s`/`u`/`n`. Doubtful (`d`)
    players are rated and keep their warning badge.
-   **Flagged players (owner, 2026-10-28):** an `i`/`s`/`u`/`n` player with 270+ minutes is
-   rated too, but placed *against* the eligible pool without joining it: each input's
-   percentile is his position among the eligible values, and his band is the best one whose
+   **Ruled-out players (owner, 2026-10-28; revised 2026-10-31):** an Injured, Suspended or
+   Not eligible (`i`/`s`/`n`) player with 270+ minutes is rated too, but placed *against*
+   the eligible pool without joining it: each input's percentile is where his value would
+   sit among the eligible values, sharing the average rank of any he equals, on the same
+   scale as theirs (so equal numbers give an equal score). His band is the best one whose
    last member's score he matches or beats. So injured players never push fit ones down a
    band. He shows his band in My squad and Players (with his flag), never in Picks.
+   **His fixtures input counts zero**: being out costs him the games in the window. FPL
+   gives no return date, so he is assumed to miss all 3 gameweeks; a short ban is treated
+   the same as an injury. The breakdown shows "Fixtures 0 (ruled out)".
+   **Unavailable (`u`) players are not rated** (reason "Unavailable"): they may have left
+   the Club or the league, so a band would mean nothing.
 2. Each input → percentile within position among eligible players ("lower is better"
    inputs inverted).
 3. Weighted mean of percentiles with the fixed weights below.
@@ -168,8 +177,8 @@ only that position with the budget set to bank + that player's selling price, un
 - **Fixture cells** follow spec 0003's cell model: opponent short name plus H/A, coloured
   by `difficultyFor` on a green (easy) → red (hard) scale. A double shows both opponents
   stacked; a blank shows an explicit "Blank".
-- Doubtful players keep their amber % badge. `i`/`s`/`u`/`n` players never appear (they
-  are rated against the pool, but can't be picked for next week).
+- Doubtful players keep their amber % badge. Ruled-out players never appear (`i`/`s`/`n`
+  are rated against the pool, `u` not at all, but none can be picked for next week).
 - Tapping a row opens the breakdown.
 
 ### Band colours
@@ -194,7 +203,7 @@ Exact values live in the web theme tokens, light and dark.
   player's **rank among rated players in that position** — "1st", "2nd", "3rd"… (ties share
   a rank) — with a bar and the input's weight, plus the overall rank ("3rd of 22 rated
   MIDs").
-- Unrated players (under 270 minutes) show "—", with the reason on tap.
+- Not rated players (under 270 minutes, or Unavailable) show "—", with the reason on tap.
 - Rated players outside the top 40% show **Below OK** in the Players tab and the Squad
   (spec 0004), never in Picks. Not rated is never shown as Below OK.
 - On Picks, players already in the Entry's Squad carry an "In squad" tag (spec 0004 data).
@@ -229,7 +238,10 @@ revised, all positions accepted 2026-10-26). `pickRatingFor` has no importers ou
       word visible, next 3 fixtures shown with doubles stacked and blanks marked.
 - [x] A player with a double gameweek in the window gets both fixtures counted in the
       fixtures input; a blank counts zero.
-- [x] Players under 270 minutes have no band. Flagged `i`/`s`/`u`/`n` players with the
+- [x] Players under 270 minutes have no band. Ruled-out `i`/`s`/`n` players with the
   minutes get a band without changing anyone else's (revised 2026-10-28), and never show on Picks.
+- [x] A ruled-out player level with an available player on every input except fixtures
+  scores the same on those inputs; his fixtures input is zero (2026-10-31).
+- [x] Unavailable (`u`) players are not rated (2026-10-31).
 - [x] No code outside `pickRatingFor` computes or reads band thresholds.
 - [x] Nothing in the decision log, model or backtest imports `pickRatingFor`.

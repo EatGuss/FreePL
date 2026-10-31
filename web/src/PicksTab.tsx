@@ -45,7 +45,7 @@ export function PicksTab({ players, fixtures, ratings, filters, update, now, onO
     for (const p of players.players) {
       const r = pickRatingFor(p, ratings);
       // Flagged players are rated (for My squad and Players) but can't be picked for next week.
-      if (!r.rated || r.band === "below" || r.unavailable) continue;
+      if (!r.rated || r.band === "below" || r.ruledOut) continue;
       const list = out.get(p.positionId) ?? [];
       list.push({ player: p, rating: r });
       out.set(p.positionId, list);

@@ -38,6 +38,7 @@ Order of work:
 | `0005-pick-rating.md` | Best/Great/Good/OK band per player within position | done |
 | `0004-entry-view.md` | Current Squad, sell prices, FTs, chips, transfer what-if (ADR 0003) | done (Free Hit check pending) |
 | `0006-shortlist-and-saved-plans.md` | Starred players and transfer plans, kept in the URL | **next** (draft) |
+| `0007-per-gameweek-data.md` | Per-gameweek view: nailedness since joining a Club, DefCon hit rate | draft |
 
 Spec 0002 scaffolds `packages/`, `server/`, `api/` and `web/` as its "Files" section lists.
 `model/` stays out until its own spec.

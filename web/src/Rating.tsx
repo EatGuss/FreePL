@@ -3,7 +3,7 @@ import { BAND_LABEL, MIN_MINUTES, ordinal, type PickRating, type PlayerRow, type
 
 /**
  * The band word for cards and rows. Unrated is almost always low minutes (an injured player
- * with the minutes is still rated), so the minutes are what it shows.
+ * with the minutes is still rated; an Unavailable one is not), so the minutes are what it shows.
  */
 export function bandWord(player: PlayerRow, rating: PickRating | null): string {
   if (!rating) return "";
@@ -41,10 +41,10 @@ export function RatingSheet({ player, rating, position, onClose }: {
         {rating.rated ? (
           <>
             <div className="sub">
-              <b>{BAND_LABEL[rating.band]}</b> · {rating.unavailable ? "would be " : ""}{ordinal(rating.rank)} of {rating.of} rated {position?.plural ?? rating.positionShort}
+              <b>{BAND_LABEL[rating.band]}</b> · {rating.ruledOut ? "would be " : ""}{ordinal(rating.rank)} of {rating.of} rated {position?.plural ?? rating.positionShort}
             </div>
-            {rating.unavailable && (
-              <div className="sub">Unavailable now, so rated against the {rating.of} available without taking a place among them, and left out of Picks.</div>
+            {rating.ruledOut && (
+              <div className="sub">Ruled out, so rated against the {rating.of} available without taking a place among them, with no credit for fixtures, and left out of Picks.</div>
             )}
             <div className="bars">
               {rating.inputs.map((i) => (
