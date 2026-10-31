@@ -6,12 +6,16 @@ optimiser, logged before each deadline, with a public scorecard.
 
 ## Current phase
 
-**Spec 0004: the Entry view (My squad).** Spec: `docs/specs/0004-entry-view.md`. Reviewed
-2026-10-27 (Q79–Q84); FPL answers Vercel (probe, 2026-10-27). Part 1 (data and read-only My
-squad) built; part 2 (the what-if) next.
+**Spec 0006: shortlist and saved plans** is next. Spec: `docs/specs/0006-shortlist-and-saved-plans.md`,
+still a draft; review it with the owner before building.
+
+Spec 0004 (Entry view, My squad) **shipped** 2026-10-30: any Entry by team ID, sell prices,
+free transfers, chips and the transfer what-if. FPL keeps pending transfers private until
+the deadline, so the Squad is shown as at the last deadline. Its Free Hit and FPL-down
+checks wait for a real occurrence.
 
 Spec 0005 (pick rating) **shipped** 2026-10-26; weights accepted by the owner on live data.
-My squad replaces Picks as the landing tab with spec 0004.
+My squad replaced Picks as the landing tab with spec 0004.
 
 Spec 0003 (fixture difficulty ticker) **shipped** 2026-10-21; its double/blank check waits for
 FPL to publish one.
@@ -32,8 +36,8 @@ Order of work:
 | `0002-player-stats-table.md` | Stats table + injury watch; stands up contract, `server/`, `web/`, Vercel | done |
 | `0003-fixture-difficulty-ticker.md` | Club × gameweek difficulty grid | done (DGW/BGW check pending) |
 | `0005-pick-rating.md` | Best/Great/Good/OK band per player within position | done |
-| `0004-entry-view.md` | Current Squad, sell prices, FTs, chips, transfer what-if (ADR 0003) | **current** (part 1 built) |
-| `0006-shortlist-and-saved-plans.md` | Starred players and transfer plans, kept in the URL | draft |
+| `0004-entry-view.md` | Current Squad, sell prices, FTs, chips, transfer what-if (ADR 0003) | done (Free Hit check pending) |
+| `0006-shortlist-and-saved-plans.md` | Starred players and transfer plans, kept in the URL | **next** (draft) |
 | `0007-per-gameweek-data.md` | Per-gameweek view: nailedness since joining a Club, DefCon hit rate | draft |
 
 Spec 0002 scaffolds `packages/`, `server/`, `api/` and `web/` as its "Files" section lists.
