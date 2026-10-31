@@ -65,7 +65,7 @@ _Avoid_: Score, projection, prediction
 A rated player outside the top 40% of their position. Shown for the Squad and in the full player table, never among picks.
 
 **Not rated**:
-A player with no pick rating: too few minutes to judge, or ruled out. Not the same as Below OK.
+A player with no pick rating: too few minutes this season to judge. Not the same as Below OK. Being ruled out does not stop a player being rated.
 
 **Purchase price**:
 What the Entry paid for a player when they joined the Squad.
