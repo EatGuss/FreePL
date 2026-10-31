@@ -1,6 +1,6 @@
 # ADR 0002 — Serve v1 from views over the latest snapshot, no flattening layer
 
-Date: 2026-10-14 · Status: accepted · Amended 2026-10-15 (backfill exclusion, cache key, cross-capture views)
+Date: 2026-10-14 · Status: accepted · Amended 2026-10-15 (backfill exclusion, cache key, cross-capture views), 2026-10-31 (spec 0005 note corrected)
 
 ## Context
 
@@ -58,11 +58,13 @@ Options:
   single row cannot serve that. Flattening gets its own spec at that point, written with
   the benefit of knowing which fields the model actually uses. That is the ordering the
   brief already argues for: don't curate before you know what you need.
-- **Partly expired by spec 0005.** The pick rating reads every `post_gw` `event/{gw}/live`
-  capture of the current season (one row per settled gameweek) through a view. That is the
-  first read across captures. It is still a view with no second writer, so the rest of this
-  decision stands; per-player-per-day reads (price predictor, projection model) still need
-  their own flattening spec.
+- **Spec 0005 does not read across captures** (corrected 2026-10-31). The pick rating
+  was planned to read every `post_gw` `event/{gw}/live` capture through a view, but its
+  review (Q71) kept v1 on season totals from the latest capture. The first read across
+  captures will be spec 0007's per-gameweek view (one row per player per settled
+  gameweek). It is still a view with no second writer, so the rest of this decision stands
+  until then; spec 0007 records its own amendment here, and per-player-per-day reads
+  (price predictor, projection model) still need their own flattening spec.
 - Drizzle buys little against views — its value is typed tables and migrations, neither of
   which exists yet. v1 uses `postgres.js` with hand-written SQL and zod parsing at the
   boundary. Revisit when flattened tables arrive; adopting it later costs nothing that
