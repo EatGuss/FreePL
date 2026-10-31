@@ -1,6 +1,6 @@
 # Spec 0004 — Entry view
 
-Status: **current** · review 2026-10-27 (Q79–Q84) below; built in two PRs (Q84)
+Status: **shipped** 2026-10-30 · review 2026-10-27 (Q79–Q84) below; built in two PRs (Q84)
 Depends on spec 0002 (contract, API, patterns), spec 0003 (`difficultyFor`, fixture cells),
 spec 0005 (row colours) and ADR 0003 (live entry reads). Called "My Team" in earlier
 drafts; the UI tab is "My squad", the code and docs say **Entry**.
@@ -322,31 +322,39 @@ are local and commit nothing.
 
 ## Acceptance criteria
 
-- [ ] ~~Immediately after making a transfer on the FPL site, the Squad reflects it within
+- [x] ~~Immediately after making a transfer on the FPL site, the Squad reflects it within
       the cache TTL.~~ Not possible from public data (2026-10-30, "The constraint, first").
       Replaced by: the page labels the Squad "as at the GW n deadline", and after the GW n+1
-      deadline it shows the transfers made before it.
-- [ ] A Wildcard week (many transfers in one event) reconstructs to exactly 15 players.
-- [ ] The week after a Free Hit, the Squad is the pre-Free-Hit Squad.
-- [ ] All 15 sell prices match the FPL site's transfers page. If any purchase price is
-      unknown, no sell price or selling value is shown at all.
-- [ ] Sell-price function passes the `fpl-domain.md` worked examples (5.0→5.1 sells 5.0,
+      deadline it shows the transfers made before it. *(Label shipped 2026-10-30.)*
+- [x] A Wildcard week (many transfers in one event) reconstructs to exactly 15 players. *(Test on the verified
+      2026-10-16 two-batch shape.)*
+- [x] The week after a Free Hit, the Squad is the pre-Free-Hit Squad. *(Synthetic test; confirm on
+      the first real Free Hit.)*
+- [x] All 15 sell prices match the FPL site's transfers page. If any purchase price is
+      unknown, no sell price or selling value is shown at all. *(Owner, live, 2026-10-30.)*
+- [x] Sell-price function passes the `fpl-domain.md` worked examples (5.0→5.1 sells 5.0,
       5.0→5.2 sells 5.1, 5.0→5.3 sells 5.1, 6.0→5.9 sells 5.9).
-- [ ] Free transfers available matches the FPL site's figure across a bank-up week, a
-      spend week, a hit week and a chip week.
-- [ ] The what-if allows a negative bank and a 4th player from a Club, and warns on both;
+- [x] Free transfers available matches the FPL site's figure across a bank-up week, a
+      spend week, a hit week and a chip week. *(Test on the real Entry's history; owner matched the live
+      figure 2026-10-30.)*
+- [x] The what-if allows a negative bank and a 4th player from a Club, and warns on both;
       hits show at −4 each beyond free transfers.
-- [ ] Pitch and List views show the same 15 players; a planned player takes the replaced
+- [x] Pitch and List views show the same 15 players; a planned player takes the replaced
       player's slot.
-- [ ] Tapping a player opens the player sheet; Replace, not the tap, opens the transfer list.
-- [ ] Move only offers swaps that keep a legal formation; a benched captain or vice loses
+- [x] Tapping a player opens the player sheet; Replace, not the tap, opens the transfer list.
+- [x] Move only offers swaps that keep a legal formation; a benched captain or vice loses
       the armband and the warning shows; captain and vice can't be ticked on the bench.
-- [ ] Chips remaining shows both chip sets and the set 1 expiry from GW19's deadline.
-- [ ] Nothing from `entry/*` is written to `api_snapshots` — verify by row count.
-- [ ] With the FPL API unreachable, the page renders the Squad from cache and labels it
-      stale; with no cache, it degrades without rendering wrong numbers.
-- [ ] Before the GW1 deadline, the page shows an empty state.
-- [ ] Leak check passes (Rollout step 5).
+- [x] Chips remaining shows both chip sets and the set 1 expiry from GW19's deadline.
+- [x] Nothing from `entry/*` is written to `api_snapshots` — verify by row count. *(2026-10-30: only the owner's
+      Entry, only the snapshot job's history and picks rows.)*
+- [x] With the FPL API unreachable, the page renders the Squad from cache and labels it
+      stale; with no cache, it degrades without rendering wrong numbers. *(Server tests; not yet
+      seen live — FPL hasn't been down.)*
+- [x] Before the GW1 deadline, the page shows an empty state.
+- [x] Leak check passes (Rollout step 5), 2026-10-30: no secret, contact or Neon host in
+      the web bundle; upstream and DB errors return generic messages (server tests);
+      `entry/%` rows are only the snapshot job's; anyone with an id sees that Entry's
+      already-public data, accepted with Q79.
 
 ## Rollout
 
