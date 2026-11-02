@@ -85,6 +85,14 @@ _Avoid_: Sell value, price (unqualified)
 The Squad's selling prices plus the bank: what the Entry could actually spend.
 _Avoid_: Team value (used for different figures by different people)
 
+**Plan**:
+Planned transfers and a planned lineup (XI, bench order, captain, vice) for one Entry's upcoming gameweek. A what-if only: it ends at that gameweek's deadline and is never sent to FPL.
+_Avoid_: Draft, saved team
+
+**Shortlist**:
+Players starred on this device to consider buying. Not tied to an Entry.
+_Avoid_: Watchlist, favourites
+
 ## Capture
 
 **Capture**:
