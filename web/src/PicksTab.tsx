@@ -6,6 +6,7 @@ import {
 import { FixtureCell } from "./FixtureChip.js";
 import { readRememberedEntry, useEntry } from "./data.js";
 import { Flag } from "./Flag.js";
+import { Star } from "./Star.js";
 import type { Filters } from "./filters.js";
 import { formatPrice } from "./format.js";
 
@@ -130,7 +131,7 @@ const PickRow = memo(function PickRow({ item, clubShort, cells, clubById, onOpen
     <tr className={`row-${rating.band} tap`} tabIndex={0} onClick={() => onOpen(p.id)}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen(p.id); } }}>
       <td>
-        <div className="pname"><span className="nm">{p.webName}</span><Flag player={p} />{owned && <span className="tag">In squad</span>}</div>
+        <div className="pname"><Star player={p} /><span className="nm">{p.webName}</span><Flag player={p} />{owned && <span className="tag">In squad</span>}</div>
         <div className="pmeta"><span className="bandword">{BAND_LABEL[rating.band]}</span> · {clubShort} · <b>{formatPrice(p.nowCost)}</b></div>
       </td>
       {cells.map((c) => <td key={c.gameweek} className="fx"><FixtureCell fixtures={c.fixtures} clubById={clubById} /></td>)}

@@ -32,6 +32,7 @@
   }
   .views button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
   .views .count { font-family: var(--font-body); font-size: 12px; font-weight: 600; color: var(--bad); margin-left: 4px; }
+  .views .count.plain { color: var(--muted); }
 
   .chip {
     font: 600 13px var(--font-body); border: 1px solid var(--line); background: var(--surface);
@@ -249,6 +250,10 @@
   .cand { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: center; text-align: left; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; cursor: pointer; font: 14px var(--font-body); }
   .cand .after { font-weight: 700; font-variant-numeric: tabular-nums; }
   .cand .why { grid-column: 1 / -1; font-size: 12px; color: var(--muted); }
+  .cand-row { display: flex; align-items: center; gap: 4px; }
+  .cand-row .cand { flex: 1; min-width: 0; }
+  .star { background: none; border: 0; padding: 0 2px; min-width: 28px; min-height: 28px; font-size: 17px; line-height: 1; color: var(--muted); cursor: pointer; flex: none; }
+  .star.on { color: var(--accent); }
 
   .notice { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px; font-size: 13px; }
   .notice.bad { border-color: var(--bad); color: var(--bad); background: var(--bad-bg); }
