@@ -21,6 +21,12 @@ Depends on spec 0004 (Squad, sell prices, transfer what-if) and spec 0005 (pick 
   only on its own Entry and waits there.
 - **Q94 (2026-11-03):** two PRs. **Part 1:** the Shortlist, with the shared season tag and
   link-vs-device handling. **Part 2:** the saved Plan.
+- *Part 1 as built (2026-11-03):* when a link differs from this device, the address bar
+  shows this device's Shortlist while the choice is open, so a refresh before choosing
+  drops the link's offer. "Bank after" sits next to the player, before the fixtures, so
+  it stays on screen at phone width. Checked in a browser on a synthetic season: star,
+  refresh, badge, link choice both ways, last-season link, blocked storage, no writes,
+  and the bank-after figure equal to the Replace sheet's for the same pair.
 
 ## Goal
 
