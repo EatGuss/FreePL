@@ -7,6 +7,7 @@ import { MySquadTab } from "./MySquadTab.js";
 import { PicksTab } from "./PicksTab.js";
 import { PlayersTab } from "./PlayersTab.js";
 import { RatingSheet } from "./Rating.js";
+import { useSavedPlan } from "./savedPlan.js";
 import { ShortlistContext, seasonOf, useShortlist } from "./shortlist.js";
 import { ShortlistTab } from "./ShortlistTab.js";
 import { useFixtures, useNow, usePlayers } from "./data.js";
@@ -27,6 +28,7 @@ export function App() {
   const flaggedCount = data ? data.players.filter((p) => p.status !== "a").length : 0;
   const season = data ? seasonOf(data.gameweeks) : null;
   const shortlist = useShortlist(filters, update, season);
+  const savedPlan = useSavedPlan(filters, update, season);
 
   // Built once per data load (and when a deadline passes, which moves the fixture window),
   // never per tap.
@@ -94,11 +96,23 @@ export function App() {
           <button className="linkish" onClick={shortlist.keepMine}>Keep mine</button>
         </p>
       )}
+      {savedPlan?.notices.map((n, i) => (
+        <p className="notice" key={n}>{n} <button className="linkish" onClick={() => savedPlan.dismiss(i)}>Dismiss</button></p>
+      ))}
+      {savedPlan?.offer && (
+        <p className="notice">
+          This link has a different plan (team {savedPlan.offer.entry}, GW{savedPlan.offer.gameweek},{" "}
+          {savedPlan.offer.transfers.length} transfer{savedPlan.offer.transfers.length === 1 ? "" : "s"}) ·{" "}
+          <button className="linkish" onClick={savedPlan.useLink}>Use link's plan</button> ·{" "}
+          <button className="linkish" onClick={savedPlan.keepMine}>Keep mine</button>
+        </p>
+      )}
       {filters.tab === "squad" && data && (
-        <MySquadTab players={data} fixtures={fixtures.data} ratings={ratings} filters={filters} update={update} now={now} onOpenRating={openSheet} />
+        <MySquadTab players={data} fixtures={fixtures.data} ratings={ratings} filters={filters} update={update} now={now} onOpenRating={openSheet} saved={savedPlan} />
       )}
       {filters.tab === "shortlist" && data && fixtures.data && (
-        <ShortlistTab players={data} fixtures={fixtures.data} ratings={ratings} filters={filters} now={now} onOpen={openSheet} />
+        <ShortlistTab players={data} fixtures={fixtures.data} ratings={ratings} filters={filters} now={now} onOpen={openSheet}
+          savedPlan={savedPlan?.plan ?? null} />
       )}
       {filters.tab === "picks" && data && fixtures.data && ratings && (
         <PicksTab players={data} fixtures={fixtures.data} ratings={ratings} filters={filters} update={update} now={now} onOpen={openSheet} />

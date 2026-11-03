@@ -196,7 +196,7 @@ live.
 - Incoming players are valued at `now_cost` (their sell price if sold straight back).
   Prices can change overnight; the plan says so.
 - **Client-side only.** Never stored on the server, never sent to FPL. Lost on refresh in
-  this spec; saving plans is spec 0006.
+  this spec; since spec 0006 (2026-11-03) the Plan is kept in the link and on the device.
 - The accounting (bank, hits, club counts) is one pure tested function — the backtest
   simulator needs the same arithmetic.
 

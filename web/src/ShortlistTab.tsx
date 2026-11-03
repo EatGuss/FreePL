@@ -7,6 +7,7 @@ import { FixtureCell } from "./FixtureChip.js";
 import { readRememberedEntry, useEntry } from "./data.js";
 import { Flag } from "./Flag.js";
 import type { Filters } from "./filters.js";
+import { restorePlan, type SavedPlan } from "./savedPlan.js";
 import { ShortlistContext } from "./shortlist.js";
 import { Star } from "./Star.js";
 
@@ -18,9 +19,9 @@ const money = (t: number) => (t < 0 ? `−${formatPrice(-t)}` : formatPrice(t));
  * "Affordable if I sell…" shows the bank after each swap, worked out as the Replace sheet
  * does from the bank after the Plan (Q89).
  */
-export function ShortlistTab({ players, fixtures, ratings, filters, now, onOpen }: {
+export function ShortlistTab({ players, fixtures, ratings, filters, now, onOpen, savedPlan }: {
   players: PlayersResponse; fixtures: FixturesResponse; ratings: RatingContext | null; filters: Filters;
-  now: number; onOpen: (playerId: number) => void;
+  now: number; onOpen: (playerId: number) => void; savedPlan: SavedPlan | null;
 }) {
   const sl = useContext(ShortlistContext);
   const [remembered] = useState(readRememberedEntry);
@@ -37,11 +38,13 @@ export function ShortlistTab({ players, fixtures, ratings, filters, now, onOpen 
     return new Map(t.rows.map((r) => [r.club.id, r.cells]));
   }, [fixtures, nextGws]);
 
-  // Part 1 has no saved Plan yet, so the bank after the Plan is the bank after an empty one.
-  const bank = useMemo(
-    () => (view ? evaluatePlan(view, startPlan(view), players.players, players.positions).bank : null),
-    [view, players],
-  );
+  // The bank after the saved Plan when it applies to this Entry; otherwise after an empty one.
+  const bank = useMemo(() => {
+    if (!view) return null;
+    const r = view.squad.length && view.gameweek !== null
+      ? restorePlan(savedPlan, view, players.players, players.positions, players.gameweeks, now) : null;
+    return evaluatePlan(view, r?.status === "applied" ? r.plan : startPlan(view), players.players, players.positions).bank;
+  }, [view, players, savedPlan, now]);
   const owned = useMemo(() => new Set(view?.squad.map((s) => s.playerId) ?? []), [view]);
   const sellSlot = view?.squad.find((s) => s.playerId === sellId) ?? null;
   const sellPlayer = sellSlot ? byId.get(sellSlot.playerId) : undefined;
