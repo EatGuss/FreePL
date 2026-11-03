@@ -6,8 +6,9 @@ optimiser, logged before each deadline, with a public scorecard.
 
 ## Current phase
 
-**Spec 0006: shortlist and saved plans** is next. Spec: `docs/specs/0006-shortlist-and-saved-plans.md`,
-still a draft; review it with the owner before building.
+**Spec 0006: shortlist and saved plans.** Spec: `docs/specs/0006-shortlist-and-saved-plans.md`.
+Reviewed 2026-11-02 and 2026-11-03 (Q85–Q94). Two PRs (Q94): part 1 the Shortlist (with the
+season tag and link-vs-device handling), part 2 the saved Plan. Part 1 built; part 2 next.
 
 Spec 0004 (Entry view, My squad) **shipped** 2026-10-30: any Entry by team ID, sell prices,
 free transfers, chips and the transfer what-if. FPL keeps pending transfers private until
@@ -37,7 +38,7 @@ Order of work:
 | `0003-fixture-difficulty-ticker.md` | Club × gameweek difficulty grid | done (DGW/BGW check pending) |
 | `0005-pick-rating.md` | Best/Great/Good/OK band per player within position | done |
 | `0004-entry-view.md` | Current Squad, sell prices, FTs, chips, transfer what-if (ADR 0003) | done (Free Hit check pending) |
-| `0006-shortlist-and-saved-plans.md` | Starred players and transfer plans, kept in the URL | **next** (draft) |
+| `0006-shortlist-and-saved-plans.md` | Starred players and transfer plans, kept in the URL | **current** (reviewed) |
 | `0007-per-gameweek-data.md` | Per-gameweek view: nailedness since joining a Club, DefCon hit rate | draft |
 
 Spec 0002 scaffolds `packages/`, `server/`, `api/` and `web/` as its "Files" section lists.
@@ -58,7 +59,7 @@ package.json, pnpm-workspace.yaml      pnpm workspace root (Node 22, see .nvmrc)
 packages/contract/                     zod schemas + types, shared by server/ and web/; ships to the browser
 server/                                Hono app, platform-agnostic; reads the views as freepl_reader
 api/index.js, vercel.json              the one Vercel function (re-exports the server/dist bundle); rewrites /api/*
-web/                                   Vite + React + Tailwind app: My squad, Picks, Players, Fixtures, Injury watch
+web/                                   Vite + React + Tailwind app: My squad, Shortlist, Picks, Players, Fixtures, Injury watch
 .github/workflows/ci.yml               on pull_request: install, typecheck, test, build
 docs/                                  human-facing docs; read on demand, not always
   specs/ decisions/ roadmap.md fpl-domain.md design.md design/mockup.html

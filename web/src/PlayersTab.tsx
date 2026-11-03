@@ -6,6 +6,7 @@ import { pickRatingFor, type ClubRow, type PlayerRow, type PlayersResponse, type
 import { FIXED_COLUMNS, GROUPS, type StatColumn } from "./columns.js";
 import { applyFilters, filtersToSearch, GROUP_KEYS, makeLookups, type Filters } from "./filters.js";
 import { Flag } from "./Flag.js";
+import { Star } from "./Star.js";
 import { ago, formatPrice } from "./format.js";
 import { RatingChip } from "./Rating.js";
 import { ageHours } from "@freepl/contract";
@@ -229,6 +230,7 @@ const Row = memo(function Row({ player: p, columns, club, position, newsOpen, on
       <tr>
         <td>
           <div className="pname">
+            <Star player={p} />
             <span className="nm">{p.webName}</span>
             <Flag player={p} onClick={() => onToggleNews(p.id)} />
           </div>

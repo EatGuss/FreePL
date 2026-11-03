@@ -54,7 +54,12 @@ distinguished by hue (blue), not by being louder.
 ## Components
 
 **Tab bar.** Text tabs with a 3px accent underline on the selected one. Order: My squad,
-Picks, Players, Fixtures, Injury watch (count badge in red).
+Shortlist (count badge in muted grey), Picks, Players, Fixtures, Injury watch (count badge in
+red). Six tabs overflow a phone's width; the bar scrolls sideways.
+
+**Shortlist star.** ☆ / ★ before the player's name on Picks, Players and Shortlist rows, and
+beside each Replace sheet candidate. Muted when off, `--accent` when on; a 28px tap target.
+Tapping it never opens the row it sits in.
 
 **Freshness line.** Dot + "Data as of …, n hours ago"; green / amber / red per the contract
 thresholds.

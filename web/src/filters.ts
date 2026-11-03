@@ -24,10 +24,13 @@ export interface Filters {
   /** My squad (spec 0004): the team id shown (null = the server's default) and the view. */
   entry: number | null;
   squadView: "pitch" | "list";
+  /** Shortlist (spec 0006): element ids, and the season they belong to (Q85). */
+  sl: number[];
+  season: number | null;
 }
 
-/** My squad is the landing tab (spec 0004 Q82). */
-export const TABS = ["squad", "picks", "players", "fixtures", "injury"] as const;
+/** My squad is the landing tab (spec 0004 Q82); Shortlist sits after it (spec 0006 Q91). */
+export const TABS = ["squad", "shortlist", "picks", "players", "fixtures", "injury"] as const;
 export type Tab = (typeof TABS)[number];
 const TICKER_SORTS: readonly TickerSort[] = ["mean", "sum", "count"];
 
@@ -37,12 +40,15 @@ export type GroupKey = (typeof GROUP_KEYS)[number];
 export const DEFAULT_FILTERS: Filters = {
   tab: "squad", pos: null, clubs: [], minPrice: null, maxPrice: null, minMinutes: 0, q: "",
   showOut: false, group: "Overview", sort: "epNext", desc: true, window: WINDOW_DEFAULT, tickerSort: "mean",
-  budget: null, entry: null, squadView: "pitch",
+  budget: null, entry: null, squadView: "pitch", sl: [], season: null,
 };
 
 const intParam = (s: string | null): number | null => (s !== null && /^\d+$/.test(s) ? Number(s) : null);
 /** A team id: a plain positive whole number, as the API accepts. */
 export const entryParam = (s: string | null): number | null => (s !== null && /^[1-9]\d{0,9}$/.test(s) ? Number(s) : null);
+/** Element ids, comma-separated: positive whole numbers, duplicates dropped, order kept. */
+const idsParam = (s: string | null): number[] =>
+  [...new Set((s ?? "").split(",").filter((x) => /^[1-9]\d{0,5}$/.test(x)).map(Number))];
 
 export function filtersFromSearch(search: string): Filters {
   const p = new URLSearchParams(search);
@@ -64,6 +70,8 @@ export function filtersFromSearch(search: string): Filters {
     budget: intParam(p.get("budget")),
     entry: entryParam(p.get("entry")),
     squadView: p.get("sview") === "list" ? "list" : "pitch",
+    sl: idsParam(p.get("sl")),
+    season: intParam(p.get("s")),
   };
 }
 
@@ -86,6 +94,10 @@ export function filtersToSearch(f: Filters): string {
   if (f.budget !== null) p.set("budget", String(f.budget));
   if (f.entry !== null) p.set("entry", String(f.entry));
   if (f.squadView !== "pitch") p.set("sview", f.squadView);
+  if (f.sl.length) {
+    p.set("sl", f.sl.join(","));
+    if (f.season !== null) p.set("s", String(f.season));
+  }
   const s = p.toString();
   return s ? `?${s}` : "";
 }

@@ -3,6 +3,7 @@ import {
   BAND_LABEL, formatPrice, pickRatingFor, type ClubRow, type PlayerRow, type RatingContext,
 } from "@freepl/contract";
 import { Flag } from "./Flag.js";
+import { Star } from "./Star.js";
 
 const SHOWN = 40;
 const money = (t: number) => (t < 0 ? `−${formatPrice(-t)}` : formatPrice(t));
@@ -77,7 +78,8 @@ export function ReplaceSheet({ out, sellPrice, bank, candidates, ratings, clubBy
             const r = ratings ? pickRatingFor(p, ratings) : null;
             const after = canPrice ? bank! + sellPrice! - p.nowCost : null;
             return (
-              <button key={p.id} type="button" className="cand" onClick={() => onPick(p.id)}>
+              <div key={p.id} className="cand-row">
+              <button type="button" className="cand" onClick={() => onPick(p.id)}>
                 <span>
                   <b>{p.webName}</b> <Flag player={p} /> · {r?.rated ? BAND_LABEL[r.band] : "Not rated"} · {clubById.get(p.clubId)?.short} · {formatPrice(p.nowCost)}
                 </span>
@@ -86,6 +88,8 @@ export function ReplaceSheet({ out, sellPrice, bank, candidates, ratings, clubBy
                 </span>
                 <span className="why">{after !== null && after < 0 ? `Over budget by ${formatPrice(-after)}` : "Bank after this swap"}</span>
               </button>
+              <Star player={p} />
+              </div>
             );
           })}
           {shown.length === 0 && <div className="sub">No one matches.</div>}

@@ -1,6 +1,6 @@
 # Spec 0006 — Shortlist and saved plans
 
-Status: draft · reviewed 2026-11-02 (Q85–Q92) · after spec 0004
+Status: draft · reviewed 2026-11-02 (Q85–Q92) and 2026-11-03 (Q93–Q94) · after spec 0004
 Depends on spec 0004 (Squad, sell prices, transfer what-if) and spec 0005 (pick rating)
 
 ## Decisions from review (2026-11-02)
@@ -16,6 +16,17 @@ Depends on spec 0004 (Squad, sell prices, transfer what-if) and spec 0005 (pick 
 - **Q90:** wording follows spec 0004 and `GLOSSARY.md` (Plan, Shortlist, Replace sheet).
 - **Q91:** the Shortlist tab sits after My squad, with a count badge.
 - **Q92:** "Clear plan" can be undone once with "Load previous plan".
+- **Q93 (2026-11-03):** the link records the Plan's Entry in its own parameter, `pe=`,
+  separate from `entry=` (the team on screen). Any team can be viewed; the Plan is applied
+  only on its own Entry and waits there.
+- **Q94 (2026-11-03):** two PRs. **Part 1:** the Shortlist, with the shared season tag and
+  link-vs-device handling. **Part 2:** the saved Plan.
+- *Part 1 as built (2026-11-03):* when a link differs from this device, the address bar
+  shows this device's Shortlist while the choice is open, so a refresh before choosing
+  drops the link's offer. "Bank after" sits next to the player, before the fixtures, so
+  it stays on screen at phone width. Checked in a browser on a synthetic season: star,
+  refresh, badge, link choice both ways, last-season link, blocked storage, no writes,
+  and the bank-after figure equal to the Replace sheet's for the same pair.
 
 ## Goal
 
@@ -39,8 +50,9 @@ and no server-side writes**:
 ## Storage
 
 - **The URL carries both**: `?sl=12,345,…` for the Shortlist (element ids) and
-  `?entry=…&plan=out:in,out:in&pgw=…&xi=…&bench=…&c=…&v=…` for a Plan (its Entry, transfers,
-  gameweek and lineup, by element id). Copying the link moves them to another device.
+  `?pe=…&plan=out:in,out:in&pgw=…&xi=…&bench=…&c=…&v=…` for a Plan (its Entry, transfers,
+  gameweek and lineup, by element id). `pe` is the Plan's Entry and stays put when
+  `entry` (the team on screen) changes (Q93). Copying the link moves them to another device.
 - **The season (Q85):** both carry `s=` the year of GW1's deadline (e.g. `s=2026`), in the
   URL and in storage. FPL reuses element ids every season, so an old link's ids would
   name different players this season; checking ids against the latest bootstrap cannot catch
@@ -72,8 +84,8 @@ and no server-side writes**:
 
 ## Saved Plan
 
-- **Scope (Q86):** a Plan stores its Entry's team id and its gameweek. Opened on another
-  Entry, it is not applied. Once its gameweek's deadline passes it shows "Plan for GW n:
+- **Scope (Q86, Q93):** a Plan stores its Entry's team id (`pe`) and its gameweek. While
+  another Entry is on screen it is not applied, and it is back when its own Entry is. Once its gameweek's deadline passes it shows "Plan for GW n:
   deadline passed" with Clear plan, and is not applied. (FPL keeps the Entry's real
   transfers private until the deadline, spec 0004, so before then the app cannot tell they
   were made.) A Plan naming a player no longer in the Squad stays a backstop: shown as
