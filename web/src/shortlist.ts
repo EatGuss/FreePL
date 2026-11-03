@@ -32,28 +32,40 @@ export interface Resolution {
 
 const sameSet = (a: number[], b: number[]) => a.length === b.length && b.every((x) => a.includes(x));
 
-/** Decides what a page load shows from the link and this device's storage (Q85, Q87). */
-export function resolveShortlist(link: SavedShortlist | null, stored: SavedShortlist | null, season: number): Resolution {
+/** The same decision for a Shortlist or a Plan: what a page load shows from the link and storage. */
+export interface Resolved<T> { value: T | null; offer: T | null; notices: string[]; clearStored: boolean }
+
+export function resolveSaved<T>(
+  kind: "shortlist" | "plan", link: { season: number | null; value: T } | null, stored: { season: number | null; value: T } | null,
+  season: number, same: (a: T, b: T) => boolean,
+): Resolved<T> {
   const notices: string[] = [];
-  const linkOk = !!link && link.ids.length > 0 && link.season === season;
-  const storedOk = !!stored && stored.ids.length > 0 && stored.season === season;
-  if (link && link.ids.length > 0 && !linkOk) {
+  const linkOk = !!link && link.season === season;
+  const storedOk = !!stored && stored.season === season;
+  if (link && !linkOk) {
     notices.push(link.season === null
-      ? "This link's shortlist doesn't say which season it's from, so its players can't be matched. It was not loaded."
-      : `This link's shortlist is from the ${seasonLabel(link.season)} season, so its players can't be matched. It was not loaded.`);
+      ? `This link's ${kind} doesn't say which season it's from, so its players can't be matched. It was not loaded.`
+      : `This link's ${kind} is from the ${seasonLabel(link.season)} season, so its players can't be matched. It was not loaded.`);
   }
-  const clearStored = !!stored && stored.ids.length > 0 && !storedOk;
+  const clearStored = !!stored && !storedOk;
   if (clearStored) {
     notices.push(stored!.season === null
-      ? "Your saved shortlist didn't say which season it was from, so it was cleared."
-      : `Your saved shortlist was from the ${seasonLabel(stored!.season)} season, so it was cleared.`);
+      ? `Your saved ${kind} didn't say which season it was from, so it was cleared.`
+      : `Your saved ${kind} was from the ${seasonLabel(stored!.season)} season, so it was cleared.`);
   }
   if (linkOk && storedOk) {
-    return { ids: stored!.ids, offer: sameSet(link!.ids, stored!.ids) ? null : link!.ids, notices, clearStored };
+    return { value: stored!.value, offer: same(link!.value, stored!.value) ? null : link!.value, notices, clearStored };
   }
-  if (linkOk) return { ids: link!.ids, offer: null, notices, clearStored };
-  if (storedOk) return { ids: stored!.ids, offer: null, notices, clearStored };
-  return { ids: [], offer: null, notices, clearStored };
+  if (linkOk) return { value: link!.value, offer: null, notices, clearStored };
+  if (storedOk) return { value: stored!.value, offer: null, notices, clearStored };
+  return { value: null, offer: null, notices, clearStored };
+}
+
+/** Decides what a page load shows from the link and this device's storage (Q85, Q87). */
+export function resolveShortlist(link: SavedShortlist | null, stored: SavedShortlist | null, season: number): Resolution {
+  const wrap = (x: SavedShortlist | null) => (x && x.ids.length ? { season: x.season, value: x.ids } : null);
+  const r = resolveSaved("shortlist", wrap(link), wrap(stored), season, sameSet);
+  return { ids: r.value ?? [], offer: r.offer, notices: r.notices, clearStored: r.clearStored };
 }
 
 const STORAGE_KEY = "freepl.shortlist";
@@ -105,7 +117,7 @@ export function useShortlist(filters: Filters, update: (p: Partial<Filters>) => 
     if (r.clearStored) writeStoredShortlist(null);
     setOffer(r.offer);
     setNotices(r.notices);
-    update({ sl: r.ids, season: r.ids.length ? season : null });
+    update({ sl: r.ids, season });
     setReady(true);
     // filters is read once here on purpose; later changes are mirrored below.
   }, [ready, season, update]);
@@ -119,7 +131,7 @@ export function useShortlist(filters: Filters, update: (p: Partial<Filters>) => 
   const toggle = useCallback((id: number) => {
     if (season === null) return;
     const next = ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id];
-    update({ sl: next, season: next.length ? season : null });
+    update({ sl: next, season });
   }, [ids, season, update]);
 
   return useMemo(() => (!ready ? null : {

@@ -1,3 +1,4 @@
+import type { SavedPlan } from "./savedPlan.js";
 import {
   WINDOW_DEFAULT, WINDOW_MAX, WINDOW_MIN, hiddenByDefault,
   type ClubRow, type PlayerRow, type PositionRow, type TickerSort,
@@ -24,9 +25,11 @@ export interface Filters {
   /** My squad (spec 0004): the team id shown (null = the server's default) and the view. */
   entry: number | null;
   squadView: "pitch" | "list";
-  /** Shortlist (spec 0006): element ids, and the season they belong to (Q85). */
+  /** Shortlist (spec 0006): element ids, and the season they and the Plan belong to (Q85). */
   sl: number[];
   season: number | null;
+  /** Saved Plan (spec 0006 part 2): pe, pgw, plan, xi, bench, c, v; null when none. */
+  plan: SavedPlan | null;
 }
 
 /** My squad is the landing tab (spec 0004 Q82); Shortlist sits after it (spec 0006 Q91). */
@@ -40,15 +43,34 @@ export type GroupKey = (typeof GROUP_KEYS)[number];
 export const DEFAULT_FILTERS: Filters = {
   tab: "squad", pos: null, clubs: [], minPrice: null, maxPrice: null, minMinutes: 0, q: "",
   showOut: false, group: "Overview", sort: "epNext", desc: true, window: WINDOW_DEFAULT, tickerSort: "mean",
-  budget: null, entry: null, squadView: "pitch", sl: [], season: null,
+  budget: null, entry: null, squadView: "pitch", sl: [], season: null, plan: null,
 };
 
 const intParam = (s: string | null): number | null => (s !== null && /^\d+$/.test(s) ? Number(s) : null);
 /** A team id: a plain positive whole number, as the API accepts. */
 export const entryParam = (s: string | null): number | null => (s !== null && /^[1-9]\d{0,9}$/.test(s) ? Number(s) : null);
+const ELEMENT_ID = /^[1-9]\d{0,5}$/;
 /** Element ids, comma-separated: positive whole numbers, duplicates dropped, order kept. */
 const idsParam = (s: string | null): number[] =>
-  [...new Set((s ?? "").split(",").filter((x) => /^[1-9]\d{0,5}$/.test(x)).map(Number))];
+  [...new Set((s ?? "").split(",").filter((x) => ELEMENT_ID.test(x)).map(Number))];
+const idParam = (s: string | null): number | null => (s !== null && ELEMENT_ID.test(s) ? Number(s) : null);
+
+/** A Plan from the link, or null unless every required part is there and well formed. */
+function planParam(p: URLSearchParams): SavedPlan | null {
+  const entry = entryParam(p.get("pe"));
+  const gameweek = intParam(p.get("pgw"));
+  const raw = p.get("plan");
+  const xi = idsParam(p.get("xi"));
+  const bench = idsParam(p.get("bench"));
+  if (entry === null || gameweek === null || raw === null || xi.length !== 11 || bench.length !== 4) return null;
+  const pairs = raw === "" ? [] : raw.split(",").map((t) => t.split(":"));
+  if (!pairs.every((x) => x.length === 2 && ELEMENT_ID.test(x[0]!) && ELEMENT_ID.test(x[1]!))) return null;
+  return {
+    entry, gameweek, xi, bench,
+    transfers: pairs.map(([o, i]) => ({ outId: Number(o), inId: Number(i) })),
+    captain: idParam(p.get("c")), vice: idParam(p.get("v")),
+  };
+}
 
 export function filtersFromSearch(search: string): Filters {
   const p = new URLSearchParams(search);
@@ -72,6 +94,7 @@ export function filtersFromSearch(search: string): Filters {
     squadView: p.get("sview") === "list" ? "list" : "pitch",
     sl: idsParam(p.get("sl")),
     season: intParam(p.get("s")),
+    plan: planParam(p),
   };
 }
 
@@ -94,10 +117,18 @@ export function filtersToSearch(f: Filters): string {
   if (f.budget !== null) p.set("budget", String(f.budget));
   if (f.entry !== null) p.set("entry", String(f.entry));
   if (f.squadView !== "pitch") p.set("sview", f.squadView);
-  if (f.sl.length) {
-    p.set("sl", f.sl.join(","));
-    if (f.season !== null) p.set("s", String(f.season));
+  if (f.sl.length) p.set("sl", f.sl.join(","));
+  if (f.plan) {
+    p.set("pe", String(f.plan.entry));
+    p.set("pgw", String(f.plan.gameweek));
+    p.set("plan", f.plan.transfers.map((t) => `${t.outId}:${t.inId}`).join(","));
+    p.set("xi", f.plan.xi.join(","));
+    p.set("bench", f.plan.bench.join(","));
+    if (f.plan.captain !== null) p.set("c", String(f.plan.captain));
+    if (f.plan.vice !== null) p.set("v", String(f.plan.vice));
   }
+  // One season tag covers both (Q85).
+  if ((f.sl.length || f.plan) && f.season !== null) p.set("s", String(f.season));
   const s = p.toString();
   return s ? `?${s}` : "";
 }

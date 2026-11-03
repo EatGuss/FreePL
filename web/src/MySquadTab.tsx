@@ -6,6 +6,7 @@ import {
   type ShirtColours, type TickerCell, shirtFor,
 } from "@freepl/contract";
 import { ReplaceSheet } from "./ReplaceSheet.js";
+import { isBasePlan, planToSaved, restorePlan, type Restored, type SavedPlanState } from "./savedPlan.js";
 import { FixtureCell } from "./FixtureChip.js";
 import { Flag } from "./Flag.js";
 import { PlayerSheet } from "./PlayerSheet.js";
@@ -22,11 +23,13 @@ interface Row { slot: PlanSlot; player: PlayerRow; cells: TickerCell[] }
 
 /**
  * Spec 0004: the Entry's Squad, money and transfer state, read live and never stored, plus the
- * what-if (planned transfers and lineup) — client side only, lost on refresh, never sent to FPL.
+ * what-if (planned transfers and lineup). The Plan is kept in the link and on this device
+ * (spec 0006), never on the server and never sent to FPL.
  */
-export function MySquadTab({ players, fixtures, ratings, filters, update, now, onOpenRating }: {
+export function MySquadTab({ players, fixtures, ratings, filters, update, now, onOpenRating, saved }: {
   players: PlayersResponse; fixtures: FixturesResponse | undefined; ratings: RatingContext | null;
   filters: Filters; update: (p: Partial<Filters>) => void; now: number; onOpenRating: (id: number) => void;
+  saved: SavedPlanState | null;
 }) {
   const [remembered] = useState(readRemembered);
   const id = filters.entry ?? remembered;
@@ -46,11 +49,23 @@ export function MySquadTab({ players, fixtures, ratings, filters, update, now, o
   }, [fixtures, nextGws]);
 
   const view = entry.data?.view;
-  // The plan belongs to the view it was made on; a new team (or new data) starts afresh.
-  const [planState, setPlanState] = useState<{ view: EntryView; plan: Plan } | null>(null);
   const basePlan = useMemo(() => (view && view.squad.length ? startPlan(view) : null), [view]);
-  const plan = planState && planState.view === view ? planState.plan : basePlan;
-  const setPlan = useCallback((p: Plan) => { if (view) setPlanState({ view, plan: p }); }, [view]);
+  const restored: Restored = useMemo(
+    () => (view && view.squad.length && view.gameweek !== null
+      ? restorePlan(saved?.plan ?? null, view, players.players, players.positions, players.gameweeks, now)
+      : { status: "none" }),
+    [saved?.plan, view, players, now],
+  );
+  // On another Entry the saved Plan waits (Q93): edits here stay on this page, unsaved.
+  const unsaved = restored.status === "other-entry" || !saved;
+  const [local, setLocal] = useState<{ view: EntryView; plan: Plan } | null>(null);
+  const plan = restored.status === "applied" ? restored.plan : unsaved && local && local.view === view ? local.plan : basePlan;
+  const setPlan = useCallback((p: Plan) => {
+    if (!view || view.gameweek === null) return;
+    if (unsaved) { setLocal({ view, plan: p }); return; }
+    saved.set(isBasePlan(p, view) ? null : planToSaved(p, view.entry.id, view.gameweek + 1));
+  }, [view, unsaved, saved]);
+  const clearPlan = () => { if (unsaved) setLocal(null); else saved.clear(); };
   const result = useMemo(
     () => (view && plan ? evaluatePlan(view, plan, players.players, players.positions) : null),
     [view, plan, players],
@@ -202,16 +217,33 @@ export function MySquadTab({ players, fixtures, ratings, filters, update, now, o
         {!flagged.length && !blanks.length && !noCaptain && <span className="ok">Nothing needs attention</span>}
       </div>
 
+      {restored.status === "expired" && (
+        <p className="notice">Plan for GW{restored.gameweek}: deadline passed, so it isn't applied.{" "}
+          <button className="linkish" onClick={() => saved?.set(null)}>Clear plan</button></p>
+      )}
+      {restored.status === "stale" && (
+        <p className="notice">Your saved plan for GW{restored.gameweek} names a player no longer in this Squad: a real transfer has
+          happened since, so it isn't applied. <button className="linkish" onClick={() => saved?.set(null)}>Clear plan</button></p>
+      )}
+      {restored.status === "other-entry" && (
+        <p className="notice">Your saved plan is for team {restored.entry}, and waits there. Changes here aren't saved.</p>
+      )}
+      {restored.status === "applied" && restored.notice && <p className="notice">{restored.notice}</p>}
+      {saved?.previous && (
+        <p className="notice">Plan cleared · <button className="linkish" onClick={saved.loadPrevious}>Load previous plan</button></p>
+      )}
+
       <div className="lineup-note">
         <span>Planned lineup <b>{r0.formation}</b> · starts from your GW{v.gameweek} XI. A what-if only: set your real XI, bench and
-          captain on the FPL site.</span>
+          captain on the FPL site.
+          {planned === 0 && !isBasePlan(p0, v) && <> <button className="linkish" onClick={clearPlan}>Clear plan</button></>}</span>
         {r0.noCaptain && <span className="warn">No captain: tick one in a starter's sheet.</span>}
         {r0.noVice && <span className="warn">No vice-captain.</span>}
       </div>
 
       {planned > 0 && (
         <div className="plan">
-          <div className="row"><b>Planned transfers</b><button className="linkish" onClick={() => setPlan(startPlan(v))}>Clear plan</button></div>
+          <div className="row"><b>Planned transfers</b><button className="linkish" onClick={clearPlan}>Clear plan</button></div>
           {p0.transfers.map((t) => {
             const out = byId.get(t.outId), inn = byId.get(t.inId);
             const sell = v.squad.find((x) => x.playerId === t.outId)?.sellPrice;
@@ -325,7 +357,8 @@ export function MySquadTab({ players, fixtures, ratings, filters, update, now, o
       </div>
 
       <div className="subrow">
-        <span>Live from FPL's public data for team {v.entry.id}, updated {ago(ageHours(meta.sources.entry.fetchedAt, now))}. Not saved anywhere.</span>
+        <span>Live from FPL's public data for team {v.entry.id}, updated {ago(ageHours(meta.sources.entry.fetchedAt, now))}. The team's data isn't saved anywhere; your plan is kept
+          in the link and on this device only.</span>
       </div>
 
       {sheetRow && (
