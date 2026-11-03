@@ -1,6 +1,7 @@
 # Spec 0006 — Shortlist and saved plans
 
-Status: draft · reviewed 2026-11-02 (Q85–Q92) and 2026-11-03 (Q93–Q94) · after spec 0004
+Status: **built** 2026-11-03 (both parts), checked in a browser on a synthetic season; a check on
+live data with the owner's Entry is pending · reviewed 2026-11-02 (Q85–Q92) and 2026-11-03 (Q93–Q94)
 Depends on spec 0004 (Squad, sell prices, transfer what-if) and spec 0005 (pick rating)
 
 ## Decisions from review (2026-11-02)
@@ -27,6 +28,15 @@ Depends on spec 0004 (Squad, sell prices, transfer what-if) and spec 0005 (pick 
   it stays on screen at phone width. Checked in a browser on a synthetic season: star,
   refresh, badge, link choice both ways, last-season link, blocked storage, no writes,
   and the bank-after figure equal to the Replace sheet's for the same pair.
+- *Part 2 as built (2026-11-03):* while another Entry is on screen, its what-if still works
+  but stays on the page unsaved, so the owner's own Plan is never overwritten (Q93). Clear
+  plan on a Plan whose deadline passed, or that went stale, removes it for good (no "Load
+  previous plan": there is nothing to go back to). A lineup-only Plan (no transfers) gets
+  its Clear plan link in the lineup note. One `s` tag covers the Shortlist and the Plan, and
+  is written while either exists. Checked in a browser on a synthetic season: save at once,
+  refresh, Shortlist bank after the Plan, another team and back, Clear and Load previous,
+  link choice both ways, deadline passed, stale, illegal lineup fallback, last-season link,
+  blocked storage, no writes.
 
 ## Goal
 
@@ -97,16 +107,19 @@ and no server-side writes**:
 
 ## Acceptance criteria
 
-- [ ] A Shortlist and a Plan survive a refresh, and opening the copied URL on another
+Ticked 2026-11-03 on a synthetic season: pure parts by `web/test/shortlist.test.ts` and
+`web/test/savedPlan.test.ts`, the rest by a browser check (see "as built" above).
+
+- [x] A Shortlist and a Plan survive a refresh, and opening the copied URL on another
       device restores both.
-- [ ] With browser storage blocked, the URL still restores both.
-- [ ] No request writes anything to the server; no login prompt exists anywhere.
-- [ ] A link or stored item from another season is dropped with a notice, even when its ids
+- [x] With browser storage blocked, the URL still restores both.
+- [x] No request writes anything to the server; no login prompt exists anywhere.
+- [x] A link or stored item from another season is dropped with a notice, even when its ids
       exist in this season's bootstrap.
-- [ ] A Plan is not applied to another Entry, nor after its gameweek's deadline.
-- [ ] A link that differs from this device's stored Shortlist or Plan changes nothing until
+- [x] A Plan is not applied to another Entry, nor after its gameweek's deadline.
+- [x] A link that differs from this device's stored Shortlist or Plan changes nothing until
       "Use link's…" is chosen; "Keep mine" leaves storage as it was.
-- [ ] Every Plan change is in the URL without pressing anything; "Load previous plan" undoes
+- [x] Every Plan change is in the URL without pressing anything; "Load previous plan" undoes
       Clear plan.
-- [ ] The Shortlist tab works with no Entry loaded; "Affordable if I sell X" matches the
+- [x] The Shortlist tab works with no Entry loaded; "Affordable if I sell X" matches the
       Replace sheet's bank after for the same pair.

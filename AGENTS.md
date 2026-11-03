@@ -8,7 +8,8 @@ optimiser, logged before each deadline, with a public scorecard.
 
 **Spec 0006: shortlist and saved plans.** Spec: `docs/specs/0006-shortlist-and-saved-plans.md`.
 Reviewed 2026-11-02 and 2026-11-03 (Q85–Q94). Two PRs (Q94): part 1 the Shortlist (with the
-season tag and link-vs-device handling), part 2 the saved Plan. Part 1 built; part 2 next.
+season tag and link-vs-device handling), part 2 the saved Plan. Both built 2026-11-03 and
+browser-checked on a synthetic season; the owner's check on live data is next.
 
 Spec 0004 (Entry view, My squad) **shipped** 2026-10-30: any Entry by team ID, sell prices,
 free transfers, chips and the transfer what-if. FPL keeps pending transfers private until
