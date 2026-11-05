@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  legalFormation, planTransfer, startPlan,
+  collapseTransfers, legalFormation, planTransfer, startPlan,
   type EntryView, type GameweekRow, type Plan, type PlannedTransfer, type PlayerRow, type PositionRow,
 } from "@freepl/contract";
 import type { Filters } from "./filters.js";
@@ -58,9 +58,12 @@ export type Restored =
 
 /** Checks a saved Plan against the Entry on screen and turns it back into a Plan. */
 export function restorePlan(
-  saved: SavedPlan | null, view: EntryView, players: PlayerRow[], positions: PositionRow[], gameweeks: GameweekRow[], now: number,
+  input: SavedPlan | null, view: EntryView, players: PlayerRow[], positions: PositionRow[], gameweeks: GameweekRow[], now: number,
 ): Restored {
-  if (!saved) return { status: "none" };
+  if (!input) return { status: "none" };
+  // A link saved before chained replacements were folded (2026-11-05) may sell a player it
+  // bought; fold it the same way planTransfer now does, so it restores instead of going stale.
+  const saved: SavedPlan = { ...input, transfers: collapseTransfers(input.transfers) };
   if (saved.entry !== view.entry.id) return { status: "other-entry", entry: saved.entry };
   const gw = gameweeks.find((g) => g.id === saved.gameweek);
   if (!gw || Date.parse(gw.deadlineTime) <= now || (view.gameweek !== null && view.gameweek >= saved.gameweek)) {

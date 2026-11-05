@@ -51,6 +51,21 @@ export function startPlan(view: EntryView): Plan {
   };
 }
 
+/**
+ * Folds transfers in order so a player is never sold before he was owned: selling a player an
+ * earlier planned transfer bought edits that transfer (he has no selling price), and bringing
+ * back the player it sold cancels it.
+ */
+export function collapseTransfers(transfers: PlannedTransfer[]): PlannedTransfer[] {
+  return transfers.reduce<PlannedTransfer[]>((acc, t) => {
+    const bought = acc.find((a) => a.inId === t.outId);
+    if (!bought) return [...acc, t];
+    return t.inId === bought.outId
+      ? acc.filter((a) => a !== bought)
+      : acc.map((a) => (a === bought ? { outId: bought.outId, inId: t.inId } : a));
+  }, []);
+}
+
 /** Planned transfer: the new player takes the slot, role and armband of the one sold. */
 export function planTransfer(plan: Plan, outId: number, inId: number): Plan {
   const lineup = new Map(plan.lineup);
@@ -58,7 +73,7 @@ export function planTransfer(plan: Plan, outId: number, inId: number): Plan {
   if (slot === undefined) throw new Error(`${outId} is not in the planned Squad`);
   lineup.set(slot, inId);
   return {
-    transfers: [...plan.transfers, { outId, inId }],
+    transfers: collapseTransfers([...plan.transfers, { outId, inId }]),
     lineup,
     captainId: plan.captainId === outId ? inId : plan.captainId,
     viceId: plan.viceId === outId ? inId : plan.viceId,

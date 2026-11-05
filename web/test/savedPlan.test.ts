@@ -8,9 +8,9 @@ import { DEFAULT_FILTERS, filtersFromSearch, filtersToSearch } from "../src/filt
 import { isBasePlan, planToSaved, restorePlan, samePlan, type SavedPlan } from "../src/savedPlan.js";
 import { resolveSaved } from "../src/shortlist.js";
 
-// Squad: ids 1–15 (GK 1–2, DEF 3–7, MID 8–12, FWD 13–15); 16 is a MID and 17 a DEF on the market.
-const pos = (id: number) => (id === 16 ? 3 : id === 17 ? 2 : id <= 2 ? 1 : id <= 7 ? 2 : id <= 12 ? 3 : 4);
-const data = buildPlayersResponse(bootstrap(Array.from({ length: 17 }, (_, k) => player({ id: k + 1, element_type: pos(k + 1), now_cost: 50 }))));
+// Squad: ids 1–15 (GK 1–2, DEF 3–7, MID 8–12, FWD 13–15); 16 and 18 are MIDs, 17 a DEF, on the market.
+const pos = (id: number) => (id === 16 || id === 18 ? 3 : id === 17 ? 2 : id <= 2 ? 1 : id <= 7 ? 2 : id <= 12 ? 3 : 4);
+const data = buildPlayersResponse(bootstrap(Array.from({ length: 18 }, (_, k) => player({ id: k + 1, element_type: pos(k + 1), now_cost: 50 }))));
 const { players, positions } = data;
 const xiIds = [1, 3, 4, 5, 6, 8, 9, 10, 11, 13, 14];
 const benchIds = [2, 7, 12, 15];
@@ -70,6 +70,17 @@ describe("saving and restoring a Plan", () => {
     expect(r.notice).toMatch(/starts from your GW4 XI again/);
     expect(r.plan.transfers).toEqual([{ outId: 9, inId: 16 }]);
     expect([...r.plan.lineup.values()].slice(0, 11)).toEqual([1, 3, 4, 5, 6, 8, 16, 10, 11, 13, 14]);
+  });
+  it("repairs a link that sold a player it bought, saved before 2026-11-05", () => {
+    // Sell 9 for 16, then replace 16 with 18: one transfer, 9 → 18.
+    const chained = { ...saved, transfers: [{ outId: 9, inId: 16 }, { outId: 16, inId: 18 }], xi: saved.xi.map((x) => (x === 16 ? 18 : x)) };
+    const r = restore(chained);
+    expect(r.status).toBe("applied");
+    if (r.status === "applied") expect(r.plan.transfers).toEqual([{ outId: 9, inId: 18 }]);
+  });
+  it("saves a replaced newcomer as one transfer", () => {
+    const p = planTransfer(planTransfer(startPlan(view), 9, 16), 16, 18);
+    expect(planToSaved(p, 42, 5).transfers).toEqual([{ outId: 9, inId: 18 }]);
   });
   it("drops an armband that sits on the bench", () => {
     const r = restore({ ...saved, captain: 6 });
