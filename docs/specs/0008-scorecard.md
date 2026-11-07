@@ -1,6 +1,6 @@
 # Spec 0008 — The scorecard
 
-Status: draft (2026-11-07) · reviewed 2026-11-07 (Q95–Q100) · prerequisite checks next, then build
+Status: ready to build · reviewed 2026-11-07 (Q95–Q102) · prerequisites checked 2026-11-07
 Depends on spec 0001 (deadline and `post_gw` captures), spec 0002 (contract, `server/`, `web/`),
 ADR 0002 (read model over captures), ADR 0003 (the account is `FPL_ENTRY_ID`)
 
@@ -15,6 +15,12 @@ ADR 0002 (read model over captures), ADR 0003 (the account is `FPL_ENTRY_ID`)
   gameweeks count towards the README's median. The Entry is the owner's own account, managed
   by hand since before FreePL existed.
 - **Q100:** until then the page is **unlisted**: no tab, but `?tab=scorecard` opens it.
+- **Q101:** the Entry's percentile is exact: gameweek rank ÷ `total_players` from that
+  gameweek's deadline capture, to one decimal, with FPL's `percentile_rank` band beside it.
+  FPL's band rounds up to the next multiple of 5 (`docs/fpl-domain.md`), too coarse for a median.
+- **Q102:** a player not in a gameweek's deadline capture (added to FPL after it) is left out of
+  that gameweek's MAE and counted on the page. From the next deadline capture on he has a
+  projection and is scored like everyone else.
 
 ## Goal
 
@@ -54,8 +60,9 @@ that the scoring itself is checked on a baseline nobody here wrote.
 
 ## Who counts (Q96, Q99)
 
-- **MAE population:** for each gameweek, every player the projection put above zero, plus every
-  player who scored any points (positive or negative). A player projected 0 who scored 0 is left
+- **MAE population:** for each gameweek, every player **in its deadline capture** the projection
+  put above zero, plus every such player who scored any points (positive or negative); players
+  added after the deadline are listed apart (Q102). A player projected 0 who scored 0 is left
   out; one projected 0 who scored is counted, so a projection is still punished for missing a
   starter. The page states the population and how many players it held.
 - **Who managed the Entry:** one constant in the contract, `MODEL_MANAGES_FROM` (season and first
@@ -64,20 +71,19 @@ that the scoring itself is checked on a baseline nobody here wrote.
 
 ## Prerequisite checks (facts, not decisions)
 
-None of these has been verified; each is checked against stored captures (a `SELECT` in Neon)
-before anything is built, and `docs/fpl-domain.md` gains what they establish. The queries are in
-"How to check" below.
+Checked 2026-11-07 by the owner in Neon with the queries under "How to check"; recorded in
+`docs/fpl-domain.md`.
 
-- In the deadline capture for GW n, `elements[].ep_next` is the projection **for GW n** (not
-  n+1). Whether it covers both fixtures of a double gameweek waits for the first one.
-- In `event/{gw}/live`, `elements[].stats.total_points` is the player's points for that
-  gameweek, bonus included, both fixtures of a double summed.
-- `entry/{id}/history.current[n]` carries the Entry's gameweek rank (field name to confirm),
-  and `bootstrap-static` carries the total number of players (`total_players`?) as at that
-  gameweek, so a percentile can be formed. Which capture's total is "as at" a gameweek is part
-  of the check.
-- A player absent from GW n's live payload (no minutes, no row?) is a 0, or is missing: confirm
-  which before scoring.
+- [x] In the deadline capture for GW n, `elements[].ep_next` is the projection **for GW n**
+      (`is_next` = n on every GW9 and GW10 deadline row). Doubles: unchecked until one exists.
+- [x] `event/{gw}/live` `elements` is a list; `stats.total_points` equals the sum of the
+      `explain` points per fixture. Bonus inclusion is asserted in the build across every
+      player of a settled gameweek, not assumed from one row.
+- [x] Every bootstrap player appears in the live payload, including non-players; one added
+      after a deadline appears in live but not in that deadline capture (Q102).
+- [x] `history.current[]` has `rank` (gameweek), `overall_rank`, `percentile_rank` (a 5-point
+      band) and `overall_rank_percentage`; `bootstrap-static.total_players` is in every capture
+      (Q101).
 
 ## Read model
 
@@ -162,6 +168,12 @@ gameweeks; if they are not, that is the trigger for the flattening spec (`docs/r
       and the page shows that capture's time.
 - [ ] GW1–6 show "no capture", not a score.
 - [ ] MAE for one gameweek matches a hand calculation on a synthetic pair of captures.
+- [ ] For every scored gameweek, each player's `total_points` equals the sum of his `explain`
+      points (bonus included), or the gameweek is flagged, not scored.
+- [ ] A player missing from the deadline capture is not scored that gameweek and is counted on
+      the page.
+- [ ] The Entry's percentile is rank ÷ the deadline capture's `total_players` (GW9: 10.0%), with
+      FPL's band (15) beside it.
 - [ ] The Entry's percentile for one gameweek matches the FPL site.
 - [ ] Gameweeks before `MODEL_MANAGES_FROM` are labelled "managed by hand" and left out of the
       median; with it `null`, the median reads "no model gameweeks yet".
