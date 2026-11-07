@@ -74,6 +74,10 @@ FPL's own `ep_next`, read from the latest capture before a gameweek's deadline: 
 **Scorecard**:
 The record of each projection's error and the Entry's gameweek rank percentile, per settled gameweek.
 
+**Managed by hand**:
+A gameweek whose decisions for the Entry were made by its owner, not the model: every gameweek before the model takes over. Shown on the scorecard but never counted towards the model's results.
+_Avoid_: Manual (that names a capture reason)
+
 **Pick rating**:
 A band (Best, Great, Good, OK) ranking a player against others in the same position on underlying stats, fixtures and nailedness. A browsing aid only: not a projection, and never an input to the Entry's logged decisions.
 _Avoid_: Score, projection, prediction
