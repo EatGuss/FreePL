@@ -64,6 +64,16 @@ A player whose FPL status is anything other than Available: doubtful or ruled ou
 A flagged player who cannot play the upcoming gameweek, always shown with FPL's reason: Injured, Suspended, Unavailable (left the club or out long-term) or Not eligible (usually a loanee facing his parent club).
 _Avoid_: Red flag, out
 
+**Projection**:
+A forecast of each player's points for one gameweek, made before its deadline. Scored by its mean absolute error against settled points, over players it projected above zero plus anyone who scored.
+_Avoid_: Prediction, xP (a vaastav column scraped after the gameweek)
+
+**Baseline**:
+FPL's own `ep_next`, read from the latest capture before a gameweek's deadline: the projection the model must beat.
+
+**Scorecard**:
+The record of each projection's error and the Entry's gameweek rank percentile, per settled gameweek.
+
 **Pick rating**:
 A band (Best, Great, Good, OK) ranking a player against others in the same position on underlying stats, fixtures and nailedness. A browsing aid only: not a projection, and never an input to the Entry's logged decisions.
 _Avoid_: Score, projection, prediction
