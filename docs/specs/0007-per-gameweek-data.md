@@ -50,8 +50,10 @@ verified any of them.
 
 ## ADR 0002
 
-This is the first read across captures. Building it amends ADR 0002 ("When this decision
-expires") in the same change: still a view, still no second writer.
+Spec 0008's scorecard views (2026-11-07) were the first read across captures; this is the
+second, and per player per gameweek rather than once per gameweek. Building it adds its own
+note to ADR 0002 ("When this decision expires") in the same change: still a view, still no
+second writer.
 
 ## Acceptance criteria (sketch)
 

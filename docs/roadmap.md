@@ -19,8 +19,9 @@ it if FreePL ever becomes multi-user. FPL login stays out regardless.
 
 Trigger: the price-change predictor or the projection model, both of which read across
 captures per player per day. Views over the latest capture (ADR 0002) cannot serve that.
-Gets its own spec, written once we know which fields the model uses. Spec 0007's
-per-gameweek view will be the first cross-capture read and is not a substitute.
+Gets its own spec, written once we know which fields the model uses. Spec 0008's
+scorecard views are the first cross-capture read (once per gameweek, cached) and are not a
+substitute.
 
 ## Price-change predictor inputs
 

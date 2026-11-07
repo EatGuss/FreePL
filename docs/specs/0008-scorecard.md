@@ -97,6 +97,14 @@ hand, readable by `freepl_reader`.
   overall rank, total players, percentile. Who managed it comes from `MODEL_MANAGES_FROM` in the
   API, not the view.
 
+*Applied in Neon 2026-11-07* (`db/views/0008_scorecard.sql`, tested first on a local Postgres 16
+with synthetic captures). First real numbers: `ep_next` MAE 2.282 / 2.398 / 1.818 for GW7–9
+over 375 / 361 / 373 players, one player added after each deadline, no missing projection, **0
+explain mismatches** across all players (so `total_points` includes bonus). The Entry's GW7–9
+percentiles 14.2 / 48.2 / 10.0 against FPL's bands 15 / 50 / 15. `explain analyze` on
+`scorecard_projection_gw`: 71 ms for 3 gameweeks, growing per gameweek, so the API caches it
+until a new `post_gw` capture lands.
+
 This is **the first read across captures** (one deadline and one `post_gw` capture per
 gameweek). ADR 0002's note currently names spec 0007 as the first; whichever ships first
 amends the ADR in the same change. Views over `jsonb` are expected to be fast enough at 38
