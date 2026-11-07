@@ -118,6 +118,8 @@ over this file — verify against a live payload before hardcoding anything.
 - `entry/{id}/history.current[]` per gameweek carries `rank` (gameweek rank), `overall_rank`,
   `percentile_rank` and `overall_rank_percentage` (verified 2026-11-07, GW9: rank 1,125,317,
   `percentile_rank` 15, overall 104,118 → `"0.9"`). `bootstrap-static.total_players` was
-  11,251,627 the same week. `overall_rank_percentage` matches overall rank ÷ total players;
-  `percentile_rank` does **not** match gameweek rank ÷ total players (15 against 10.0), and its
-  definition is unknown: don't derive one from the other.
+  11,251,627 the same week. `overall_rank_percentage` matches overall rank ÷ total players.
+  `percentile_rank` is gameweek rank ÷ `total_players` **rounded up to the next multiple of 5**:
+  exact on GW7–9 against each deadline capture's `total_players` (14.2% → 15, 48.2% → 50,
+  10.04% → 15); GW1–6 fit too but have no captured player count. So it is a coarse band (a
+  10.04% week reads "15"): compute the exact share from rank and `total_players` instead.
