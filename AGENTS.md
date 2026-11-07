@@ -6,10 +6,11 @@ optimiser, logged before each deadline, with a public scorecard.
 
 ## Current phase
 
-**Spec 0006: shortlist and saved plans.** Spec: `docs/specs/0006-shortlist-and-saved-plans.md`.
-Reviewed 2026-11-02 and 2026-11-03 (Q85–Q94). Two PRs (Q94): part 1 the Shortlist (with the
-season tag and link-vs-device handling), part 2 the saved Plan. Both built 2026-11-03 and
-browser-checked on a synthetic season; the owner's check on live data is next.
+**Spec 0008: the scorecard.** Spec: `docs/specs/0008-scorecard.md`. Reviewed 2026-11-07
+(Q95–Q102), prerequisites checked in Neon the same day; ready to build.
+
+Spec 0006 (shortlist and saved plans) **shipped** 2026-11-07: checked by the owner on live data,
+including the chained-Replace fix of 2026-11-05.
 
 Spec 0004 (Entry view, My squad) **shipped** 2026-10-30: any Entry by team ID, sell prices,
 free transfers, chips and the transfer what-if. FPL keeps pending transfers private until
@@ -39,8 +40,9 @@ Order of work:
 | `0003-fixture-difficulty-ticker.md` | Club × gameweek difficulty grid | done (DGW/BGW check pending) |
 | `0005-pick-rating.md` | Best/Great/Good/OK band per player within position | done |
 | `0004-entry-view.md` | Current Squad, sell prices, FTs, chips, transfer what-if (ADR 0003) | done (Free Hit check pending) |
-| `0006-shortlist-and-saved-plans.md` | Starred players and transfer plans, kept in the URL | **current** (reviewed) |
+| `0006-shortlist-and-saved-plans.md` | Starred players and transfer plans, kept in the URL | done |
 | `0007-per-gameweek-data.md` | Per-gameweek view: nailedness since joining a Club, DefCon hit rate | draft |
+| `0008-scorecard.md` | Scorecard (unlisted until a season of results): projections vs settled points; the Entry's rank | **current** (reviewed) |
 
 Spec 0002 scaffolds `packages/`, `server/`, `api/` and `web/` as its "Files" section lists.
 `model/` stays out until its own spec.

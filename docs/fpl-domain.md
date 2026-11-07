@@ -86,6 +86,12 @@ over this file — verify against a live payload before hardcoding anything.
 
   `assists` is a single number, not per position.
 - `event/{gw}/live` includes an `explain` breakdown per player showing exactly how points were awarded. Use it as ground truth for tests.
+  Verified 2026-11-07 on stored GW9 (spec 0008): `elements` is a **list** of
+  `{id, stats, explain, modified}`; `stats.total_points` is the gameweek's points and equals
+  the sum of `explain[].stats[].points` (one `explain` entry per fixture); `stats` also carries
+  `played` and `minutes`. Every player in bootstrap appears, including those who did not play
+  (GW9: 670 in both). A player added to FPL after a deadline appears in that gameweek's live
+  payload but not in its deadline capture (GW7: 668 against 667).
 
 ## Player status (`elements[].status`)
 
@@ -106,3 +112,14 @@ over this file — verify against a live payload before hardcoding anything.
 - While a GW is being updated the API may return 503 or an HTML/text body ("The game is being updated"). A 200 is not proof of a valid payload — check JSON shape.
 - Element IDs are **per season**: the same player has different IDs in different seasons, and there is no shared key with FBref/Understat.
 - `ep_this` / `ep_next` are FPL's own projections. Only valid as a baseline if captured **before** the deadline.
+  Verified 2026-11-07: in every deadline capture for GW n, `events[].is_next` is GW n, so
+  `ep_next` there is the projection **for GW n** (GW9, GW10). Whether it covers both fixtures of
+  a double gameweek is unchecked until FPL publishes one.
+- `entry/{id}/history.current[]` per gameweek carries `rank` (gameweek rank), `overall_rank`,
+  `percentile_rank` and `overall_rank_percentage` (verified 2026-11-07, GW9: rank 1,125,317,
+  `percentile_rank` 15, overall 104,118 → `"0.9"`). `bootstrap-static.total_players` was
+  11,251,627 the same week. `overall_rank_percentage` matches overall rank ÷ total players.
+  `percentile_rank` is gameweek rank ÷ `total_players` **rounded up to the next multiple of 5**:
+  exact on GW7–9 against each deadline capture's `total_players` (14.2% → 15, 48.2% → 50,
+  10.04% → 15); GW1–6 fit too but have no captured player count. So it is a coarse band (a
+  10.04% week reads "15"): compute the exact share from rank and `total_players` instead.
