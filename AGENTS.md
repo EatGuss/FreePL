@@ -6,8 +6,8 @@ optimiser, logged before each deadline, with a public scorecard.
 
 ## Current phase
 
-**Spec 0008: the scorecard.** Spec: `docs/specs/0008-scorecard.md`, a draft; review it with the
-owner before building.
+**Spec 0008: the scorecard.** Spec: `docs/specs/0008-scorecard.md`. Reviewed 2026-11-07
+(Q95–Q102), prerequisites checked in Neon the same day; ready to build.
 
 Spec 0006 (shortlist and saved plans) **shipped** 2026-11-07: checked by the owner on live data,
 including the chained-Replace fix of 2026-11-05.
@@ -42,7 +42,7 @@ Order of work:
 | `0004-entry-view.md` | Current Squad, sell prices, FTs, chips, transfer what-if (ADR 0003) | done (Free Hit check pending) |
 | `0006-shortlist-and-saved-plans.md` | Starred players and transfer plans, kept in the URL | done |
 | `0007-per-gameweek-data.md` | Per-gameweek view: nailedness since joining a Club, DefCon hit rate | draft |
-| `0008-scorecard.md` | Public scorecard: pre-deadline projections vs settled points; the account's rank | **current** (draft) |
+| `0008-scorecard.md` | Scorecard (unlisted until a season of results): projections vs settled points; the Entry's rank | **current** (reviewed) |
 
 Spec 0002 scaffolds `packages/`, `server/`, `api/` and `web/` as its "Files" section lists.
 `model/` stays out until its own spec.
