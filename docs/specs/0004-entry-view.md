@@ -269,6 +269,9 @@ From `docs/fpl-domain.md`; one pure tested function, shared with the backtest si
 - Captain and vice-captain must both be starters. Moving either to the bench clears it and
   shows the warning.
 - A planned transfer in keeps the slot, role and armband of the player it replaces.
+- Replacing a player the plan bought edits that planned transfer (Kell → Quin, then Replace
+  Quin with Vale, is one transfer Kell → Vale); choosing the player it sold cancels it. He
+  was never owned, so he has no selling price to sell at (2026-11-05, owner's bug report).
 - Client-side only, like the transfer what-if; saved with the plan in spec 0006.
 
 Row and card colours (spec 0005 bands, plus two Squad-only states):

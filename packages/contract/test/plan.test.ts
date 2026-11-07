@@ -54,6 +54,19 @@ describe("transfer what-if accounting", () => {
     expect(view.state.freeTransfers).toBe(2);
     expect([r.freeTransfersLeft, r.hitPoints]).toEqual([0, 4]);
   });
+  it("replacing a player the plan bought edits that transfer, not a second one", () => {
+    const plan = planTransfer(planTransfer(startPlan(view), 8, 17), 17, 16);
+    expect(plan.transfers).toEqual([{ outId: 8, inId: 16 }]);
+    expect([plan.lineup.get(6), plan.captainId]).toEqual([16, 16]);
+    const r = evaluatePlan(view, plan, players, positions);
+    expect(r.bank).toBe(5 + 50 - 70);
+    expect(r.freeTransfersLeft).toBe(1);
+  });
+  it("bringing back the player a planned transfer sold cancels it", () => {
+    const plan = planTransfer(planTransfer(startPlan(view), 8, 17), 17, 8);
+    expect(plan.transfers).toEqual([]);
+    expect([plan.lineup.get(6), plan.captainId]).toEqual([8, 8]);
+  });
   it("undoes one planned transfer, restoring the player and armband", () => {
     const plan = undoTransfer(planTransfer(startPlan(view), 8, 17), 17);
     expect(plan.transfers).toEqual([]);
