@@ -1,7 +1,7 @@
 # Spec 0006 — Shortlist and saved plans
 
-Status: **built** 2026-11-03 (both parts), checked in a browser on a synthetic season; a check on
-live data with the owner's Entry is pending · reviewed 2026-11-02 (Q85–Q92) and 2026-11-03 (Q93–Q94)
+Status: **shipped** 2026-11-07: built 2026-11-03 (both parts), browser-checked on a synthetic
+season, and checked by the owner on live data (plan, chained Replace, link on a phone, figures) · reviewed 2026-11-02 (Q85–Q92) and 2026-11-03 (Q93–Q94)
 Depends on spec 0004 (Squad, sell prices, transfer what-if) and spec 0005 (pick rating)
 
 ## Decisions from review (2026-11-02)
