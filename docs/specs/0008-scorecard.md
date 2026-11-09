@@ -1,6 +1,7 @@
 # Spec 0008 — The scorecard
 
-Status: ready to build · reviewed 2026-11-07 (Q95–Q102) · prerequisites checked 2026-11-07
+Status: **built** 2026-11-09 (views applied 2026-11-07); the owner's check against the FPL site
+is next · reviewed 2026-11-07 (Q95–Q102) · prerequisites checked 2026-11-07
 Depends on spec 0001 (deadline and `post_gw` captures), spec 0002 (contract, `server/`, `web/`),
 ADR 0002 (read model over captures), ADR 0003 (the account is `FPL_ENTRY_ID`)
 
@@ -170,21 +171,40 @@ gameweeks; if they are not, that is the trigger for the flattening spec (`docs/r
    order by captured_at desc limit 1;
    ```
 
-## Acceptance criteria (sketch)
+## As built (2026-11-09)
 
-- [ ] Every scored gameweek's projection comes from a capture strictly before its deadline,
+- Contract `packages/contract/src/scorecard.ts`: raw view rows → `ScorecardResponse`;
+  `MODEL_MANAGES_FROM = null`; season named from GW1's deadline year (spec 0001's label).
+  Cumulative MAE pools every counted player-gameweek over unflagged gameweeks (GW7–9:
+  2.164). A flagged gameweek keeps its counts but has no MAE.
+- `GET /api/scorecard`: rebuilt only when its key changes, the views' choice of deadline and
+  live capture per settled gameweek plus the length of the Entry's history (`freepl_reader`
+  reads only views, so the key comes from them). Future gameweeks are left out of the key:
+  their latest capture moves hourly. 503 before any gameweek settles.
+- Rows shown: gameweeks that settled or that the Entry's history holds, so GW10 appears once
+  settled.
+- Page `web/src/ScorecardTab.tsx`, opened only by `?tab=scorecard`; the GW rank percentile is
+  the second column so it stays on screen at phone width.
+- Checked: the real repo code against a local Postgres 16 as `freepl_reader` with the synthetic
+  captures; a browser check at 390px on the owner's GW1–9 numbers (no tab, fetched only when
+  opened, 2.16 MAE, "no model gameweeks yet", GW3 "no capture" with band 75, GW9 10.0% (top 15%),
+  1.82 over 373 players, captured 53 min before the deadline, no writes).
+
+## Acceptance criteria
+
+- [x] Every scored gameweek's projection comes from a capture strictly before its deadline,
       and the page shows that capture's time.
-- [ ] GW1–6 show "no capture", not a score.
-- [ ] MAE for one gameweek matches a hand calculation on a synthetic pair of captures.
-- [ ] For every scored gameweek, each player's `total_points` equals the sum of his `explain`
+- [x] GW1–6 show "no capture", not a score.
+- [x] MAE for one gameweek matches a hand calculation on a synthetic pair of captures.
+- [x] For every scored gameweek, each player's `total_points` equals the sum of his `explain`
       points (bonus included), or the gameweek is flagged, not scored.
-- [ ] A player missing from the deadline capture is not scored that gameweek and is counted on
+- [x] A player missing from the deadline capture is not scored that gameweek and is counted on
       the page.
-- [ ] The Entry's percentile is rank ÷ the deadline capture's `total_players` (GW9: 10.0%), with
+- [x] The Entry's percentile is rank ÷ the deadline capture's `total_players` (GW9: 10.0%), with
       FPL's band (15) beside it.
-- [ ] The Entry's percentile for one gameweek matches the FPL site.
-- [ ] Gameweeks before `MODEL_MANAGES_FROM` are labelled "managed by hand" and left out of the
+- [ ] The Entry's percentile for one gameweek matches the FPL site. *(Owner, on the live page.)*
+- [x] Gameweeks before `MODEL_MANAGES_FROM` are labelled "managed by hand" and left out of the
       median; with it `null`, the median reads "no model gameweeks yet".
-- [ ] A projected-0, scored-0 player is not counted; a projected-0 player who scored is.
-- [ ] The page opens at `?tab=scorecard` and is in no tab bar.
-- [ ] No row is written anywhere; the views read only `api_snapshots`.
+- [x] A projected-0, scored-0 player is not counted; a projected-0 player who scored is.
+- [x] The page opens at `?tab=scorecard` and is in no tab bar.
+- [x] No row is written anywhere; the views read only `api_snapshots`.

@@ -57,6 +57,11 @@ distinguished by hue (blue), not by being louder.
 Shortlist (count badge in muted grey), Picks, Players, Fixtures, Injury watch (count badge in
 red). Six tabs overflow a phone's width; the bar scrolls sideways.
 
+**Scorecard** (spec 0008, unlisted at `?tab=scorecard`). Summary cards (surface, 1px line,
+10px radius: label in small caps, 22px display figure, muted note), then one table row per
+gameweek with the GW rank percentile second so it stays on screen at 390px, FPL's band in
+brackets. Missing data reads "no capture" or "not settled", never a blank.
+
 **Shortlist star.** ☆ / ★ before the player's name on Picks, Players and Shortlist rows, and
 beside each Replace sheet candidate. Muted when off, `--accent` when on; a 28px tap target.
 Tapping it never opens the row it sits in.
