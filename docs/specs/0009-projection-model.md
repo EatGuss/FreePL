@@ -1,7 +1,21 @@
 # Spec 0009 — Projection model v1
 
-Status: draft (2026-11-09) · review with the owner before building
+Status: draft (2026-11-09) · review round 1 settled (Q103–Q107)
 Depends on spec 0001 (captures), spec 0008 (scorecard), ADR 0001 (Neon + archive), ADR 0002
+
+## Decisions from review (2026-11-09)
+
+- **Q103:** v1 projects points only, for the upcoming gameweek only; the optimiser, multi-gameweek
+  projections and the account's decisions are the next spec.
+- **Q104:** Python in GitHub Actions, inside each deadline window; never on Vercel. How it is
+  triggered is round 2 (the owner asked whether GitHub is reliable enough).
+- **Q105:** trains on earlier seasons from vaastav/Fantasy-Premier-League: MIT-licensed
+  (checked 2026-11-09); its README asks for a link back, which the README gives. Its files
+  live in the private archive, never in this public repo. Its own README warns that `xP` may be
+  post-match; it is never a feature (data-integrity rules).
+- **Q106:** two parts multiplied, as the README says: a minutes model and points per appearance.
+- **Q107:** projections go to a new append-only `projections` table, the second writer, with
+  ADR 0004 written before it is built.
 
 ## Goal
 
