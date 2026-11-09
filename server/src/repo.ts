@@ -1,5 +1,5 @@
 import postgres from "postgres";
-import type { RawBootstrapRows, RawFixturesRows } from "@freepl/contract";
+import type { RawBootstrapRows, RawFixturesRows, RawScorecardRows } from "@freepl/contract";
 
 /** Everything the API reads. Implemented over the views; faked in tests. */
 export interface Repo {
@@ -11,6 +11,13 @@ export interface Repo {
   latestFixturesCapturedAt(): Promise<Date | string | null>;
   /** Fixtures plus the bootstrap Clubs and gameweeks they refer to, in one snapshot. */
   fixturesRows(): Promise<RawFixturesRows>;
+  /**
+   * Spec 0008: which deadline and live capture each settled gameweek reads, and how many
+   * gameweeks the Entry's history holds. Changes only when a gameweek settles; null before any.
+   */
+  scorecardKey(): Promise<string | null>;
+  /** The three scorecard views, in one snapshot. */
+  scorecardRows(): Promise<RawScorecardRows>;
 }
 
 /**
@@ -67,6 +74,27 @@ export function createPgRepo(databaseUrl: string): Repo & { end(): Promise<void>
           fixturesCapturedAt: fLatest[0]?.captured_at ?? null,
           fixtures: [...fixtures],
         };
+      });
+    },
+    async scorecardKey() {
+      // freepl_reader reads only the views, so the key comes from them too. Future gameweeks
+      // (no live capture) are left out: their latest capture moves every hour.
+      const rows = await sql<{ k: string | null; n: string }[]>`
+        select (select md5(string_agg(gameweek || ':' || coalesce(capture_id::text, '-') || ':' || live_id, ','
+                                      order by gameweek))
+                from scorecard_gameweeks where live_id is not null) as k,
+               (select count(*) from scorecard_entry_gw) as n`;
+      const r = rows[0];
+      return r?.k ? `${r.k}-${r.n}` : null;
+    },
+    async scorecardRows() {
+      return sql.begin("isolation level repeatable read read only", async (tx) => {
+        const [gameweeks, projections, entry] = await Promise.all([
+          tx`select * from scorecard_gameweeks`,
+          tx`select * from scorecard_projection_gw`,
+          tx`select * from scorecard_entry_gw`,
+        ]);
+        return { gameweeks: [...gameweeks], projections: [...projections], entry: [...entry] };
       });
     },
     end: () => sql.end({ timeout: 5 }),

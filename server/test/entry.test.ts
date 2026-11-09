@@ -19,6 +19,8 @@ const repo: Repo = {
   bootstrapRows: async () => rows,
   latestFixturesCapturedAt: async () => null,
   fixturesRows: async () => { throw new Error("unused"); },
+  scorecardKey: async () => null,
+  scorecardRows: async () => { throw new Error("unused"); },
 };
 const entryData = (id: number) => ({
   [`entry/${id}`]: { id, name: "Test XI", player_first_name: "Test", player_last_name: "Manager" },

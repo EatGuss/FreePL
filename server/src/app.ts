@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import {
-  ageHours, buildEntryView, buildFixturesResponse, buildPlayersResponse, lastStartedGameweek,
+  ageHours, buildEntryView, buildFixturesResponse, buildPlayersResponse, buildScorecardResponse, lastStartedGameweek,
   type EntryView, type PlayersResponse,
 } from "@freepl/contract";
 import { EntryCache } from "./entryCache.js";
@@ -174,6 +174,17 @@ export function createApp(repo: Repo, log: Log = defaultLog, options: AppOptions
       const response = buildFixturesResponse(await repo.fixturesRows());
       const { bootstrap, fixtures } = response.meta.sources;
       return { key: fixturesKey(bootstrap.capturedAt, fixtures.capturedAt), body: JSON.stringify(response) };
+    },
+  );
+
+  // Spec 0008: the scorecard views cost tens of ms per gameweek, so the body is rebuilt only
+  // when a gameweek settles (the key changes), never per request.
+  cachedJson(
+    "/scorecard",
+    () => repo.scorecardKey(),
+    async () => {
+      const [key, rows] = await Promise.all([repo.scorecardKey(), repo.scorecardRows()]);
+      return { key: key ?? "", body: JSON.stringify(buildScorecardResponse(rows)) };
     },
   );
 
