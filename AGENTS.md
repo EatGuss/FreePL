@@ -6,9 +6,12 @@ optimiser, logged before each deadline, with a public scorecard.
 
 ## Current phase
 
-**Spec 0008: the scorecard.** Spec: `docs/specs/0008-scorecard.md`. Reviewed 2026-11-07
-(Q95–Q102); views applied in Neon 2026-11-07; API and unlisted page (`?tab=scorecard`) built
-2026-11-09. The owner's check against the FPL site on the live page is next.
+**Next spec not chosen yet:** the projection model (not drafted) or spec 0007 (draft).
+
+Spec 0008 (scorecard) **shipped** 2026-11-09: views in Neon, `GET /api/scorecard`, and the page
+at `?tab=scorecard`, unlisted until a full season of the model's results (Q98, Q100). FPL's
+`ep_next` scores 2.16 MAE over GW7–9; every gameweek so far is managed by hand
+(`MODEL_MANAGES_FROM = null`).
 
 Spec 0006 (shortlist and saved plans) **shipped** 2026-11-07: checked by the owner on live data,
 including the chained-Replace fix of 2026-11-05.
@@ -43,7 +46,7 @@ Order of work:
 | `0004-entry-view.md` | Current Squad, sell prices, FTs, chips, transfer what-if (ADR 0003) | done (Free Hit check pending) |
 | `0006-shortlist-and-saved-plans.md` | Starred players and transfer plans, kept in the URL | done |
 | `0007-per-gameweek-data.md` | Per-gameweek view: nailedness since joining a Club, DefCon hit rate | draft |
-| `0008-scorecard.md` | Scorecard (unlisted until a season of results): projections vs settled points; the Entry's rank | **current** (reviewed) |
+| `0008-scorecard.md` | Scorecard (unlisted until a season of results): projections vs settled points; the Entry's rank | done |
 
 Spec 0002 scaffolds `packages/`, `server/`, `api/` and `web/` as its "Files" section lists.
 `model/` stays out until its own spec.
