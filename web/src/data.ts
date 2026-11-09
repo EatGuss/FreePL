@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import type { EntryView, FixturesResponse, PlayersResponse } from "@freepl/contract";
+import type { EntryView, FixturesResponse, PlayersResponse, ScorecardResponse } from "@freepl/contract";
 import { useEffect, useState } from "react";
 import { entryParam } from "./filters.js";
 
@@ -31,6 +31,20 @@ export function useFixtures(enabled: boolean) {
     enabled,
     staleTime: 60_000,
     refetchOnWindowFocus: true,
+  });
+}
+
+/** The scorecard (spec 0008); fetched only when its page is opened. */
+export function useScorecard(enabled: boolean) {
+  return useQuery({
+    queryKey: ["scorecard"],
+    queryFn: async () => {
+      const res = await fetch("/api/scorecard");
+      if (!res.ok) throw new Error(`API returned ${res.status}`);
+      return (await res.json()) as ScorecardResponse;
+    },
+    enabled,
+    staleTime: 60_000,
   });
 }
 

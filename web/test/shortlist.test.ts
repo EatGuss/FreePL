@@ -58,4 +58,8 @@ describe("shortlist in the URL", () => {
   it("has a Shortlist tab", () => {
     expect(filtersFromSearch("?tab=shortlist").tab).toBe("shortlist");
   });
+  it("opens the unlisted Scorecard by its link (spec 0008 Q100)", () => {
+    expect(filtersFromSearch("?tab=scorecard").tab).toBe("scorecard");
+    expect(filtersToSearch({ ...DEFAULT_FILTERS, tab: "scorecard" })).toBe("?tab=scorecard");
+  });
 });

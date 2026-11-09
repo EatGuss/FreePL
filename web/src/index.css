@@ -257,5 +257,12 @@
 
   .notice { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px; font-size: 13px; }
   .notice.bad { border-color: var(--bad); color: var(--bad); background: var(--bad-bg); }
+  .score-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+  .score-cards .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .score-cards .k { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; }
+  .score-cards .v { font-family: var(--font-display); font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .score-cards .n { font-size: 12px; color: var(--muted); }
+  .criteria { margin: 0; padding-left: 18px; }
+  .table-box.score th:first-child, .table-box.score td:first-child { min-width: 0; width: 44px; text-align: left; }
   details.more summary { cursor: pointer; font: 600 13px var(--font-body); color: var(--accent); }
 }
