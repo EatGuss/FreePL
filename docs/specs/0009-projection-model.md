@@ -1,6 +1,6 @@
 # Spec 0009 — Projection model v1
 
-Status: draft (2026-11-09) · review round 1 settled (Q103–Q107)
+Status: draft (2026-11-09) · review rounds 1–2 (Q103–Q110); the go-live goal is open
 Depends on spec 0001 (captures), spec 0008 (scorecard), ADR 0001 (Neon + archive), ADR 0002
 
 ## Decisions from review (2026-11-09)
@@ -16,6 +16,12 @@ Depends on spec 0001 (captures), spec 0008 (scorecard), ADR 0001 (Neon + archive
 - **Q106:** two parts multiplied, as the README says: a minutes model and points per appearance.
 - **Q107:** projections go to a new append-only `projections` table, the second writer, with
   ADR 0004 written before it is built.
+- **Q108:** a second job in `snapshot.yml`, run after every run that stores a deadline capture,
+  so it reuses the external hourly trigger and gets 3–4 tries per deadline window. A model
+  failure never fails or delays the snapshot job. Its own healthcheck alerts when no
+  projection was written before a deadline. The latest run written before the deadline counts.
+- **Q110:** numpy, pandas and scikit-learn, pinned in `model/requirements.txt` only; the snapshot
+  job's `requirements.txt` stays as it is.
 
 ## Goal
 
