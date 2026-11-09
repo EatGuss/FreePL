@@ -73,7 +73,7 @@ FreePL's own append-only record of what it projected or decided for a gameweek, 
 _Avoid_: Prediction log, history (unqualified)
 
 **Baseline**:
-FPL's own `ep_next`, read from the latest capture before a gameweek's deadline: the projection the model must beat.
+A projection the model must beat. Two: FPL's own `ep_next`, read from the latest capture before a gameweek's deadline; and the last-5 baseline, each player's average points over his last 5 settled gameweeks known before the deadline.
 
 **Scorecard**:
 The record of each projection's error and the Entry's gameweek rank percentile, per settled gameweek.

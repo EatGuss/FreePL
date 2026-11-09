@@ -1,6 +1,6 @@
 # Spec 0009 — Projection model v1
 
-Status: draft (2026-11-09) · review rounds 1–2 (Q103–Q110); the go-live goal is open
+Status: draft (2026-11-09) · review rounds 1–3 (Q103–Q112)
 Depends on spec 0001 (captures), spec 0008 (scorecard), ADR 0001 (Neon + archive), ADR 0002
 
 ## Decisions from review (2026-11-09)
@@ -22,6 +22,14 @@ Depends on spec 0001 (captures), spec 0008 (scorecard), ADR 0001 (Neon + archive
   projection was written before a deadline. The latest run written before the deadline counts.
 - **Q110:** numpy, pandas and scikit-learn, pinned in `model/requirements.txt` only; the snapshot
   job's `requirements.txt` stays as it is.
+- **Q111:** the go-live goal: on the 2025/26 replay, the model's MAE is **at least 10% lower than
+  the last-5 baseline's, overall and in every position**. Until it is, the model is improved
+  and nothing of it is logged live.
+- **Q112:** the **last-5 baseline** (each player's average points over his last 5 settled
+  gameweeks known before the deadline) also runs live: logged before every deadline by the
+  same job, in the same decision log, and shown on the scorecard beside `ep_next` and the model,
+  which must keep beating it. The pipeline is built first with the last-5 baseline as its first
+  entry, so it logs live weeks before the model is ready.
 
 ## Goal
 
