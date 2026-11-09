@@ -127,7 +127,7 @@ export class ContractError extends Error {
   }
 }
 
-function parseAll<S extends z.ZodTypeAny>(schema: S, rows: unknown[], what: string): z.output<S>[] {
+export function parseAll<S extends z.ZodTypeAny>(schema: S, rows: unknown[], what: string): z.output<S>[] {
   const out: z.output<S>[] = [];
   const issues: string[] = [];
   rows.forEach((row, i) => {

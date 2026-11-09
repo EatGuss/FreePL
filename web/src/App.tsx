@@ -9,13 +9,14 @@ import { PlayersTab } from "./PlayersTab.js";
 import { RatingSheet } from "./Rating.js";
 import { useSavedPlan } from "./savedPlan.js";
 import { ShortlistContext, seasonOf, useShortlist } from "./shortlist.js";
+import { ScorecardTab } from "./ScorecardTab.js";
 import { ShortlistTab } from "./ShortlistTab.js";
-import { useFixtures, useNow, usePlayers } from "./data.js";
+import { useFixtures, useNow, usePlayers, useScorecard } from "./data.js";
 import type { Tab } from "./filters.js";
 import { localDateTime } from "./format.js";
 import { useFilters } from "./useFilters.js";
 
-const TITLES: Record<Tab, string> = { squad: "My squad", shortlist: "Shortlist", picks: "Picks", players: "Players", fixtures: "Fixtures", injury: "Injury watch" };
+const TITLES: Record<Tab, string> = { squad: "My squad", shortlist: "Shortlist", picks: "Picks", players: "Players", fixtures: "Fixtures", injury: "Injury watch", scorecard: "Scorecard" };
 
 export function App() {
   const [filters, update] = useFilters();
@@ -29,6 +30,8 @@ export function App() {
   const season = data ? seasonOf(data.gameweeks) : null;
   const shortlist = useShortlist(filters, update, season);
   const savedPlan = useSavedPlan(filters, update, season);
+  // Unlisted (spec 0008 Q100): only ?tab=scorecard fetches or shows it.
+  const scorecard = useScorecard(filters.tab === "scorecard");
 
   // Built once per data load (and when a deadline passes, which moves the fixture window),
   // never per tap.
@@ -124,6 +127,11 @@ export function App() {
         <FixturesTab data={fixtures.data} filters={filters} update={update} now={now} />
       )}
       {filters.tab === "injury" && data && <InjuryTab data={data} now={now} />}
+      {filters.tab === "scorecard" && scorecard.isPending && <p className="notice">Loading the scorecard…</p>}
+      {filters.tab === "scorecard" && scorecard.isError && (
+        <p className="notice bad">Couldn't load the scorecard. <button className="linkish" onClick={() => scorecard.refetch()}>Try again</button></p>
+      )}
+      {filters.tab === "scorecard" && scorecard.data && <ScorecardTab data={scorecard.data} />}
 
       {sheetPlayer && ratings && (
         <RatingSheet player={sheetPlayer} rating={pickRatingFor(sheetPlayer, ratings)}

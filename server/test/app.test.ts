@@ -1,11 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
-import { FixturesResponse, PlayersResponse, type RawBootstrapRows } from "@freepl/contract";
+import { FixturesResponse, PlayersResponse, ScorecardResponse, type RawBootstrapRows, type RawScorecardRows } from "@freepl/contract";
 import { createApp, etagMatches } from "../src/app.js";
 import type { Repo } from "../src/repo.js";
 import { bootstrap, player, rawFixture } from "@freepl/contract/test-fixtures";
 
 function fakeRepo(rows: RawBootstrapRows = bootstrap()) {
-  const state = { rows, reads: 0, fixturesAt: new Date("2030-08-20T08:00:00Z"), fixtures: [rawFixture()] as unknown[], fixtureReads: 0 };
+  const state = {
+    rows, reads: 0, fixturesAt: new Date("2030-08-20T08:00:00Z"), fixtures: [rawFixture()] as unknown[], fixtureReads: 0,
+    scorecardKey: "k1" as string | null, scorecard: scorecardRows(), scorecardReads: 0,
+  };
   const repo: Repo = {
     latestCapturedAt: async () => state.rows.capturedAt as Date,
     bootstrapRows: async () => {
@@ -17,11 +20,65 @@ function fakeRepo(rows: RawBootstrapRows = bootstrap()) {
       state.fixtureReads++;
       return { bootstrap: state.rows, fixturesCapturedAt: state.fixturesAt, fixtures: state.fixtures };
     },
+    scorecardKey: async () => state.scorecardKey,
+    scorecardRows: async () => {
+      state.scorecardReads++;
+      return state.scorecard;
+    },
   };
   return { repo, state };
 }
 
 const silent = () => {};
+
+/** One settled gameweek as the 0008 views return it through postgres.js (synthetic numbers). */
+function scorecardRows(mae = "2.000"): RawScorecardRows {
+  const deadline = new Date("2030-08-22T17:30:00Z");
+  return {
+    gameweeks: [{ gameweek: 1, deadline_time: deadline, capture_id: "11", captured_at: new Date("2030-08-22T17:07:00Z"), total_players: "1000", live_id: "21" }],
+    projections: [{
+      gameweek: 1, source: "fpl_ep_next", deadline_time: deadline, captured_at: new Date("2030-08-22T17:07:00Z"),
+      players_counted: "3", mae, added_after_deadline: "0", no_projection: "0", explain_mismatches: "0",
+    }],
+    entry: [{ gameweek: 1, entry_id: "42", points: 60, gw_rank: "100", overall_rank: "100", fpl_percentile_band: 10, total_players: "1000", gw_percentile: "10.0" }],
+  };
+}
+
+describe("GET /api/scorecard (spec 0008)", () => {
+  it("builds the scorecard once per key, with ETag", async () => {
+    const { repo, state } = fakeRepo();
+    const app = createApp(repo, silent);
+    const res = await app.request("/api/scorecard");
+    expect(res.status).toBe(200);
+    expect(res.headers.get("ETag")).toBe('"k1"');
+    const body = ScorecardResponse.parse(await res.json());
+    expect(body.gameweeks[0]).toMatchObject({ gameweek: 1, projections: [{ mae: 2 }], entry: { gwPercentile: 10, managedBy: "hand" } });
+    expect(body.summary.entry.medianGwPercentile).toBeNull();
+    await app.request("/api/scorecard");
+    expect(state.scorecardReads).toBe(1);
+  });
+  it("answers a matching If-None-Match with 304 without reading the views", async () => {
+    const { repo, state } = fakeRepo();
+    const res = await createApp(repo, silent).request("/api/scorecard", { headers: { "If-None-Match": 'W/"k1"' } });
+    expect(res.status).toBe(304);
+    expect(state.scorecardReads).toBe(0);
+  });
+  it("rebuilds when a gameweek settles (the key changes)", async () => {
+    const { repo, state } = fakeRepo();
+    const app = createApp(repo, silent);
+    await app.request("/api/scorecard");
+    state.scorecardKey = "k2";
+    state.scorecard = scorecardRows("1.500");
+    const body = ScorecardResponse.parse(await (await app.request("/api/scorecard")).json());
+    expect(state.scorecardReads).toBe(2);
+    expect(body.gameweeks[0]!.projections[0]!.mae).toBe(1.5);
+  });
+  it("answers 503 before any gameweek has settled", async () => {
+    const { repo, state } = fakeRepo();
+    state.scorecardKey = null;
+    expect((await createApp(repo, silent).request("/api/scorecard")).status).toBe(503);
+  });
+});
 
 describe("GET /api/players", () => {
   it("returns the parsed response with ETag and Cache-Control", async () => {

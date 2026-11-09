@@ -32,8 +32,11 @@ export interface Filters {
   plan: SavedPlan | null;
 }
 
-/** My squad is the landing tab (spec 0004 Q82); Shortlist sits after it (spec 0006 Q91). */
-export const TABS = ["squad", "shortlist", "picks", "players", "fixtures", "injury"] as const;
+/**
+ * My squad is the landing tab (spec 0004 Q82); Shortlist sits after it (spec 0006 Q91).
+ * "scorecard" opens by link only: unlisted until a season of the model's results (spec 0008 Q100).
+ */
+export const TABS = ["squad", "shortlist", "picks", "players", "fixtures", "injury", "scorecard"] as const;
 export type Tab = (typeof TABS)[number];
 const TICKER_SORTS: readonly TickerSort[] = ["mean", "sum", "count"];
 

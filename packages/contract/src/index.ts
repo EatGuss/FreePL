@@ -10,3 +10,4 @@ export * from "./pickRating.js";
 export * from "./entry.js";
 export * from "./plan.js";
 export * from "./clubColours.js";
+export * from "./scorecard.js";
