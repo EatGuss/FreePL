@@ -6,7 +6,8 @@ optimiser, logged before each deadline, with a public scorecard.
 
 ## Current phase
 
-**Next spec not chosen yet:** the projection model (not drafted) or spec 0007 (draft).
+**Spec 0009: projection model v1.** Spec: `docs/specs/0009-projection-model.md`, a draft; review it with
+the owner before building.
 
 Spec 0008 (scorecard) **shipped** 2026-11-09: views in Neon, `GET /api/scorecard`, and the page
 at `?tab=scorecard`, unlisted until a full season of the model's results (Q98, Q100). FPL's
@@ -47,6 +48,7 @@ Order of work:
 | `0006-shortlist-and-saved-plans.md` | Starred players and transfer plans, kept in the URL | done |
 | `0007-per-gameweek-data.md` | Per-gameweek view: nailedness since joining a Club, DefCon hit rate | draft |
 | `0008-scorecard.md` | Scorecard (unlisted until a season of results): projections vs settled points; the Entry's rank | done |
+| `0009-projection-model.md` | Projection model v1: upcoming-gameweek points, logged before each deadline, scored | **current** (draft) |
 
 Spec 0002 scaffolds `packages/`, `server/`, `api/` and `web/` as its "Files" section lists.
 `model/` stays out until its own spec.
