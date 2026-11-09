@@ -1,6 +1,6 @@
 # Spec 0009 — Projection model v1
 
-Status: draft (2026-11-09) · review rounds 1–3 (Q103–Q112)
+Status: reviewed 2026-11-09 (Q103–Q115) · ready to build part 1 (Q114)
 Depends on spec 0001 (captures), spec 0008 (scorecard), ADR 0001 (Neon + archive), ADR 0002
 
 ## Decisions from review (2026-11-09)
@@ -36,6 +36,14 @@ Depends on spec 0001 (captures), spec 0008 (scorecard), ADR 0001 (Neon + archive
   using only what was known before each deadline, and the last-5 baseline's replay MAE (the
   bar). **Part 3, the model:** minutes × points per appearance, improved until Q111's goal is
   met, then logged live.
+- **Q113:** with several projections, each gameweek is scored over **one shared set of
+  players**: anyone any projection put above zero, plus anyone who scored. With one projection
+  this is spec 0008's Q96 unchanged (GW7–9 keep their numbers). The set is used only to mark
+  projections after a gameweek settles; no model ever sees it.
+- **Q115:** live results never tune the model. Tuning uses earlier seasons and the 2025/26 replay
+  only. Every change is a new `model_version` that must meet Q111's goal on the replay again
+  before it is logged live, and the scorecard scores each version only on the gameweeks it
+  actually projected: a new version never inherits or replaces an old one's record.
 
 ## Goal
 
@@ -54,7 +62,7 @@ the optimiser's spec.
 - Not multi-gameweek: the upcoming gameweek only. A horizon comes with the optimiser.
 - Never fed by the pick rating (spec 0005 "What it is not").
 
-## Shape (draft, Q4)
+## Shape (Q106)
 
 `expected points = P(plays 60+) × points if 60+ + P(plays 1–59) × points if under 60`, per
 player, built from two parts:
@@ -66,39 +74,51 @@ player, built from two parts:
    points, from per-90 rates and the opponent's strength, using FPL's scoring values read from
    the payload (`fpl-domain.md`: never hardcoded).
 
-## Where it runs (draft, Q2)
+## Where it runs (Q104, Q108)
 
-Python, like the snapshot job, in GitHub Actions: a second workflow that runs inside each
-deadline window after a deadline capture, reads captures from Neon with the job's role, and
-writes its projections. Never on Vercel.
+Python, in `model/`, as a second job in `snapshot.yml` that runs after every snapshot run that
+stored a deadline capture. It reads captures from Neon with the job's role and writes its
+projections. A failure here never fails the snapshot job. Never on Vercel.
 
-## The decision log (draft, Q5)
+## The decision log (Q107)
 
 A new append-only table, the second writer in the system (needs ADR 0004):
 `projections(season, gameweek, model, model_version, element_id, expected_points,
 expected_minutes, created_at, deadline_time, input_capture_id)`. A row counts only if
-`created_at < deadline_time`; the scorecard reads the latest qualifying run per gameweek. Never
-`UPDATE` or `DELETE`, like `api_snapshots`.
+`created_at < deadline_time`; the scorecard reads the latest qualifying run per gameweek and
+`model_version`. Never `UPDATE` or `DELETE`, like `api_snapshots`. First entries: `last5`
+(Q112), then the model.
 
-## Training and validation data (draft, Q3, Q6)
+## Training and validation data (Q105, Q109, Q111)
 
 - **Training:** earlier seasons' per-gameweek player data (vaastav/Fantasy-Premier-League),
   for components only. `xP`, `selected`, `transfers_*` and current-season aggregates are never
   features (data-integrity rules).
-- **Validation:** a 2025/26 replay, flag-blind, gameweek by gameweek using only what was known
-  before each deadline. Its MAE is reported but **not** compared with `ep_next`, which has no
-  honest point-in-time record for 2025/26.
-- **Live:** from the first gameweek the job logs, scored on the scorecard against `ep_next`.
+- **Validation and the go-live goal:** a 2025/26 replay, flag-blind, gameweek by gameweek using
+  only what was known before each deadline. The model must beat the last-5 baseline's replay MAE
+  by at least 10%, overall and in every position (Q111). It is **not** compared with `ep_next`
+  there: `ep_next` has no honest point-in-time record for 2025/26.
+- **Live:** from the first gameweek each version logs, scored on the scorecard against `ep_next`
+  and the last-5 baseline (Q112, Q113, Q115).
 
-## Open questions for review
+## Acceptance criteria
 
-Draft questions Q1–Q6 are put to the owner in rounds; decisions are recorded here as Q103 on.
-
-## Acceptance criteria (sketch)
-
-- [ ] A projection for every player in the deadline capture is logged before the deadline, for
-      every gameweek from the first live one.
+Part 1 (pipeline):
+- [ ] Before every deadline from the first live one, a `last5` projection for every player in
+      the deadline capture is logged; the healthcheck fails if none was written in time.
 - [ ] No row is ever updated or deleted; a row written after its deadline is never scored.
-- [ ] The scorecard shows the model's MAE beside `ep_next`'s, over the same players.
-- [ ] No feature uses data from after its gameweek's deadline (a test replays one gameweek with
-      later data present and gets the same projection).
+- [ ] A model failure leaves the snapshot job's run and deadline assertion untouched.
+- [ ] The scorecard shows `last5` beside `ep_next`, both over one shared set of players (Q113),
+      and GW7–9's `ep_next` numbers are unchanged.
+
+Part 2 (replay):
+- [ ] The 2025/26 replay uses only data known before each deadline (a test replays one
+      gameweek with later data present and gets the same projection), with no `xP`,
+      `selected`, `transfers_*` or availability fields.
+- [ ] The last-5 baseline's replay MAE, overall and per position, is recorded as the bar.
+
+Part 3 (model):
+- [ ] The model meets Q111's goal on the replay before it is logged live; each version's replay
+      result is recorded with its `model_version`.
+- [ ] The scorecard shows the model beside both baselines, each version scored only on its own
+      gameweeks.

@@ -9,6 +9,8 @@ ADR 0002 (read model over captures), ADR 0003 (the account is `FPL_ENTRY_ID`)
 
 - **Q95:** scorecard only; the decision log arrives with the first thing that makes decisions.
 - **Q96:** MAE counts players the projection put above zero, plus anyone who scored.
+  *Widened by spec 0009 Q113:* with several projections, one shared set per gameweek (anyone
+  any projection put above zero, plus anyone who scored); identical while there is only one.
 - **Q97:** the Entry is judged on **gameweek** rank percentile (README), overall rank beside it
   for context only.
 - **Q98:** not public until there is a full season of the model's results.
