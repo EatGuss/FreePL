@@ -30,6 +30,12 @@ Depends on spec 0001 (captures), spec 0008 (scorecard), ADR 0001 (Neon + archive
   same job, in the same decision log, and shown on the scorecard beside `ep_next` and the model,
   which must keep beating it. The pipeline is built first with the last-5 baseline as its first
   entry, so it logs live weeks before the model is ready.
+- **Q114:** three PRs. **Part 1, the pipeline:** the `projections` table and ADR 0004, the job in
+  `snapshot.yml` with its healthcheck, the last-5 baseline logged live, the scorecard reading
+  the table. **Part 2, the replay:** vaastav seasons into the archive, a 2025/26 replay harness
+  using only what was known before each deadline, and the last-5 baseline's replay MAE (the
+  bar). **Part 3, the model:** minutes × points per appearance, improved until Q111's goal is
+  met, then logged live.
 
 ## Goal
 
