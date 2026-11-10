@@ -1,7 +1,7 @@
 # Spec 0008 — The scorecard
 
-Status: **built** 2026-11-09 (views applied 2026-11-07); the owner's check against the FPL site
-is next · reviewed 2026-11-07 (Q95–Q102) · prerequisites checked 2026-11-07
+Status: **shipped** 2026-11-09 (views applied 2026-11-07): live at `?tab=scorecard`, unlisted;
+checked by the owner against the FPL site · reviewed 2026-11-07 (Q95–Q102) · prerequisites checked 2026-11-07
 Depends on spec 0001 (deadline and `post_gw` captures), spec 0002 (contract, `server/`, `web/`),
 ADR 0002 (read model over captures), ADR 0003 (the account is `FPL_ENTRY_ID`)
 
@@ -9,6 +9,8 @@ ADR 0002 (read model over captures), ADR 0003 (the account is `FPL_ENTRY_ID`)
 
 - **Q95:** scorecard only; the decision log arrives with the first thing that makes decisions.
 - **Q96:** MAE counts players the projection put above zero, plus anyone who scored.
+  *Widened by spec 0009 Q113:* with several projections, one shared set per gameweek (anyone
+  any projection put above zero, plus anyone who scored); identical while there is only one.
 - **Q97:** the Entry is judged on **gameweek** rank percentile (README), overall rank beside it
   for context only.
 - **Q98:** not public until there is a full season of the model's results.
@@ -202,7 +204,9 @@ gameweeks; if they are not, that is the trigger for the flattening spec (`docs/r
       the page.
 - [x] The Entry's percentile is rank ÷ the deadline capture's `total_players` (GW9: 10.0%), with
       FPL's band (15) beside it.
-- [ ] The Entry's percentile for one gameweek matches the FPL site. *(Owner, on the live page.)*
+- [x] The Entry's percentile for one gameweek matches the FPL site. *(Owner, live page,
+      2026-11-09: no Scorecard tab, 2.16, "no model gameweeks yet", figures as on FPL. GW10 not
+      settled yet, so not shown.)*
 - [x] Gameweeks before `MODEL_MANAGES_FROM` are labelled "managed by hand" and left out of the
       median; with it `null`, the median reads "no model gameweeks yet".
 - [x] A projected-0, scored-0 player is not counted; a projected-0 player who scored is.
