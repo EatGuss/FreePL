@@ -39,6 +39,8 @@ export const RawScorecardProjection = z.object({
   added_after_deadline: count,
   no_projection: count,
   explain_mismatches: count,
+  /** null for ep_next; absent until db/views/0009_scorecard_projections.sql is applied. */
+  model_version: z.string().nullable().optional(),
 });
 
 export const RawScorecardEntry = z.object({
@@ -59,7 +61,9 @@ export interface RawScorecardRows {
 }
 
 const projection = z.object({
+  /** "fpl_ep_next", or a model in the decision log such as "last5" (spec 0009). */
   source: z.string(),
+  modelVersion: z.string().nullable(),
   playersCounted: z.number().int(),
   /** null when flagged or when no player was counted. */
   mae: z.number().nullable(),
@@ -100,7 +104,8 @@ export const ScorecardResponse = z.object({
   gameweeks: z.array(ScorecardGameweek),
   summary: z.object({
     projections: z.array(z.object({
-      source: z.string(), gameweeks: z.number().int(), players: z.number().int(), mae: z.number().nullable(),
+      source: z.string(), modelVersion: z.string().nullable(),
+      gameweeks: z.number().int(), players: z.number().int(), mae: z.number().nullable(),
     })),
     entry: z.object({
       modelGameweeks: z.number().int(),
@@ -155,6 +160,7 @@ export function buildScorecardResponse(
         settled: g.live_id !== null,
         projections: projections.filter((p) => p.gameweek === g.gameweek).map((p) => ({
           source: p.source,
+          modelVersion: p.model_version ?? null,
           playersCounted: p.players_counted,
           mae: p.explain_mismatches > 0 ? null : p.mae,
           addedAfterDeadline: p.added_after_deadline,
@@ -168,12 +174,18 @@ export function buildScorecardResponse(
       };
     });
 
-  const sources = [...new Set(projections.map((p) => p.source))];
-  const summaryProjections = sources.map((source) => {
-    const scored = gameweeks.flatMap((g) => g.projections.filter((p) => p.source === source && p.mae !== null && p.playersCounted > 0));
+  // One summary per source and version (spec 0009 Q115): a version is scored only on its own
+  // gameweeks. ep_next first, then the decision log's sources in name order.
+  const keyOf = (p: { source: string; modelVersion: string | null }) => `${p.source}@${p.modelVersion ?? ""}`;
+  const keys = new Map<string, { source: string; modelVersion: string | null }>();
+  for (const p of projections) keys.set(keyOf({ source: p.source, modelVersion: p.model_version ?? null }), { source: p.source, modelVersion: p.model_version ?? null });
+  const ordered = [...keys.values()].sort((a, b) =>
+    Number(b.source === "fpl_ep_next") - Number(a.source === "fpl_ep_next") || keyOf(a).localeCompare(keyOf(b)));
+  const summaryProjections = ordered.map((s) => {
+    const scored = gameweeks.flatMap((g) => g.projections.filter((p) => keyOf(p) === keyOf(s) && p.mae !== null && p.playersCounted > 0));
     const players = scored.reduce((n, p) => n + p.playersCounted, 0);
-    const mae = players ? Math.round((scored.reduce((s, p) => s + p.mae! * p.playersCounted, 0) / players) * 1000) / 1000 : null;
-    return { source, gameweeks: scored.length, players, mae };
+    const mae = players ? Math.round((scored.reduce((t, p) => t + p.mae! * p.playersCounted, 0) / players) * 1000) / 1000 : null;
+    return { ...s, gameweeks: scored.length, players, mae };
   });
   const withEntry = gameweeks.filter((g) => g.entry);
   const modelPercentiles = withEntry

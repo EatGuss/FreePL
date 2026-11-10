@@ -1,7 +1,13 @@
 import type { ScorecardGameweek, ScorecardResponse } from "@freepl/contract";
 import { localDateTime } from "./format.js";
 
-const SOURCE_LABEL: Record<string, string> = { fpl_ep_next: "FPL's ep_next" };
+const SOURCE_LABEL: Record<string, string> = { fpl_ep_next: "FPL's ep_next", last5: "Last-5 average" };
+type SourceKey = { source: string; modelVersion: string | null };
+const sameSource = (a: SourceKey, b: SourceKey) => a.source === b.source && a.modelVersion === b.modelVersion;
+const sourceLabel = (s: SourceKey) => `${SOURCE_LABEL[s.source] ?? s.source}${s.modelVersion ? ` (v${s.modelVersion})` : ""}`;
+/** Short column heading: "ep_next", "Last-5 v1". */
+const sourceShort = (s: SourceKey) =>
+  s.source === "fpl_ep_next" ? "ep_next" : `${s.source === "last5" ? "Last-5" : s.source}${s.modelVersion ? ` v${s.modelVersion}` : ""}`;
 const TARGET_PERCENTILE = 40;
 
 const rank = (n: number | null) => (n === null ? "—" : n.toLocaleString("en-GB"));
@@ -16,11 +22,13 @@ function lead(capturedAt: string, deadline: string): string {
 /**
  * Spec 0008: the scorecard. Unlisted (Q100): opened by ?tab=scorecard, in no tab bar. Every
  * figure comes from captures taken before each deadline and settled points after it; gameweeks
- * managed by hand are shown but never count towards the model's median (Q99).
+ * managed by hand are shown but never count towards the model's median (Q99). Spec 0009 adds the
+ * decision log's projections beside ep_next, one MAE column each, all over the same players (Q113).
  */
 export function ScorecardTab({ data }: { data: ScorecardResponse }) {
   const { summary, meta } = data;
   const median = summary.entry.medianGwPercentile;
+  const sources: SourceKey[] = summary.projections;
   return (
     <section className="flex flex-col gap-2.5">
       <p className="notice">
@@ -30,8 +38,8 @@ export function ScorecardTab({ data }: { data: ScorecardResponse }) {
 
       <div className="score-cards">
         {summary.projections.map((p) => (
-          <div className="card" key={p.source}>
-            <span className="k">{SOURCE_LABEL[p.source] ?? p.source} · MAE</span>
+          <div className="card" key={`${p.source}@${p.modelVersion ?? ""}`}>
+            <span className="k">{sourceLabel(p)} · MAE</span>
             <span className="v">{p.mae === null ? "—" : p.mae.toFixed(2)}</span>
             <span className="n">points off per player · {p.gameweeks} GW{p.gameweeks === 1 ? "" : "s"}, {rank(p.players)} player-weeks</span>
           </div>
@@ -58,7 +66,7 @@ export function ScorecardTab({ data }: { data: ScorecardResponse }) {
             <tr>
               <th scope="col">GW</th>
               <th scope="col">GW rank</th>
-              <th scope="col">ep_next MAE</th>
+              {sources.map((s) => <th scope="col" key={`${s.source}@${s.modelVersion ?? ""}`}>{sourceShort(s)} MAE</th>)}
               <th scope="col">Points</th>
               <th scope="col">Managed</th>
               <th scope="col">Overall</th>
@@ -66,7 +74,7 @@ export function ScorecardTab({ data }: { data: ScorecardResponse }) {
             </tr>
           </thead>
           <tbody>
-            {data.gameweeks.map((g) => <Row key={g.gameweek} g={g} />)}
+            {data.gameweeks.map((g) => <Row key={g.gameweek} g={g} sources={sources} />)}
           </tbody>
         </table>
       </div>
@@ -80,8 +88,9 @@ export function ScorecardTab({ data }: { data: ScorecardResponse }) {
       </div>
       <div className="subrow">
         <span>
-          MAE counts every player the projection put above zero, plus anyone who scored; a player added to FPL after a
-          deadline is not scored that week. Each projection is read from the last capture before its deadline. GW rank
+          MAE counts every player any projection put above zero, plus anyone who scored, the same players for every
+          projection; a player added to FPL after a deadline is not scored that week. The last-5 average is each
+          player's mean points over his last 5 settled gameweeks, logged before the deadline. Each projection is read from the last capture before its deadline. GW rank
           percentile = rank ÷ players at that deadline; FPL's own rounded-up band in brackets. GW1–6 have no capture.
           {meta.season ? ` Season ${meta.season.replace("-", "/")}.` : ""}
         </span>
@@ -90,8 +99,7 @@ export function ScorecardTab({ data }: { data: ScorecardResponse }) {
   );
 }
 
-function Row({ g }: { g: ScorecardGameweek }) {
-  const p = g.projections.find((x) => x.source === "fpl_ep_next");
+function Row({ g, sources }: { g: ScorecardGameweek; sources: SourceKey[] }) {
   const e = g.entry;
   return (
     <tr>
@@ -100,13 +108,18 @@ function Row({ g }: { g: ScorecardGameweek }) {
         {e ? <>{pct(e.gwPercentile)} <span className="pmeta">({e.fplPercentileBand === null ? "—" : `top ${e.fplPercentileBand}%`})</span>
           <div className="pmeta">{rank(e.gwRank)}</div></> : "—"}
       </td>
-      <td>
-        {g.capturedAt === null ? <span className="pmeta">no capture</span>
-          : !g.settled ? <span className="pmeta">not settled</span>
-          : !p ? "—"
-          : p.flagged ? <span style={{ color: "var(--bad)" }}>flagged: points ≠ breakdown</span>
-          : <>{p.mae === null ? "—" : p.mae.toFixed(2)}<div className="pmeta">{p.playersCounted} players{p.addedAfterDeadline ? ` · ${p.addedAfterDeadline} added late` : ""}</div></>}
-      </td>
+      {sources.map((s) => {
+        const p = g.projections.find((x) => sameSource(x, s));
+        return (
+          <td key={`${s.source}@${s.modelVersion ?? ""}`}>
+            {g.capturedAt === null ? <span className="pmeta">no capture</span>
+              : !g.settled ? <span className="pmeta">not settled</span>
+              : !p ? <span className="pmeta">not logged</span>
+              : p.flagged ? <span style={{ color: "var(--bad)" }}>flagged: points ≠ breakdown</span>
+              : <>{p.mae === null ? "—" : p.mae.toFixed(2)}<div className="pmeta">{p.playersCounted} players{p.addedAfterDeadline ? ` · ${p.addedAfterDeadline} added late` : ""}</div></>}
+          </td>
+        );
+      })}
       <td>{e?.points ?? "—"}</td>
       <td>{e ? (e.managedBy === "model" ? "Model" : "By hand") : "—"}</td>
       <td>{rank(e?.overallRank ?? null)}</td>

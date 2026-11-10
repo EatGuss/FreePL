@@ -61,7 +61,20 @@ describe("buildScorecardResponse", () => {
   });
   it("pools cumulative MAE over every counted player-gameweek", () => {
     // (2.282·375 + 2.398·361 + 1.818·373) / 1109 = 2.1637…
-    expect(r.summary.projections).toEqual([{ source: "fpl_ep_next", gameweeks: 3, players: 1109, mae: 2.164 }]);
+    expect(r.summary.projections).toEqual([{ source: "fpl_ep_next", modelVersion: null, gameweeks: 3, players: 1109, mae: 2.164 }]);
+  });
+  it("adds the decision log's sources beside ep_next, each scored only on its own gameweeks (spec 0009)", () => {
+    // The 0009 view: model_version as a last column; last5 logged for GW9 only (synthetic numbers).
+    const withVersion = projections.map((p) => ({ ...p, model_version: null }));
+    const last5 = { ...proj(9, "380", "1.950"), source: "last5", model_version: "1" };
+    const m = buildScorecardResponse({ ...raw, projections: [last5, ...withVersion] }, null);
+    expect(m.summary.projections.map((p) => [p.source, p.modelVersion, p.gameweeks, p.mae])).toEqual([
+      ["fpl_ep_next", null, 3, 2.164], ["last5", "1", 1, 1.95],
+    ]);
+    expect(m.gameweeks[8]!.projections.map((p) => [p.source, p.modelVersion, p.playersCounted])).toEqual([
+      ["last5", "1", 380], ["fpl_ep_next", null, 373],
+    ]);
+    expect(m.gameweeks[7]!.projections.map((p) => p.source)).toEqual(["fpl_ep_next"]);
   });
   it("counts every gameweek as managed by hand while MODEL_MANAGES_FROM is null (Q99)", () => {
     expect(MODEL_MANAGES_FROM).toBeNull();
