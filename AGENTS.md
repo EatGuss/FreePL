@@ -9,7 +9,8 @@ optimiser, logged before each deadline, with a public scorecard.
 **Spec 0009: projection model v1.** Spec: `docs/specs/0009-projection-model.md`. Reviewed
 2026-11-09 (Q103–Q115). Three PRs (Q114): part 1 the pipeline (`projections` table, ADR 0004,
 job in `snapshot.yml`, `last5` baseline live, scorecard), part 2 the 2025/26 replay, part 3 the
-model. Part 1 next. `model/` is allowed by this spec.
+model. Part 1 built 2026-11-10; the owner applies the table and view in Neon and adds the
+model healthcheck, then the first live `last5` run is checked. `model/` is allowed by this spec.
 
 Spec 0008 (scorecard) **shipped** 2026-11-09: views in Neon, `GET /api/scorecard`, and the page
 at `?tab=scorecard`, unlisted until a full season of the model's results (Q98, Q100). FPL's
@@ -58,14 +59,18 @@ Spec 0002 scaffolds `packages/`, `server/`, `api/` and `web/` as its "Files" sec
 ## Repo layout (only what exists now)
 
 ```
-.github/workflows/snapshot.yml         hourly via external workflow_dispatch; cron backstop
+.github/workflows/snapshot.yml         hourly via external workflow_dispatch; cron backstop; then the projection job
 scripts/snapshot.py                    single bare script, one main()
 db/migrations/0001_api_snapshots.sql   applied by hand in Neon SQL editor
 db/migrations/0002_api_snapshots_season.sql  adds api_snapshots.season; applied by hand
+db/migrations/0003_projections.sql     projections: the append-only decision log (ADR 0004); applied by hand
 db/roles/0002_reader.sql               freepl_reader role; applied by hand, password set in the editor only
 db/views/0002_current.sql              views over the latest capture (ADR 0002); applied by hand
 db/views/0003_fixtures.sql             latest_fixtures, current_fixtures (spec 0003); applied by hand
 db/views/0008_scorecard.sql            scorecard_* views across captures (spec 0008); applied by hand
+db/views/0009_scorecard_projections.sql  scorecard_projection_gw reads the decision log (spec 0009); applied by hand
+model/project.py, model/test_project.py  projection job (spec 0009), run by snapshot.yml; stdlib unittest
+model/requirements.txt                 the projection job's own dependencies (spec 0009 Q110)
 requirements.txt                       httpx, psycopg[binary], python-dotenv — nothing else without asking
 package.json, pnpm-workspace.yaml      pnpm workspace root (Node 22, see .nvmrc); tsconfig.base.json
 packages/contract/                     zod schemas + types, shared by server/ and web/; ships to the browser
@@ -108,6 +113,7 @@ The app (Vercel, and `server/` locally) reads only `DATABASE_URL`, and there it 
 `server/.env` (gitignored). Never prefix a server variable with `VITE_`.
 
 CI-only: secret `ARCHIVE_DEPLOY_KEY` and variable `ARCHIVE_REPO` — used by the workflow's checkout and push steps, never read by the script.
+Secret `MODEL_HEALTHCHECK_URL` (optional): the projection job's own dead-man's switch, pinged by its workflow step.
 
 ## Non-negotiables
 

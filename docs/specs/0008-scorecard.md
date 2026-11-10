@@ -100,6 +100,9 @@ hand, readable by `freepl_reader`.
   overall rank, total players, percentile. Who managed it comes from `MODEL_MANAGES_FROM` in the
   API, not the view.
 
+*`scorecard_projection_gw` is replaced by `db/views/0009_scorecard_projections.sql`* (spec 0009),
+which adds the decision log's projections; the other two views are unchanged.
+
 *Applied in Neon 2026-11-07* (`db/views/0008_scorecard.sql`, tested first on a local Postgres 16
 with synthetic captures). First real numbers: `ep_next` MAE 2.282 / 2.398 / 1.818 for GW7–9
 over 375 / 361 / 373 players, one player added after each deadline, no missing projection, **0
