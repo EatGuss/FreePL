@@ -1,6 +1,6 @@
 # Spec 0009 — Projection model v1
 
-Status: reviewed 2026-11-09 (Q103–Q115) · ready to build part 1 (Q114)
+Status: part 1 built 2026-11-10, awaiting the owner's Neon and healthcheck steps · reviewed 2026-11-09 (Q103–Q115)
 Depends on spec 0001 (captures), spec 0008 (scorecard), ADR 0001 (Neon + archive), ADR 0002
 
 ## Decisions from review (2026-11-09)
@@ -100,6 +100,29 @@ expected_minutes, created_at, deadline_time, input_capture_id)`. A row counts on
   there: `ep_next` has no honest point-in-time record for 2025/26.
 - **Live:** from the first gameweek each version logs, scored on the scorecard against `ep_next`
   and the last-5 baseline (Q112, Q113, Q115).
+
+## Part 1 as built (2026-11-10)
+
+- ADR 0004; `db/migrations/0003_projections.sql`: `check (created_at < deadline_time)` and a
+  trigger refusing UPDATE, DELETE and TRUNCATE. `freepl_reader` has no grant on the table.
+- `model/project.py`: does nothing outside a deadline window (the snapshot job's 3 h rule), so
+  its hourly healthcheck stays green between deadlines. Inside one it reads the latest capture
+  before the deadline (whichever run stored it, so a failed snapshot run doesn't stop it) and
+  the last 5 `post_gw` live captures that landed before the deadline, and logs `last5@1` for
+  every player in that capture in one transaction. A player absent from a gameweek (added
+  later) is averaged over the gameweeks he was in; no history gives 0.
+- `snapshot.yml` job `project`: `needs: snapshot`, `if: always()`, its own healthcheck
+  (`MODEL_HEALTHCHECK_URL`). CI runs `python -m unittest discover -s model`.
+- `db/views/0009_scorecard_projections.sql` replaces `scorecard_projection_gw`: each model's
+  latest run before the deadline beside `ep_next`, over one shared set (Q113), `model_version`
+  as a new last column. With `ep_next` alone its output equals 0008's.
+- Contract and page: one MAE card and column per projection and version; "not logged" for
+  gameweeks before a source started. Works with either view.
+- Checked on a local Postgres 16: the view before and after on the synthetic captures (same),
+  two logged runs (the later one scored: last5 1.600, ep_next 2.250 over the wider shared set),
+  a write at the deadline refused, UPDATE, DELETE and TRUNCATE refused, `freepl_reader` refused;
+  the job inside a synthetic window (4.0 / 2.0 / 5.0, two runs) and outside one (nothing). A
+  browser check at 390px with a `last5` GW9 result.
 
 ## Acceptance criteria
 

@@ -84,3 +84,41 @@ jobs:
           url="${HEALTHCHECK_URL%/}"
           if [ "$JOB_STATUS" != "success" ]; then url="$url/fail"; fi
           curl -fsS -m 10 --retry 3 -o /dev/null "$url" || echo "healthcheck ping failed"
+
+  # Spec 0009 part 1 (Q108, ADR 0004): log projections before each deadline. Runs after every
+  # snapshot run, whatever its outcome, and does nothing outside a deadline window. Its own job
+  # and healthcheck, so a failure here never touches the snapshot's run or its deadline check.
+  project:
+    needs: snapshot
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: model/requirements.txt
+
+      - run: pip install -r model/requirements.txt
+
+      - name: Log projections
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: python model/project.py
+
+      - name: Healthcheck ping
+        if: always()
+        env:
+          MODEL_HEALTHCHECK_URL: ${{ secrets.MODEL_HEALTHCHECK_URL }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          if [ -z "$MODEL_HEALTHCHECK_URL" ]; then
+            echo "MODEL_HEALTHCHECK_URL not set; skipping ping"
+            exit 0
+          fi
+          url="${MODEL_HEALTHCHECK_URL%/}"
+          if [ "$JOB_STATUS" != "success" ]; then url="$url/fail"; fi
+          curl -fsS -m 10 --retry 3 -o /dev/null "$url" || echo "healthcheck ping failed"

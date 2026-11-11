@@ -1,4 +1,5 @@
-# App checks for spec 0002: install, typecheck, test, build. Never touches Neon or FPL.
+# App checks for spec 0002 (install, typecheck, test, build) and spec 0009's projection job
+# unit tests. Never touches Neon or FPL.
 name: ci
 
 on:
@@ -26,6 +27,12 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
+      # Spec 0009: the projection job's pure parts (stdlib unittest; no database).
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: pip install -r model/requirements.txt
+      - run: python -m unittest discover -s model
       - name: Built bundle carries no database host
         run: |
           if grep -rIl -E 'neon\.tech|postgres(ql)?://|DATABASE_URL' web/dist; then
